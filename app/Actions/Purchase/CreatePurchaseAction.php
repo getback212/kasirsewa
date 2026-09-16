@@ -37,9 +37,13 @@ class CreatePurchaseAction
             $grandTotal,
             $note
         ) {
+            $outlet = \App\Models\Outlet::find($outletId);
+            $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
+
             $invoiceNumber = 'PO/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
             $purchase = Purchase::create([
+                'tenant_id' => $tenantId,
                 'outlet_id' => $outletId,
                 'supplier_id' => $supplierId,
                 'user_id' => $userId,

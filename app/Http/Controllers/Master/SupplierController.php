@@ -18,8 +18,10 @@ class SupplierController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menambah data supplier.');
         }
 
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'unique:suppliers,code'],
+            'code' => ['required', 'string', 'max:50', Rule::unique('suppliers', 'code')->where('tenant_id', $tenantId)],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -27,7 +29,8 @@ class SupplierController extends Controller
         ]);
 
         Supplier::create([
-            'company_id' => $user->company_id,
+            'company_id' => $user->company_id ?? 1,
+            'tenant_id' => $tenantId,
             'code' => strtoupper($validated['code']),
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
