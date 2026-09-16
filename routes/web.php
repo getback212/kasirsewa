@@ -28,6 +28,9 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Invoice\InvoiceController;
 
 Route::middleware('guest')->group(function () {
+    Route::get('/', function () {
+        return \Inertia\Inertia::render('Welcome');
+    });
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 });
