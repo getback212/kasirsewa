@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-200;
+  }
+
+  /* ☀️ LIGHT MODE ENTERPRISE THEME OVERRIDES */
+  html.light body {
+    @apply bg-slate-100 text-slate-900 selection:bg-emerald-600 selection:text-white;
+  }
+
+  /* Core Canvas & Card Backgrounds */
+  html.light .bg-slate-950 {
+    background-color: #f1f5f9 !important;
+  }
+
+  html.light .bg-slate-900 {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  html.light .bg-slate-900\/95,
+  html.light .bg-slate-900\/90,
+  html.light .bg-slate-900\/80 {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Buttons & Action Badges with slate-800 / slate-700 / slate-950 */
+  html.light .bg-slate-800 {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  html.light .bg-slate-700 {
+    background-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  html.light .bg-slate-800\/60,
+  html.light .bg-slate-800\/80,
+  html.light .bg-slate-800\/40,
+  html.light .bg-slate-800\/50,
+  html.light .bg-slate-900\/50 {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  html.light .bg-slate-950\/80,
+  html.light .bg-slate-950\/60,
+  html.light .bg-slate-950\/30 {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+
+  /* Force Dark Slate (#0f172a) on Slate/Gray Buttons in Light Mode */
+  html.light .bg-slate-800 *,
+  html.light .bg-slate-700 *,
+  html.light .bg-slate-950:not(.bg-emerald-600):not(.bg-emerald-500):not(.bg-blue-600):not(.bg-rose-600) *,
+  html.light .bg-slate-900:not(.bg-emerald-600):not(.bg-emerald-500):not(.bg-blue-600):not(.bg-rose-600) * {
+    color: inherit;
+  }
+
+  /* Hover States in Light Mode */
+  html.light .hover\:bg-slate-800:hover {
+    background-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  html.light .hover\:bg-slate-700:hover {
+    background-color: #94a3b8 !important;
+    color: #0f172a !important;
+  }
+
+  html.light .hover\:bg-slate-900:hover {
+    background-color: #f1f5f9 !important;
+  }
+
+  html.light .hover\:bg-slate-800\/60:hover,
+  html.light .hover\:bg-slate-800\/40:hover {
+    background-color: #e2e8f0 !important;
+  }
+
+  /* Borders in Light Mode */
+  html.light .border-slate-800,
+  html.light .border-slate-800\/80,
+  html.light .border-slate-800\/60,
+  html.light .border-slate-800\/50,
+  html.light .border-slate-800\/40,
+  html.light .border-slate-700 {
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Typography Colors in Light Mode */
+  html.light .text-slate-100,
+  html.light .text-slate-200 {
+    color: #0f172a !important;
+  }
+
+  html.light .text-slate-300,
+  html.light .text-slate-400 {
+    color: #334155 !important;
+  }
+
+  html.light .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  /* Convert text-white on cards to dark slate, EXCEPT inside solid primary colored buttons & badges */
+  html.light .text-white:not(button):not(.bg-emerald-600 *):not(.bg-emerald-500 *):not(.bg-teal-600 *):not(.bg-blue-600 *):not(.bg-rose-600 *):not(.bg-purple-600 *):not(.bg-amber-500 *) {
+    color: #0f172a !important;
+  }
+
+  /* Retain Pure White (#ffffff) text & icons ONLY for solid primary colored buttons & badges */
+  html.light .bg-emerald-600,
+  html.light .bg-emerald-600 *,
+  html.light .bg-emerald-500,
+  html.light .bg-emerald-500 *,
+  html.light .bg-teal-600,
+  html.light .bg-teal-600 *,
+  html.light .bg-blue-600,
+  html.light .bg-blue-600 *,
+  html.light .bg-rose-600,
+  html.light .bg-rose-600 *,
+  html.light .bg-purple-600,
+  html.light .bg-purple-600 * {
+    color: #ffffff !important;
+  }
+
+  /* Form Inputs in Light Mode */
+  html.light input:not([type="checkbox"]):not([type="radio"]),
+  html.light select,
+  html.light textarea {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  html.light input::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  /* Modal Backdrop Overlay in Light Mode */
+  html.light div.fixed.inset-0.bg-slate-950\/85,
+  html.light div.fixed.inset-0.bg-slate-950\/80 {
+    background-color: rgba(15, 23, 42, 0.65) !important;
+  }
+
+  /* Explicit Store & Brand Header Name Color */
+  .store-name-text {
+    color: #ffffff !important;
+  }
+
+  html.light .store-name-text {
+    color: #0f172a !important;
+  }
+
+  /* ☀️ Light Mode Theme Override for Super Giant LED Total Tagihan Banner (POS & Customer Display) */
+  html.light .bg-gradient-to-r.from-slate-950.via-slate-900.to-slate-950,
+  html.light .bg-gradient-to-b.from-slate-900.to-slate-950 {
+    background: linear-gradient(to bottom, #ecfdf5, #ffffff, #f0fdf4) !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15) !important;
+  }
+
+  html.light .bg-gradient-to-r.from-slate-950.via-slate-900.to-slate-950 .text-emerald-400,
+  html.light .bg-gradient-to-b.from-slate-900.to-slate-950 .text-emerald-400 {
+    color: #059669 !important;
+  }
+}
