@@ -24,6 +24,7 @@ use App\Http\Controllers\Backup\BackupController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Invoice\InvoiceController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -45,6 +46,10 @@ Route::middleware('auth')->group(function () {
     // Tenant SaaS Subscription & Billing Routes
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
     Route::post('/subscription/renew', [SubscriptionController::class, 'renew'])->name('subscription.renew');
+
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::post('/invoices/{id}/confirm-payment', [InvoiceController::class, 'confirmPayment'])->name('invoices.confirm_payment');
 
     // Dashboard & Executive Summary
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');

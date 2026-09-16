@@ -204,6 +204,7 @@ export default function AppLayout({ title, children }: { title?: string; childre
             icon: BarChart3,
             items: [
                 { name: 'Laporan Keuangan', path: '/reports', icon: BarChart3, permission: 'view-reports-financial' },
+                { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: Receipt, permission: null },
                 { name: 'Audit Logs System', path: '/audit-logs', icon: ShieldAlert, permission: 'view-audit-logs' },
                 { name: 'Backup & Restore', path: '/backups', icon: Database, permission: 'view-audit-logs' },
                 { name: 'Kelola Tenant SaaS', path: '/admin/tenants', icon: Building2, permission: 'manage-tenants' },
