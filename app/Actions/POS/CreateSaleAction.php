@@ -44,6 +44,9 @@ class CreateSaleAction
             $paidAmount,
             $note
         ) {
+            $outlet = \App\Models\Outlet::find($outletId);
+            $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
+
             $totalPaymentsAmount = array_sum(array_column($payments, 'amount'));
             if ($totalPaymentsAmount < $grandTotal) {
                 throw new InvalidArgumentException("Jumlah nominal pembayaran (Rp ".number_format($totalPaymentsAmount, 0, ',', '.').") kurang dari Grand Total (Rp ".number_format($grandTotal, 0, ',', '.').")!");
@@ -53,6 +56,7 @@ class CreateSaleAction
             $invoiceNumber = 'INV/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
             $sale = Sale::create([
+                'tenant_id' => $tenantId,
                 'outlet_id' => $outletId,
                 'cashier_id' => $cashierId,
                 'customer_id' => $customerId,

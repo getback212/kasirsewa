@@ -14,7 +14,23 @@ class PaymentController extends Controller
     public function processCheckout(Request $request, CreateSaleAction $createSaleAction): JsonResponse
     {
         $user = $request->user();
+        $tenantId = session('active_tenant_id', $user->tenant_id);
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
+
+        if ($tenantId) {
+            $tenant = \App\Models\Tenant::with('subscription.plan')->find($tenantId);
+            if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
+                $maxTransactions = $tenant->subscription->plan->max_transactions;
+                $currentTransactionsCount = \App\Models\Sale::where('tenant_id', $tenantId)->count();
+
+                if ($currentTransactionsCount >= $maxTransactions) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Batas jumlah transaksi untuk paket '{$tenant->subscription->plan->name}' adalah {$maxTransactions} transaksi. Silakan upgrade paket berlangganan SaaS Anda.",
+                    ], 422);
+                }
+            }
+        }
 
         // Check if cashier has an active open shift
         $activeShift = Shift::where('outlet_id', $activeOutletId)
