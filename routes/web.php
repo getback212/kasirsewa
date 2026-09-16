@@ -24,6 +24,7 @@ use App\Http\Controllers\Backup\BackupController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Invoice\InvoiceController;
 
 Route::middleware('guest')->group(function () {
@@ -34,7 +35,8 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Super Admin Tenant & Plan Management Routes
+    // Super Admin Tenant, Plan & Dashboard Routes
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/tenants', [TenantController::class, 'index'])->name('admin.tenants.index');
     Route::post('/admin/tenants', [TenantController::class, 'store'])->name('admin.tenants.store');
     Route::put('/admin/tenants/{id}', [TenantController::class, 'update'])->name('admin.tenants.update');

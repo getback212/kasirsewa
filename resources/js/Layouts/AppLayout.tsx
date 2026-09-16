@@ -207,6 +207,7 @@ export default function AppLayout({ title, children }: { title?: string; childre
                 { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: Receipt, permission: null },
                 { name: 'Audit Logs System', path: '/audit-logs', icon: ShieldAlert, permission: 'view-audit-logs' },
                 { name: 'Backup & Restore', path: '/backups', icon: Database, permission: 'view-audit-logs' },
+                { name: 'Dashboard SaaS Global', path: '/admin/dashboard', icon: BarChart3, permission: 'manage-tenants' },
                 { name: 'Kelola Tenant SaaS', path: '/admin/tenants', icon: Building2, permission: 'manage-tenants' },
             ]
         }
