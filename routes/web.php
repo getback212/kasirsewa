@@ -22,6 +22,8 @@ use App\Http\Controllers\Expense\ExpenseController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Backup\BackupController;
 use App\Http\Controllers\Tenant\TenantController;
+use App\Http\Controllers\Subscription\SubscriptionController;
+use App\Http\Controllers\Admin\PlanController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -31,10 +33,18 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Super Admin Tenant Management Routes
+    // Super Admin Tenant & Plan Management Routes
     Route::get('/admin/tenants', [TenantController::class, 'index'])->name('admin.tenants.index');
     Route::post('/admin/tenants', [TenantController::class, 'store'])->name('admin.tenants.store');
     Route::put('/admin/tenants/{id}', [TenantController::class, 'update'])->name('admin.tenants.update');
+
+    Route::get('/admin/plans', [PlanController::class, 'index'])->name('admin.plans.index');
+    Route::post('/admin/plans', [PlanController::class, 'store'])->name('admin.plans.store');
+    Route::put('/admin/plans/{id}', [PlanController::class, 'update'])->name('admin.plans.update');
+
+    // Tenant SaaS Subscription & Billing Routes
+    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscription/renew', [SubscriptionController::class, 'renew'])->name('subscription.renew');
 
     // Dashboard & Executive Summary
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
