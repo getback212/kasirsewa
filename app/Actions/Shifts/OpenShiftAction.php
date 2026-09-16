@@ -18,7 +18,11 @@ class OpenShiftAction
             throw new InvalidArgumentException('Anda sudah memiliki sesi shift kasir yang sedang aktif!');
         }
 
+        $outlet = \App\Models\Outlet::find($outletId);
+        $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
+
         return Shift::create([
+            'tenant_id' => $tenantId,
             'outlet_id' => $outletId,
             'user_id' => $userId,
             'opening_cash' => $openingCash,

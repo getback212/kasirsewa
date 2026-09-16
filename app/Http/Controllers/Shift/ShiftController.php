@@ -143,6 +143,7 @@ class ShiftController extends Controller
     public function cashMovement(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $tenantId = session('active_tenant_id', $user->tenant_id);
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
 
         $validated = $request->validate([
@@ -154,6 +155,7 @@ class ShiftController extends Controller
         ]);
 
         CashMovement::create([
+            'tenant_id' => $tenantId,
             'shift_id' => $validated['shift_id'],
             'user_id' => $user->id,
             'type' => $validated['type'],
