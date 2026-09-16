@@ -23,6 +23,8 @@ import {
     PackageCheck,
     Receipt,
     Building2,
+    Sparkles,
+    CreditCard,
     Maximize,
     Minimize,
     Sun,
@@ -186,6 +188,17 @@ export default function AppLayout({ title, children }: { title?: string; childre
 
     const navigationGroups: NavGroup[] = [
         {
+            id: 'saas_admin',
+            group: 'SaaS Admin Management',
+            icon: Sparkles,
+            items: [
+                { name: 'Dashboard SaaS Global', path: '/admin/dashboard', icon: BarChart3, permission: 'manage-tenants' },
+                { name: 'Kelola Tenant SaaS', path: '/admin/tenants', icon: Building2, permission: 'manage-tenants' },
+                { name: 'Pengaturan Paket SaaS', path: '/admin/plans', icon: Sparkles, permission: 'manage-plans' },
+                { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: CreditCard, permission: 'view-reports-financial' },
+            ]
+        },
+        {
             id: 'stok',
             group: 'Stok & Inventaris',
             icon: Boxes,
@@ -215,11 +228,8 @@ export default function AppLayout({ title, children }: { title?: string; childre
             icon: BarChart3,
             items: [
                 { name: 'Laporan Keuangan', path: '/reports', icon: BarChart3, permission: 'view-reports-financial' },
-                { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: Receipt, permission: 'view-reports-financial' },
                 { name: 'Audit Logs System', path: '/audit-logs', icon: ShieldAlert, permission: 'view-audit-logs' },
                 { name: 'Backup & Restore', path: '/backups', icon: Database, permission: 'view-audit-logs' },
-                { name: 'Dashboard SaaS Global', path: '/admin/dashboard', icon: BarChart3, permission: 'manage-tenants' },
-                { name: 'Kelola Tenant SaaS', path: '/admin/tenants', icon: Building2, permission: 'manage-tenants' },
             ]
         }
     ];
