@@ -135,21 +135,32 @@ export default function AppLayout({ title, children }: { title?: string; childre
     }, []);
 
     const hasPermission = (permission: string | null) => {
-        if (roles.includes('CASHIER')) {
-            if (permission === 'view-dashboard' || permission === null) {
-                return false;
-            }
-            if (!['open-shift', 'access-pos'].includes(permission || '')) {
-                return false;
-            }
-        }
-        if (roles.includes('WAREHOUSE')) {
-            if (!['view-products', 'view-stock', 'view-purchases'].includes(permission || '')) {
-                return false;
-            }
-        }
         if (!permission) return true;
-        if (roles.includes('SUPER_ADMIN') || roles.includes('OWNER')) return true;
+
+        // Super Admin SaaS Management features are restricted strictly to SUPER_ADMIN
+        if (permission === 'manage-tenants' || permission === 'manage-plans') {
+            return roles.includes('SUPER_ADMIN');
+        }
+
+        // CASHIER role menu permissions restriction
+        if (roles.includes('CASHIER')) {
+            if (permission === 'view-dashboard') return false;
+            return ['open-shift', 'access-pos'].includes(permission);
+        }
+
+        // WAREHOUSE role menu permissions restriction
+        if (roles.includes('WAREHOUSE')) {
+            if (permission === 'view-dashboard') return false;
+            return ['view-products', 'view-stock', 'view-purchases', 'view-suppliers'].includes(permission);
+        }
+
+        if (roles.includes('SUPER_ADMIN')) return true;
+
+        if (roles.includes('OWNER')) {
+            // Owner has full access to all tenant operational features except super admin tenant management
+            return permission !== 'manage-tenants' && permission !== 'manage-plans';
+        }
+
         return permissions.includes(permission);
     };
 
@@ -204,7 +215,7 @@ export default function AppLayout({ title, children }: { title?: string; childre
             icon: BarChart3,
             items: [
                 { name: 'Laporan Keuangan', path: '/reports', icon: BarChart3, permission: 'view-reports-financial' },
-                { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: Receipt, permission: null },
+                { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: Receipt, permission: 'view-reports-financial' },
                 { name: 'Audit Logs System', path: '/audit-logs', icon: ShieldAlert, permission: 'view-audit-logs' },
                 { name: 'Backup & Restore', path: '/backups', icon: Database, permission: 'view-audit-logs' },
                 { name: 'Dashboard SaaS Global', path: '/admin/dashboard', icon: BarChart3, permission: 'manage-tenants' },
