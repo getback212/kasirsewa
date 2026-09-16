@@ -27,7 +27,10 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         if ($user) {
-            session(['active_outlet_id' => $user->outlet_id]);
+            session([
+                'active_tenant_id' => $user->tenant_id,
+                'active_outlet_id' => $user->outlet_id,
+            ]);
         }
 
         AuditLogService::log(
@@ -36,6 +39,10 @@ class AuthenticatedSessionController extends Controller
             modelId: $user->id,
             newValues: ['email' => $user->email, 'name' => $user->name]
         );
+
+        if ($user && $user->hasRole('SUPER_ADMIN')) {
+            return redirect()->intended('/admin/dashboard');
+        }
 
         if ($user && $user->hasRole('CASHIER')) {
             return redirect()->intended('/pos');

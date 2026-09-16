@@ -25,7 +25,7 @@ class SubscriptionAccessMiddleware
                 $sub = $tenant->subscription;
 
                 // Allow viewing subscription, invoices, payments, and logout even if suspended/expired
-                $allowedRoutes = ['subscription.index', 'subscription.pay', 'subscription.renew', 'invoices.show', 'logout'];
+                $allowedRoutes = ['subscription.index', 'subscription.pay', 'subscription.renew', 'invoices.index', 'invoices.show', 'logout'];
                 $currentRoute = $request->route()?->getName();
 
                 if (in_array($currentRoute, $allowedRoutes)) {
