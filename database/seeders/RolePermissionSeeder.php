@@ -185,7 +185,7 @@ class RolePermissionSeeder extends Seeder
                 'tenant_id' => $tenant1->id,
                 'outlet_id' => $outlet1->id,
                 'name' => 'Owner Pemilik Toko',
-                'password' => Hash::make('PosRetail2026!'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
             ]
         );
@@ -199,7 +199,7 @@ class RolePermissionSeeder extends Seeder
                 'tenant_id' => $tenant1->id,
                 'outlet_id' => $outlet1->id,
                 'name' => 'Kasir Santi',
-                'password' => Hash::make('PosRetail2026!'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
             ]
         );
@@ -212,7 +212,7 @@ class RolePermissionSeeder extends Seeder
                 'tenant_id' => $tenant1->id,
                 'outlet_id' => $outlet1->id,
                 'name' => 'Staf Gudang Budi',
-                'password' => Hash::make('PosRetail2026!'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
             ]
         );
@@ -351,7 +351,7 @@ class RolePermissionSeeder extends Seeder
                 'tenant_id' => $tenant2->id,
                 'outlet_id' => $outlet2->id,
                 'name' => 'Pak Hendra (Sinar Jaya)',
-                'password' => Hash::make('PosRetail2026!'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
             ]
         );
