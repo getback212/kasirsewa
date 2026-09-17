@@ -28,7 +28,8 @@ import {
     Maximize,
     Minimize,
     Sun,
-    Moon
+    Moon,
+    ChevronRight
 } from 'lucide-react';
 
 interface NavItem {
@@ -46,29 +47,30 @@ interface NavGroup {
     items: NavItem[];
 }
 
-export default function AppLayout({ title, children }: { title?: string; children: React.ReactNode }) {
-    const pageProps = usePage<any>().props;
-    const auth = pageProps.auth || {};
-    const user = auth.user;
-    
-    // Fallback props resolution
-    const currentOutlet = pageProps.currentOutlet || auth.currentOutlet;
-    const availableOutlets = pageProps.availableOutlets || auth.availableOutlets || [];
+interface AppLayoutProps {
+    children: React.ReactNode;
+    title?: string;
+}
 
-    // Extract roles & permissions safely
-    const roles: string[] = Array.isArray(auth.roles) 
-        ? auth.roles 
-        : (user?.role ? [user.role] : []);
-        
-    const permissions: string[] = Array.isArray(auth.permissions) 
-        ? auth.permissions 
+export default function AppLayout({ children, title }: AppLayoutProps) {
+    const { auth, currentOutlet, availableOutlets } = usePage<any>().props;
+
+    const user = auth?.user;
+    const roles: string[] = Array.isArray(auth?.roles)
+        ? auth.roles
+        : (Array.isArray(user?.roles) ? user.roles : (user?.role ? [user.role] : []));
+
+    const permissions: string[] = Array.isArray(auth?.permissions)
+        ? auth.permissions
         : (Array.isArray(user?.permissions) ? user.permissions : []);
 
     const userRole = roles.length > 0 ? roles[0] : (user?.role || 'Staff');
-    
+
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [outletDropdownOpen, setOutletDropdownOpen] = useState(false);
-    const [activeTopCategory, setActiveTopCategory] = useState<string | null>(null);
+    const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         if (typeof window !== 'undefined') {
@@ -76,9 +78,7 @@ export default function AppLayout({ title, children }: { title?: string; childre
         }
         return 'dark';
     });
-    const topNavRef = useRef<HTMLDivElement>(null);
 
-    // Dark / Light Theme Class Sync
     useEffect(() => {
         const root = document.documentElement;
         if (theme === 'light') {
@@ -89,68 +89,34 @@ export default function AppLayout({ title, children }: { title?: string; childre
             root.classList.add('dark');
         }
         localStorage.setItem('theme', theme);
-
-        try {
-            const channel = new BroadcastChannel('pos_customer_display');
-            channel.postMessage({ type: 'THEME_CHANGE', theme });
-            channel.close();
-        } catch (e) {
-            // BroadcastChannel fallback
-        }
     }, [theme]);
 
     const toggleTheme = () => {
-        setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
     };
-
-    // Fullscreen Event Listener
-    useEffect(() => {
-        const handleFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
-        };
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    }, []);
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch((err) => {
-                console.error(`Error enabling fullscreen: ${err.message}`);
-            });
+            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
         } else {
             if (document.exitFullscreen) {
-                document.exitFullscreen();
+                document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
             }
         }
     };
-
-    // Close top dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (topNavRef.current && !topNavRef.current.contains(event.target as Node)) {
-                setActiveTopCategory(null);
-                setOutletDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const hasPermission = (permission: string | null) => {
         if (!permission) return true;
 
-        // Super Admin SaaS Management features are restricted strictly to SUPER_ADMIN
         if (permission === 'manage-tenants' || permission === 'manage-plans') {
             return roles.includes('SUPER_ADMIN');
         }
 
-        // CASHIER role menu permissions restriction
         if (roles.includes('CASHIER')) {
             if (permission === 'view-dashboard') return false;
             return ['open-shift', 'access-pos'].includes(permission);
         }
 
-        // WAREHOUSE role menu permissions restriction
         if (roles.includes('WAREHOUSE')) {
             if (permission === 'view-dashboard') return false;
             return ['view-products', 'view-stock', 'view-purchases', 'view-suppliers'].includes(permission);
@@ -159,7 +125,6 @@ export default function AppLayout({ title, children }: { title?: string; childre
         if (roles.includes('SUPER_ADMIN')) return true;
 
         if (roles.includes('OWNER')) {
-            // Owner has full access to all tenant operational features except super admin tenant management
             return permission !== 'manage-tenants' && permission !== 'manage-plans';
         }
 
@@ -235,395 +200,368 @@ export default function AppLayout({ title, children }: { title?: string; childre
         }
     ];
 
-    const toggleTopCategory = (catId: string) => {
-        setActiveTopCategory(activeTopCategory === catId ? null : catId);
+    const toggleGroup = (groupId: string) => {
+        setCollapsedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans selection:bg-blue-500 selection:text-white">
             
             {/* ========================================================================= */}
-            {/* 🖥️ TOP NAVIGATION HEADER BAR (BERADA DI ATAS DENGAN KATEOGORI DROPDOWN) */}
+            {/* ⬅️ LEFT SIDEBAR NAVIGATION (SIDEBAR SEBELAH KIRI UNTUK DESKTOP) */}
             {/* ========================================================================= */}
-            <header ref={topNavRef} className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                    <div className="flex items-center justify-between h-16">
-                        
-                        {/* LEFT BRAND LOGO */}
-                        <div className="flex items-center gap-4">
-                            <Link href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'} className="flex items-center gap-2.5 group">
-                                <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition transform">
-                                    <Building2 className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="hidden sm:block">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-black text-base tracking-tight text-white leading-none">KasirSewa</span>
-                                        <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md text-[9px] font-mono font-bold">SaaS</span>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 font-mono tracking-widest uppercase font-semibold block mt-0.5">Multi-Tenant Platform</span>
-                                </div>
-                            </Link>
-
-                            {/* DESKTOP TOP KATEGORI DROPDOWNS (DI ATAS) */}
-                            <nav className="hidden lg:flex items-center gap-1.5">
-                                
-                                {/* DIRECT DASHBOARD BUTTON */}
-                                {hasPermission('view-dashboard') && (
-                                    <Link
-                                        href="/dashboard"
-                                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                                            isCurrentRoute('/dashboard')
-                                                ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                                                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                                        }`}
-                                    >
-                                        <LayoutDashboard className="w-4 h-4 text-emerald-400" />
-                                        <span>Dashboard</span>
-                                    </Link>
-                                )}
-
-                                {/* DIRECT POS KASIR BUTTON */}
-                                {hasPermission('access-pos') && (
-                                    <Link
-                                        href="/pos"
-                                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                                            isCurrentRoute('/pos')
-                                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                                                : 'bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20 border border-emerald-500/30'
-                                        }`}
-                                    >
-                                        <ShoppingCart className="w-4 h-4" />
-                                        <span>POS Kasir</span>
-                                    </Link>
-                                )}
-
-                                {/* CATEGORY DROPDOWN BUTTONS ON TOPBAR */}
-                                {navigationGroups.map((group) => {
-                                    const filteredItems = group.items.filter(item => hasPermission(item.permission));
-                                    if (filteredItems.length === 0) return null;
-
-                                    const isCategoryActive = group.items.some(item => isCurrentRoute(item.path));
-                                    const isOpen = activeTopCategory === group.id;
-                                    const GroupIcon = group.icon;
-
-                                    return (
-                                        <div key={group.id} className="relative">
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleTopCategory(group.id)}
-                                                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer active:scale-95 ${
-                                                    isCategoryActive
-                                                        ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                                                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                                                }`}
-                                            >
-                                                <GroupIcon className={`w-4 h-4 ${isCategoryActive ? 'text-emerald-400' : 'text-slate-400'}`} />
-                                                <span>{group.group}</span>
-                                                <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition transform ${isOpen ? 'rotate-180 text-emerald-400' : ''}`} />
-                                            </button>
-
-                                            {/* DROPDOWN MENU BOARD (TAMPIL TEPAT DI BAWAH KATEGORI) */}
-                                            {isOpen && (
-                                                <div className="absolute left-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                                                    <div className="px-3.5 py-1.5 text-[10px] text-slate-500 uppercase tracking-wider font-bold border-b border-slate-800/80">
-                                                        Menu {group.group}
-                                                    </div>
-                                                    <div className="py-1">
-                                                        {filteredItems.map((item) => {
-                                                            const Icon = item.icon;
-                                                            const active = isCurrentRoute(item.path);
-
-                                                            return (
-                                                                <Link
-                                                                    key={item.path}
-                                                                    href={item.path}
-                                                                    onClick={() => setActiveTopCategory(null)}
-                                                                    className={`flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold transition ${
-                                                                        item.highlight
-                                                                            ? 'bg-emerald-600/10 text-emerald-400 font-bold hover:bg-emerald-600/20'
-                                                                            : active
-                                                                                ? 'bg-slate-800 text-emerald-400 font-bold'
-                                                                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                                    }`}
-                                                                >
-                                                                    <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-400' : ''}`} />
-                                                                    <span>{item.name}</span>
-                                                                </Link>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-
-                            </nav>
+            <aside className="hidden lg:flex flex-col w-64 bg-slate-900 border-r border-slate-800 sticky top-0 h-screen z-40 shrink-0">
+                
+                {/* BRAND HEADER ATAS SIDEBAR */}
+                <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                    <Link href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'} className="flex items-center gap-3 group">
+                        <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition transform">
+                            <Building2 className="w-5 h-5 text-white" />
                         </div>
-
-                        {/* RIGHT: OUTLET SWITCHER & USER PROFILE */}
-                        <div className="flex items-center gap-3">
-                            
-                            {/* OUTLET BADGE / DROPDOWN */}
-                            {currentOutlet && (
-                                <div className="relative">
-                                    {canSwitchOutlet ? (
-                                        <button 
-                                            type="button"
-                                            onClick={() => setOutletDropdownOpen(!outletDropdownOpen)}
-                                            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl text-xs transition cursor-pointer active:scale-95 shadow-inner"
-                                        >
-                                            <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
-                                            <span className="font-bold store-name-text max-w-[100px] xs:max-w-[130px] sm:max-w-[200px] md:max-w-[280px] truncate">{currentOutlet.name}</span>
-                                            <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
-                                        </button>
-                                    ) : (
-                                        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs">
-                                            <Store className="w-4 h-4 text-emerald-400 shrink-0" />
-                                            <span className="font-black store-name-text max-w-[140px] sm:max-w-[220px] md:max-w-[280px] truncate">{currentOutlet.name}</span>
-                                        </div>
-                                    )}
-
-                                    {outletDropdownOpen && canSwitchOutlet && (
-                                        <div className="absolute right-0 mt-2 w-60 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                                            <div className="px-3 py-1.5 text-[10px] text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-800 flex items-center gap-1">
-                                                <Building2 className="w-3 h-3 text-emerald-400" />
-                                                <span>Pilih Outlet Cabang Toko</span>
-                                            </div>
-                                            <div className="py-1 max-h-60 overflow-y-auto">
-                                                {availableOutlets.map((outlet: any) => (
-                                                    <button
-                                                        key={outlet.id}
-                                                        onClick={() => handleSwitchOutlet(outlet.id)}
-                                                        className={`w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-slate-800 transition cursor-pointer ${
-                                                            outlet.id === currentOutlet.id ? 'text-emerald-400 font-bold bg-slate-800/60' : 'text-slate-300'
-                                                        }`}
-                                                    >
-                                                        <div>
-                                                            <div className="font-bold">{outlet.name}</div>
-                                                            <div className="text-[10px] text-slate-500 font-mono">{outlet.code}</div>
-                                                        </div>
-                                                        {outlet.id === currentOutlet.id && <Check className="w-4 h-4 text-emerald-400" />}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* THEME TOGGLE BUTTON (DARK / LIGHT MODE) */}
-                            <button
-                                type="button"
-                                onClick={toggleTheme}
-                                className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center border border-slate-800/80"
-                                title={theme === 'dark' ? 'Ganti ke Mode Terang (Light Mode)' : 'Ganti ke Mode Gelap (Dark Mode)'}
-                            >
-                                {theme === 'dark' ? (
-                                    <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
-                                ) : (
-                                    <Moon className="w-4 h-4 text-indigo-400" />
-                                )}
-                            </button>
-
-                            {/* FULLSCREEN TOGGLE BUTTON (DESKTOP & TABLET ONLY) */}
-                            <button
-                                type="button"
-                                onClick={toggleFullscreen}
-                                className="hidden sm:flex p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-xl transition cursor-pointer active:scale-95 items-center justify-center border border-slate-800/80"
-                                title={isFullscreen ? "Keluar Fullscreen" : "Layar Penuh (Full Screen)"}
-                            >
-                                {isFullscreen ? (
-                                    <Minimize className="w-4 h-4 text-emerald-400" />
-                                ) : (
-                                    <Maximize className="w-4 h-4 text-slate-300 hover:text-emerald-400" />
-                                )}
-                            </button>
-
-                            {/* USER PROFILE & LOGOUT */}
-                            <div className="flex items-center gap-2">
-                                <div className="hidden sm:flex flex-col text-right">
-                                    <span className="text-xs font-black store-name-text leading-tight">{user?.name}</span>
-                                    <span className="text-[10px] font-bold text-emerald-400 font-mono uppercase tracking-wider">{userRole}</span>
-                                </div>
-
-                                <button
-                                    onClick={handleLogout}
-                                    className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition cursor-pointer active:scale-95"
-                                    title="Logout Keluar Sistem"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                </button>
+                        <div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-black text-base tracking-tight text-white leading-none">KasirSewa</span>
+                                <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md text-[9px] font-mono font-bold">SaaS</span>
                             </div>
-
-                            {/* MOBILE MENU TOGGLE */}
-                            <button
-                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 active:scale-95 transition cursor-pointer"
-                            >
-                                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                            </button>
-
+                            <span className="text-[10px] text-slate-400 font-mono tracking-widest uppercase font-semibold block mt-0.5">Multi-Tenant Engine</span>
                         </div>
-
-                    </div>
+                    </Link>
                 </div>
-            </header>
 
-            {/* MOBILE DRAWER MENU (BAGUS & UTUH) */}
-            {mobileMenuOpen && (
-                <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
+                {/* SCROLLABLE SIDEBAR MENU ITEMS */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
                     
-                    {/* MOBILE OUTLET SWITCHER */}
-                    {currentOutlet && canSwitchOutlet && (
-                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                                <Store className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Pilih Outlet Cabang Aktif</span>
+                    {/* DIRECT DASHBOARD & POS KASIR BUTTONS */}
+                    <div className="space-y-1.5">
+                        {hasPermission('view-dashboard') && (
+                            <Link
+                                href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-bold transition ${
+                                    (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard'))
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                }`}
+                            >
+                                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                                <span>Dashboard</span>
+                            </Link>
+                        )}
+
+                        {hasPermission('access-pos') && (
+                            <Link
+                                href="/pos"
+                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-bold transition ${
+                                    isCurrentRoute('/pos')
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                                        : 'bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20 border border-emerald-500/30'
+                                }`}
+                            >
+                                <ShoppingCart className="w-4 h-4 shrink-0" />
+                                <span>POS Kasir Touch</span>
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* NAVIGATION GROUPS IN SIDEBAR */}
+                    {navigationGroups.map((group) => {
+                        const filteredItems = group.items.filter(item => hasPermission(item.permission));
+                        if (filteredItems.length === 0) return null;
+
+                        const isGroupCollapsed = collapsedGroups[group.id];
+                        const GroupIcon = group.icon;
+
+                        return (
+                            <div key={group.id} className="space-y-1">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleGroup(group.id)}
+                                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider hover:text-slate-300 transition cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <GroupIcon className="w-3.5 h-3.5 text-blue-400" />
+                                        <span>{group.group}</span>
+                                    </div>
+                                    <ChevronRight className={`w-3.5 h-3.5 transition transform ${!isGroupCollapsed ? 'rotate-90' : ''}`} />
+                                </button>
+
+                                {!isGroupCollapsed && (
+                                    <div className="space-y-1 pl-1">
+                                        {filteredItems.map((item) => {
+                                            const Icon = item.icon;
+                                            const active = isCurrentRoute(item.path);
+
+                                            return (
+                                                <Link
+                                                    key={item.path}
+                                                    href={item.path}
+                                                    className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
+                                                        active
+                                                            ? 'bg-slate-800 text-blue-400 font-bold border border-slate-700'
+                                                            : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
+                                                    }`}
+                                                >
+                                                    <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-blue-400' : ''}`} />
+                                                    <span>{item.name}</span>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
-                            <div className="grid grid-cols-1 gap-1.5">
-                                {availableOutlets.map((outlet: any) => (
-                                    <button
-                                        key={outlet.id}
-                                        onClick={() => handleSwitchOutlet(outlet.id)}
-                                        className={`w-full text-left p-2.5 rounded-xl border text-xs flex items-center justify-between font-bold transition active:scale-98 ${
-                                            outlet.id === currentOutlet.id
-                                                ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400'
-                                                : 'bg-slate-900 border-slate-800 text-slate-300'
-                                        }`}
-                                    >
-                                        <span>{outlet.name}</span>
-                                        {outlet.id === currentOutlet.id && <Check className="w-4 h-4 text-emerald-400" />}
-                                    </button>
-                                ))}
+                        );
+                    })}
+
+                </div>
+
+                {/* BOTTOM SIDEBAR USER FOOTER */}
+                <div className="p-4 border-t border-slate-800 space-y-3 bg-slate-950/60">
+                    {currentOutlet && (
+                        <div className="flex items-center justify-between text-xs bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                            <div className="flex items-center gap-2 truncate">
+                                <Store className="w-4 h-4 text-emerald-400 shrink-0" />
+                                <span className="font-bold text-slate-200 truncate">{currentOutlet.name}</span>
                             </div>
                         </div>
                     )}
 
-                    {/* GROUPED MOBILE MENU LIST */}
-                    {navigationGroups.map((group, idx) => {
-                        const filteredItems = group.items.filter(item => hasPermission(item.permission));
-                        if (filteredItems.length === 0) return null;
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold text-white truncate max-w-[120px]">{user?.name}</span>
+                            <span className="text-[10px] font-bold text-emerald-400 font-mono uppercase">{userRole}</span>
+                        </div>
 
-                        return (
-                            <div key={idx} className="space-y-1">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1 mb-1">
-                                    {group.group}
-                                </div>
-                                {filteredItems.map((item) => {
-                                    const Icon = item.icon;
-                                    const active = isCurrentRoute(item.path);
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={toggleTheme}
+                                className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition"
+                                title="Mode Terang/Gelap"
+                            >
+                                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+                            </button>
 
-                                    return (
-                                        <Link
-                                            key={item.path}
-                                            href={item.path}
-                                            onClick={() => setMobileMenuOpen(false)}
-                                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition ${
-                                                item.highlight
-                                                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                                                    : active
-                                                        ? 'bg-slate-800 text-emerald-400 border border-slate-700'
-                                                        : 'text-slate-300 hover:bg-slate-800'
-                                            }`}
-                                        >
-                                            <Icon className="w-4 h-4 shrink-0" />
-                                            <span>{item.name}</span>
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
+                            <button
+                                onClick={handleLogout}
+                                className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition cursor-pointer"
+                                title="Logout Keluar"
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            )}
 
-            {/* MAIN CONTENT BODY AREA */}
-            <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
-                {title && <div className="sr-only">{title}</div>}
-                {children}
-            </main>
+            </aside>
 
-            {/* MOBILE BOTTOM NAVIGATION DOCK (5 KEY BUTTONS - UTUH) */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5 flex justify-between items-center shadow-2xl">
+            {/* ========================================================================= */}
+            {/* 🖥️ RIGHT MAIN BODY WRAPPER */}
+            {/* ========================================================================= */}
+            <div className="flex-1 flex flex-col min-w-0">
                 
-                {/* HOME / DASHBOARD */}
-                <Link
-                    href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
-                    className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                        (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard')) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                >
-                    <LayoutDashboard className="w-5 h-5" />
-                    <span className="text-[10px]">Home</span>
-                </Link>
-
-                {/* PRODUK */}
-                {hasPermission('view-products') && (
-                    <Link
-                        href="/products"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/products') ? 'text-emerald-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Boxes className="w-5 h-5" />
-                        <span className="text-[10px]">Produk</span>
-                    </Link>
-                )}
-
-                {/* CENTER FLOATING POS BUTTON */}
-                {hasPermission('access-pos') && (
-                    <div className="flex-1 flex justify-center -mt-6">
-                        <Link
-                            href="/pos"
-                            className={`w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 text-white shadow-2xl transition transform active:scale-90 border-4 border-slate-950 ${
-                                isCurrentRoute('/pos')
-                                    ? 'bg-emerald-500 shadow-emerald-500/50 ring-4 ring-emerald-500/20'
-                                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/40'
-                            }`}
-                            title="Buka POS Kasir Touch"
+                {/* TOP HEADER BAR */}
+                <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-30 px-4 sm:px-6 h-16 flex items-center justify-between">
+                    
+                    {/* LEFT PAGE TITLE / MOBILE LOGO */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 active:scale-95 transition cursor-pointer"
                         >
-                            <ShoppingCart className="w-6 h-6" />
-                            <span className="text-[9px] font-extrabold tracking-tighter leading-none">KASIR</span>
-                        </Link>
+                            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        </button>
+
+                        <div className="flex items-center gap-2 lg:hidden">
+                            <div className="p-1.5 bg-blue-600 rounded-xl">
+                                <Building2 className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="font-black text-sm text-white">KasirSewa</span>
+                        </div>
+
+                        {title && <h2 className="hidden lg:block text-base font-extrabold text-white tracking-tight">{title}</h2>}
+                    </div>
+
+                    {/* RIGHT ACTIONS */}
+                    <div className="flex items-center gap-3">
+                        
+                        {/* OUTLET BADGE / DROPDOWN */}
+                        {currentOutlet && (
+                            <div className="relative">
+                                {canSwitchOutlet ? (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setOutletDropdownOpen(!outletDropdownOpen)}
+                                        className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl text-xs transition cursor-pointer active:scale-95 shadow-inner"
+                                    >
+                                        <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                                        <span className="font-bold store-name-text max-w-[100px] xs:max-w-[130px] sm:max-w-[200px] md:max-w-[280px] truncate">{currentOutlet.name}</span>
+                                        <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs">
+                                        <Store className="w-4 h-4 text-emerald-400 shrink-0" />
+                                        <span className="font-bold store-name-text max-w-[100px] xs:max-w-[130px] sm:max-w-[200px] md:max-w-[280px] truncate">{currentOutlet.name}</span>
+                                    </div>
+                                )}
+
+                                {outletDropdownOpen && canSwitchOutlet && (
+                                    <div className="absolute right-0 mt-2 w-60 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="px-3 py-1.5 text-[10px] text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-800 flex items-center gap-1">
+                                            <Building2 className="w-3 h-3 text-emerald-400" />
+                                            <span>Pilih Outlet Cabang Toko</span>
+                                        </div>
+                                        <div className="py-1 max-h-60 overflow-y-auto">
+                                            {availableOutlets.map((outlet: any) => (
+                                                <button
+                                                    key={outlet.id}
+                                                    onClick={() => handleSwitchOutlet(outlet.id)}
+                                                    className={`w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-slate-800 transition cursor-pointer ${
+                                                        outlet.id === currentOutlet.id ? 'text-emerald-400 font-bold bg-slate-800/60' : 'text-slate-300'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <div className="font-bold">{outlet.name}</div>
+                                                        <div className="text-[10px] text-slate-500 font-mono">{outlet.code}</div>
+                                                    </div>
+                                                    {outlet.id === currentOutlet.id && <Check className="w-4 h-4 text-emerald-400" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* FULLSCREEN TOGGLE */}
+                        <button
+                            type="button"
+                            onClick={toggleFullscreen}
+                            className="hidden sm:flex p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-xl transition cursor-pointer active:scale-95 items-center justify-center border border-slate-800/80"
+                            title={isFullscreen ? "Keluar Fullscreen" : "Layar Penuh"}
+                        >
+                            {isFullscreen ? <Minimize className="w-4 h-4 text-emerald-400" /> : <Maximize className="w-4 h-4 text-slate-300" />}
+                        </button>
+
+                    </div>
+                </header>
+
+                {/* MOBILE DRAWER MENU */}
+                {mobileMenuOpen && (
+                    <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
+                        {navigationGroups.map((group, idx) => {
+                            const filteredItems = group.items.filter(item => hasPermission(item.permission));
+                            if (filteredItems.length === 0) return null;
+
+                            return (
+                                <div key={idx} className="space-y-1">
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1 mb-1">
+                                        {group.group}
+                                    </div>
+                                    {filteredItems.map((item) => {
+                                        const Icon = item.icon;
+                                        const active = isCurrentRoute(item.path);
+
+                                        return (
+                                            <Link
+                                                key={item.path}
+                                                href={item.path}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition ${
+                                                    active
+                                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                                        : 'text-slate-300 hover:bg-slate-800'
+                                                }`}
+                                            >
+                                                <Icon className="w-4 h-4 shrink-0" />
+                                                <span>{item.name}</span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
 
-                {/* RESTOK */}
-                {hasPermission('view-purchases') ? (
-                    <Link
-                        href="/purchases"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/purchases') ? 'text-emerald-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Truck className="w-5 h-5" />
-                        <span className="text-[10px]">Restok</span>
-                    </Link>
-                ) : hasPermission('open-shift') ? (
-                    <Link
-                        href="/shifts"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/shifts') ? 'text-emerald-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Clock className="w-5 h-5" />
-                        <span className="text-[10px]">Shift</span>
-                    </Link>
-                ) : null}
+                {/* MAIN CONTENT AREA */}
+                <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+                    {children}
+                </main>
 
-                {/* LAPORAN */}
-                {(hasPermission('view-reports-sales') || hasPermission('view-reports-financial')) && (
+                {/* MOBILE BOTTOM DOCK */}
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5 flex justify-between items-center shadow-2xl">
                     <Link
-                        href="/reports"
+                        href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
                         className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/reports') ? 'text-emerald-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard')) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
                         }`}
                     >
-                        <BarChart3 className="w-5 h-5" />
-                        <span className="text-[10px]">Laporan</span>
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span className="text-[10px]">Home</span>
                     </Link>
-                )}
+
+                    {hasPermission('view-products') && (
+                        <Link
+                            href="/products"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/products') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Boxes className="w-5 h-5" />
+                            <span className="text-[10px]">Produk</span>
+                        </Link>
+                    )}
+
+                    {hasPermission('access-pos') && (
+                        <div className="flex-1 flex justify-center -mt-6">
+                            <Link
+                                href="/pos"
+                                className={`w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 text-white shadow-2xl transition transform active:scale-90 border-4 border-slate-950 ${
+                                    isCurrentRoute('/pos')
+                                        ? 'bg-emerald-500 shadow-emerald-500/50 ring-4 ring-emerald-500/20'
+                                        : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/40'
+                                }`}
+                                title="POS Kasir Touch"
+                            >
+                                <ShoppingCart className="w-6 h-6" />
+                                <span className="text-[9px] font-extrabold tracking-tighter leading-none">KASIR</span>
+                            </Link>
+                        </div>
+                    )}
+
+                    {hasPermission('view-purchases') ? (
+                        <Link
+                            href="/purchases"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/purchases') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Truck className="w-5 h-5" />
+                            <span className="text-[10px]">Restok</span>
+                        </Link>
+                    ) : hasPermission('open-shift') ? (
+                        <Link
+                            href="/shifts"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/shifts') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Clock className="w-5 h-5" />
+                            <span className="text-[10px]">Shift</span>
+                        </Link>
+                    ) : null}
+
+                    {(hasPermission('view-reports-sales') || hasPermission('view-reports-financial')) && (
+                        <Link
+                            href="/reports"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/reports') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <BarChart3 className="w-5 h-5" />
+                            <span className="text-[10px]">Laporan</span>
+                        </Link>
+                    )}
+                </div>
 
             </div>
 
