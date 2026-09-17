@@ -52,7 +52,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children, title }: AppLayoutProps) {
-    const { auth, currentOutlet, availableOutlets } = usePage<any>().props;
+    const { auth, currentOutlet, availableOutlets, tenantSubscription } = usePage<any>().props;
 
     const user = auth?.user;
     const roles: string[] = Array.isArray(auth?.roles)
@@ -123,6 +123,11 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             return roles.includes('SUPER_ADMIN');
         }
 
+        // Single-store tenants (max_stores <= 1) do not need multi-branch transfer feature
+        if (permission === 'transfer-stock' && tenantSubscription && tenantSubscription.max_stores <= 1 && !roles.includes('SUPER_ADMIN')) {
+            return false;
+        }
+
         if (roles.includes('CASHIER')) {
             if (permission === 'view-dashboard') return false;
             return ['open-shift', 'access-pos'].includes(permission);
@@ -182,7 +187,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 { name: 'Katalog Produk', path: '/products', icon: Boxes, permission: 'view-products' },
                 { name: 'Stok Gudang', path: '/inventory', icon: Warehouse, permission: 'view-stock' },
                 { name: 'Stock Opname Audit', path: '/stock-opname', icon: ClipboardCheck, permission: 'view-stock' },
-                { name: 'Transfer Stok Cabang', path: '/stock-transfers', icon: Repeat, permission: 'view-stock' },
+                { name: 'Transfer Stok Cabang', path: '/stock-transfers', icon: Repeat, permission: 'transfer-stock' },
                 { name: 'Restok Supplier', path: '/purchases', icon: Truck, permission: 'view-purchases' },
             ]
         },

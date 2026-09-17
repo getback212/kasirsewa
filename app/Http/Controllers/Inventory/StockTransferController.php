@@ -18,9 +18,21 @@ use Illuminate\Support\Facades\DB;
 
 class StockTransferController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $user = $request->user();
+
+        // Single-store tenants (max_stores <= 1) do not have multi-branch transfer features
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        if ($tenantId && !$user->hasRole('SUPER_ADMIN')) {
+            $tenant = \App\Models\Tenant::with('subscription.plan')->find($tenantId);
+            if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
+                if ($tenant->subscription->plan->max_stores <= 1) {
+                    return redirect()->route('subscription.index')->with('error', "Fitur Transfer Stok Cabang hanya tersedia untuk Paket Multi-Cabang (Business Pro & Enterprise Unlimited). Silakan upgrade paket berlangganan toko Anda.");
+                }
+            }
+        }
+
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
 
         $transfers = StockTransfer::with(['fromOutlet', 'toOutlet', 'user', 'items.product'])
