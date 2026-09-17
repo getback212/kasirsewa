@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { CreditCard, CheckCircle2, Building2, QrCode, FileText } from 'lucide-react';
+import { CreditCard, CheckCircle2, Building2, Plus, Trash2, Save, FileText } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
+interface BankAccount {
+    id: number;
+    bank_name: string;
+    account_number: string;
+    account_name: string;
+    is_active?: boolean;
+}
+
 interface SettingsData {
-    bank_bca_number: string;
-    bank_bca_name: string;
-    bank_mandiri_number: string;
-    bank_mandiri_name: string;
-    qris_payload: string;
-    payment_instructions: string;
+    bank_accounts?: BankAccount[];
+    bank_bca_number?: string;
+    bank_bca_name?: string;
+    bank_mandiri_number?: string;
+    bank_mandiri_name?: string;
+    qris_payload?: string;
+    payment_instructions?: string;
 }
 
 interface PaymentSettingsPageProps extends PageProps {
@@ -20,14 +29,44 @@ interface PaymentSettingsPageProps extends PageProps {
 export default function PaymentSettingsIndex({ settings }: PaymentSettingsPageProps) {
     const { flash } = usePage<PaymentSettingsPageProps>().props;
 
+    const initialBankAccounts: BankAccount[] = settings?.bank_accounts && settings.bank_accounts.length > 0
+        ? settings.bank_accounts
+        : [
+            { id: 1, bank_name: 'Bank BCA', account_number: settings?.bank_bca_number || '123-456-7890', account_name: settings?.bank_bca_name || 'PT KasirSewa Indonesia', is_active: true },
+            { id: 2, bank_name: 'Bank Mandiri', account_number: settings?.bank_mandiri_number || '987-000-111-22', account_name: settings?.bank_mandiri_name || 'PT KasirSewa Indonesia', is_active: true },
+        ];
+
     const form = useForm({
-        bank_bca_number: settings?.bank_bca_number || '',
-        bank_bca_name: settings?.bank_bca_name || '',
-        bank_mandiri_number: settings?.bank_mandiri_number || '',
-        bank_mandiri_name: settings?.bank_mandiri_name || '',
+        bank_accounts: initialBankAccounts,
         qris_payload: settings?.qris_payload || '',
         payment_instructions: settings?.payment_instructions || '',
     });
+
+    const addBankAccount = () => {
+        const newBank: BankAccount = {
+            id: Date.now(),
+            bank_name: 'Bank BRI',
+            account_number: '',
+            account_name: 'PT KasirSewa Indonesia',
+            is_active: true,
+        };
+        form.setData('bank_accounts', [...form.data.bank_accounts, newBank]);
+    };
+
+    const removeBankAccount = (index: number) => {
+        if (form.data.bank_accounts.length <= 1) {
+            alert('Minimal harus ada 1 rekening bank aktif!');
+            return;
+        }
+        const updated = form.data.bank_accounts.filter((_, i) => i !== index);
+        form.setData('bank_accounts', updated);
+    };
+
+    const updateBankField = (index: number, field: keyof BankAccount, value: any) => {
+        const updated = [...form.data.bank_accounts];
+        updated[index] = { ...updated[index], [field]: value };
+        form.setData('bank_accounts', updated);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,9 +88,17 @@ export default function PaymentSettingsIndex({ settings }: PaymentSettingsPagePr
                             <CreditCard className="w-5 h-5 text-blue-400" /> Pengaturan Rekening Pembayaran SaaS
                         </h1>
                         <p className="text-xs text-slate-400 mt-1">
-                            Atur nomor rekening tujuan transfer bank (BCA / Mandiri / QRIS) yang tampil pada invoice tagihan sewa tenant.
+                            Kelola bebas daftar rekening bank (BCA, BRI, Mandiri, BNI, BSI, Jago, Dana, dll) dan QRIS yang tampil pada tagihan sewa tenant.
                         </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={addBankAccount}
+                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" /> + Tambah Rekening Bank Baru
+                    </button>
                 </div>
 
                 {/* FLASH NOTIFICATION */}
@@ -65,119 +112,105 @@ export default function PaymentSettingsIndex({ settings }: PaymentSettingsPagePr
                 {/* SETTINGS FORM */}
                 <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl space-y-6 text-xs font-sans">
                     
-                    {/* BANK BCA SETTINGS */}
-                    <div className="space-y-3 bg-slate-950 p-5 rounded-2xl border border-slate-800">
-                        <div className="font-extrabold text-sm text-blue-400 flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> 1. Rekening Bank BCA Resmi
+                    {/* DYNAMIC BANK ACCOUNTS LIST */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-emerald-400" /> Daftar Rekening Bank Tujuan Transfer ({form.data.bank_accounts.length} Bank)
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={addBankAccount}
+                                className="text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+                            >
+                                <Plus className="w-3.5 h-3.5" /> Tambah Bank
+                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-slate-400 font-semibold mb-1">Nomor Rekening BCA</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={form.data.bank_bca_number}
-                                    onChange={(e) => form.setData('bank_bca_number', e.target.value)}
-                                    placeholder="123-456-7890"
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono font-bold"
-                                />
-                            </div>
+                        {form.data.bank_accounts.map((bank, index) => (
+                            <div key={bank.id || index} className="space-y-3 bg-slate-950 p-5 rounded-2xl border border-slate-800 relative transition hover:border-slate-700">
+                                <div className="flex justify-between items-center gap-2">
+                                    <span className="text-[11px] font-bold text-slate-400 uppercase font-mono">
+                                        Rekening #{index + 1}
+                                    </span>
+                                    {form.data.bank_accounts.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeBankAccount(index)}
+                                            className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 transition"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" /> Hapus Bank
+                                        </button>
+                                    )}
+                                </div>
 
-                            <div>
-                                <label className="block text-slate-400 font-semibold mb-1">Nama Pemilik Rekening BCA (a.n.)</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={form.data.bank_bca_name}
-                                    onChange={(e) => form.setData('bank_bca_name', e.target.value)}
-                                    placeholder="PT KasirSewa Indonesia"
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-bold"
-                                />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Nama Bank / Provider</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={bank.bank_name}
+                                            onChange={(e) => updateBankField(index, 'bank_name', e.target.value)}
+                                            placeholder="Bank BCA / BRI / Mandiri / BSI"
+                                            className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Nomor Rekening</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={bank.account_number}
+                                            onChange={(e) => updateBankField(index, 'account_number', e.target.value)}
+                                            placeholder="123-456-7890"
+                                            className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono font-bold"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Atas Nama (a.n)</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={bank.account_name}
+                                            onChange={(e) => updateBankField(index, 'account_name', e.target.value)}
+                                            placeholder="PT KasirSewa Indonesia"
+                                            className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        ))}
                     </div>
 
-                    {/* BANK MANDIRI SETTINGS */}
-                    <div className="space-y-3 bg-slate-950 p-5 rounded-2xl border border-slate-800">
-                        <div className="font-extrabold text-sm text-emerald-400 flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> 2. Rekening Bank Mandiri Resmi
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-slate-400 font-semibold mb-1">Nomor Rekening Mandiri</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={form.data.bank_mandiri_number}
-                                    onChange={(e) => form.setData('bank_mandiri_number', e.target.value)}
-                                    placeholder="987-000-111-22"
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono font-bold"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-slate-400 font-semibold mb-1">Nama Pemilik Rekening Mandiri (a.n.)</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={form.data.bank_mandiri_name}
-                                    onChange={(e) => form.setData('bank_mandiri_name', e.target.value)}
-                                    placeholder="PT KasirSewa Indonesia"
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-bold"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* QRIS SETTINGS */}
-                    <div className="space-y-3 bg-slate-950 p-5 rounded-2xl border border-slate-800">
-                        <div className="font-extrabold text-sm text-purple-400 flex items-center gap-2">
-                            <QrCode className="w-4 h-4" /> 3. String Payload QRIS Resmi Platform
-                        </div>
-
-                        <div>
-                            <label className="block text-slate-400 font-semibold mb-1">Kode QRIS String Payload (String Resmi dari Bank/Payment Gateway)</label>
-                            <textarea
-                                rows={3}
-                                value={form.data.qris_payload}
-                                onChange={(e) => form.setData('qris_payload', e.target.value)}
-                                placeholder="Paste kode teks QRIS resmi SaaS..."
-                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono text-[11px]"
-                            />
-                        </div>
-                    </div>
-
-                    {/* PAYMENT INSTRUCTIONS */}
+                    {/* INSTRUCTIONS */}
                     <div className="space-y-3 bg-slate-950 p-5 rounded-2xl border border-slate-800">
                         <div className="font-extrabold text-sm text-amber-400 flex items-center gap-2">
-                            <FileText className="w-4 h-4" /> 4. Instruksi Catatan Pembayaran Bagi Tenant
+                            <FileText className="w-4 h-4" /> Catatan & Instruksi Pembayaran Tagihan
                         </div>
-
-                        <div>
-                            <textarea
-                                rows={2}
-                                value={form.data.payment_instructions}
-                                onChange={(e) => form.setData('payment_instructions', e.target.value)}
-                                placeholder="Tuliskan catatan instruksi pembayaran bagi penyewa toko..."
-                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white"
-                            />
-                        </div>
+                        <textarea
+                            rows={3}
+                            value={form.data.payment_instructions}
+                            onChange={(e) => form.setData('payment_instructions', e.target.value)}
+                            placeholder="Catatan tambahan untuk tenant saat transfer pembayaran..."
+                            className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-medium"
+                        />
                     </div>
 
+                    {/* SUBMIT BUTTON */}
                     <div className="pt-2 flex justify-end">
                         <button
                             type="submit"
                             disabled={form.processing}
-                            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-2xl shadow-xl shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-xl shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
                         >
-                            <span>{form.processing ? '⏳ Menyimpan...' : 'Simpan Pengaturan Rekening SaaS'}</span>
+                            <Save className="w-4 h-4" />
+                            <span>{form.processing ? 'Menyimpan...' : 'Simpan Semua Pengaturan Rekening'}</span>
                         </button>
                     </div>
-
                 </form>
-
             </div>
         </AppLayout>
     );

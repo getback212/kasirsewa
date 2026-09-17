@@ -91,9 +91,18 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
                         </div>
                         <div className="text-left md:text-right space-y-1">
                             <span className="text-slate-500 font-bold uppercase tracking-wider block">REKENING PEMBAYARAN SEWA SAAS</span>
-                            <p className="font-extrabold text-sm text-emerald-400">BCA / Mandiri / Scan QRIS</p>
-                            <p className="text-slate-300 font-mono">BCA: {paymentSettings?.bank_bca_number || '123-456-7890'} (a.n {paymentSettings?.bank_bca_name || 'PT KasirSewa Indonesia'})</p>
-                            <p className="text-slate-300 font-mono">Mandiri: {paymentSettings?.bank_mandiri_number || '987-000-111-22'} (a.n {paymentSettings?.bank_mandiri_name || 'PT KasirSewa Indonesia'})</p>
+                            {paymentSettings?.bank_accounts && paymentSettings.bank_accounts.length > 0 ? (
+                                paymentSettings.bank_accounts.map((b: any, idx: number) => (
+                                    <p key={idx} className="text-slate-200 font-mono text-[11px]">
+                                        <strong className="text-emerald-400">{b.bank_name}:</strong> {b.account_number} <span className="text-slate-400">(a.n {b.account_name})</span>
+                                    </p>
+                                ))
+                            ) : (
+                                <>
+                                    <p className="text-slate-300 font-mono">BCA: {paymentSettings?.bank_bca_number || '123-456-7890'} (a.n {paymentSettings?.bank_bca_name || 'PT KasirSewa Indonesia'})</p>
+                                    <p className="text-slate-300 font-mono">Mandiri: {paymentSettings?.bank_mandiri_number || '987-000-111-22'} (a.n {paymentSettings?.bank_mandiri_name || 'PT KasirSewa Indonesia'})</p>
+                                </>
+                            )}
                         </div>
                     </div>
 

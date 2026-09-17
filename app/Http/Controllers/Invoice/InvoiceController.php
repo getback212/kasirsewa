@@ -50,7 +50,28 @@ class InvoiceController extends Controller
 
         $invoice = $query->findOrFail($id);
 
+        $defaultBankAccounts = [
+            [
+                'id' => 1,
+                'bank_name' => 'Bank BCA',
+                'account_number' => \App\Models\SaaSSetting::get('bank_bca_number', '123-456-7890'),
+                'account_name' => \App\Models\SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
+                'is_active' => true,
+            ],
+            [
+                'id' => 2,
+                'bank_name' => 'Bank Mandiri',
+                'account_number' => \App\Models\SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
+                'account_name' => \App\Models\SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
+                'is_active' => true,
+            ]
+        ];
+
+        $bankAccountsRaw = \App\Models\SaaSSetting::get('bank_accounts', null);
+        $bankAccounts = $bankAccountsRaw ? json_decode($bankAccountsRaw, true) : $defaultBankAccounts;
+
         $paymentSettings = [
+            'bank_accounts' => $bankAccounts,
             'bank_bca_number' => \App\Models\SaaSSetting::get('bank_bca_number', '123-456-7890'),
             'bank_bca_name' => \App\Models\SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
             'bank_mandiri_number' => \App\Models\SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
