@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Head, usePage, Link, router } from '@inertiajs/react';
+import React from 'react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Receipt, CheckCircle2, AlertCircle, Eye, ShieldCheck, Clock, FileText } from 'lucide-react';
+import { Receipt, CheckCircle2, Eye } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface InvoiceItem {
@@ -15,19 +15,24 @@ interface InvoiceItem {
     paid_at: string | null;
     tenant?: { name: string };
     subscription?: { plan?: { name: string } };
+    plan?: { name: string };
 }
 
 interface InvoicesPageProps extends PageProps {
-    invoices: {
+    invoices?: {
         data: InvoiceItem[];
         links: any[];
         total: number;
     };
-    isSuperAdmin: boolean;
+    isSuperAdmin?: boolean;
 }
 
-export default function InvoicesIndex({ invoices, isSuperAdmin }: InvoicesPageProps) {
+export default function InvoicesIndex({
+    invoices = { data: [], links: [], total: 0 },
+    isSuperAdmin = false
+}: InvoicesPageProps) {
     const { flash } = usePage<InvoicesPageProps>().props;
+    const invoiceList = invoices?.data || [];
 
     return (
         <AppLayout title="Riwayat Tagihan Invoice SaaS">
@@ -70,14 +75,14 @@ export default function InvoicesIndex({ invoices, isSuperAdmin }: InvoicesPagePr
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-                                {invoices.data.length === 0 ? (
+                                {invoiceList.length === 0 ? (
                                     <tr>
                                         <td colSpan={isSuperAdmin ? 6 : 5} className="p-8 text-center text-slate-500 font-sans">
                                             Belum ada tagihan invoice.
                                         </td>
                                     </tr>
                                 ) : (
-                                    invoices.data.map((inv) => (
+                                    invoiceList.map((inv) => (
                                         <tr key={inv.id} className="hover:bg-slate-800/40">
                                             <td className="p-4 font-bold text-white">
                                                 #{inv.invoice_number}
@@ -88,7 +93,7 @@ export default function InvoicesIndex({ invoices, isSuperAdmin }: InvoicesPagePr
                                                 </td>
                                             )}
                                             <td className="p-4 font-sans text-slate-400">
-                                                {inv.subscription?.plan?.name || 'SaaS Plan'}
+                                                {inv.subscription?.plan?.name || inv.plan?.name || 'SaaS Plan'}
                                             </td>
                                             <td className="p-4 font-bold text-emerald-400">
                                                 Rp {Number(inv.total).toLocaleString('id-ID')}

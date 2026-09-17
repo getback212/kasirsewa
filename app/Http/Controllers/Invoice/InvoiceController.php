@@ -19,7 +19,7 @@ class InvoiceController extends Controller
         $user = $request->user();
         $isSuperAdmin = $user->hasRole('SUPER_ADMIN');
 
-        $query = Invoice::with(['tenant', 'subscription.plan', 'items', 'payments']);
+        $query = Invoice::with(['tenant', 'subscription.plan', 'plan', 'items', 'payments']);
 
         if (!$isSuperAdmin) {
             $tenantId = session('active_tenant_id', $user->tenant_id);
