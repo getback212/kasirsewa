@@ -1,7 +1,7 @@
-import React from 'react';
-import { Head, usePage, Link } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, usePage, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Receipt, CheckCircle2, Eye } from 'lucide-react';
+import { Receipt, CheckCircle2, Eye, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface InvoiceItem {
@@ -33,6 +33,14 @@ export default function InvoicesIndex({
 }: InvoicesPageProps) {
     const { flash } = usePage<InvoicesPageProps>().props;
     const invoiceList = invoices?.data || [];
+    const [deletingInvoice, setDeletingInvoice] = useState<InvoiceItem | null>(null);
+
+    const handleDeleteInvoice = () => {
+        if (!deletingInvoice) return;
+        router.delete(`/invoices/${deletingInvoice.id}`, {
+            onSuccess: () => setDeletingInvoice(null),
+        });
+    };
 
     return (
         <AppLayout title="Riwayat Tagihan Invoice SaaS">
@@ -105,13 +113,23 @@ export default function InvoicesIndex({
                                                     {inv.status}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-right font-sans">
+                                            <td className="p-4 text-right font-sans space-x-2">
                                                 <Link
                                                     href={`/invoices/${inv.id}`}
                                                     className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition"
                                                 >
                                                     <Eye className="w-3.5 h-3.5 text-blue-400" /> Lihat Detail
                                                 </Link>
+
+                                                {isSuperAdmin && (
+                                                    <button
+                                                        onClick={() => setDeletingInvoice(inv)}
+                                                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                                        title="Hapus Invoice Tagihan"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Hapus
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -120,6 +138,36 @@ export default function InvoicesIndex({
                         </table>
                     </div>
                 </div>
+
+                {/* MODAL KONFIRMASI HAPUS INVOICE */}
+                {deletingInvoice && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+                            <div className="flex items-center gap-3 text-rose-400">
+                                <div className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/20">
+                                    <Trash2 className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-lg text-white">Hapus Tagihan Invoice?</h3>
+                                    <p className="text-xs text-slate-400">Tindakan ini akan menghapus riwayat invoice #{deletingInvoice.invoice_number}.</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-1 text-xs">
+                                <p className="text-slate-300"><strong>No. Invoice:</strong> #{deletingInvoice.invoice_number}</p>
+                                <p className="text-slate-300"><strong>Tenant:</strong> {deletingInvoice.tenant?.name || 'Tenant N/A'}</p>
+                                <p className="text-slate-300"><strong>Total Tagihan:</strong> Rp {Number(deletingInvoice.total).toLocaleString('id-ID')}</p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setDeletingInvoice(null)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
+                                <button type="button" onClick={handleDeleteInvoice} className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
+                                    <Trash2 className="w-4 h-4" /> Ya, Hapus Invoice
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </AppLayout>

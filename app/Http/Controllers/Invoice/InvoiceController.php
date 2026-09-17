@@ -10,6 +10,7 @@ use App\Services\Payment\ManualPaymentGateway;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -123,5 +124,27 @@ class InvoiceController extends Controller
         $paymentService->processPaymentSuccess($pendingPayment);
 
         return redirect()->back()->with('success', "Pembayaran invoice #{$invoice->invoice_number} berhasil dikonfirmasi LUNAS! Langganan SaaS tenant telah diperpanjang.");
+    }
+
+    public function destroy(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Hanya Super Admin yang memiliki wewenang untuk menghapus riwayat tagihan invoice.');
+        }
+
+        $invoice = Invoice::with(['items', 'payments'])->findOrFail($id);
+        $invoiceNumber = $invoice->invoice_number;
+
+        DB::transaction(function () use ($invoice) {
+            $invoice->items()->delete();
+            $invoice->payments()->delete();
+            $invoice->delete();
+        });
+
+        AuditLogService::log('SAAS_INVOICE_DELETE', 'Invoice', $id, ['invoice_number' => $invoiceNumber]);
+
+        return redirect()->route('invoices.index')->with('success', "Riwayat tagihan invoice #{$invoiceNumber} berhasil dihapus dari sistem!");
     }
 }
