@@ -221,7 +221,7 @@ class RolePermissionSeeder extends Seeder
         Subscription::updateOrCreate(
             ['tenant_id' => $tenant1->id],
             [
-                'plan_id' => $planPro->id,
+                'plan_id' => $planBasic->id,
                 'status' => 'active',
                 'billing_cycle' => 'monthly',
                 'starts_at' => now(),
