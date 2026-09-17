@@ -56,7 +56,7 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
     const createForm = useForm({
         name: '',
         email: '',
-        password: 'PosRetail2026!',
+        password: 'password',
         role: 'CASHIER',
         outlet_id: outlets.length > 0 ? String(outlets[0].id) : '',
     });
@@ -314,14 +314,16 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
                             </div>
 
                             <div>
-                                <label className="block text-slate-400 font-semibold mb-1">Password Awal</label>
+                                <label className="block text-slate-400 font-semibold mb-1">Password Awal Login Staff</label>
                                 <input
                                     type="text"
                                     required
                                     value={createForm.data.password}
                                     onChange={(e) => createForm.setData('password', e.target.value)}
+                                    placeholder="Masukkan password awal"
                                     className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-emerald-400 font-mono font-bold"
                                 />
+                                <p className="text-[10px] text-slate-500 mt-1">Default password awal: <span className="font-mono text-emerald-400 font-bold">password</span> (Dapat diganti oleh staff saat login).</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
