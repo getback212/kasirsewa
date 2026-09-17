@@ -250,17 +250,17 @@ export default function AppLayout({ title, children }: { title?: string; childre
                     <div className="flex items-center justify-between h-16">
                         
                         {/* LEFT BRAND LOGO */}
-                        <div className="flex items-center gap-6">
-                            <Link href="/dashboard" className="flex items-center gap-3 group">
-                                <div className="p-2 bg-gradient-to-tr from-emerald-600 to-teal-500 rounded-xl shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition transform">
-                                    <ShoppingBag className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-4">
+                            <Link href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'} className="flex items-center gap-2.5 group">
+                                <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition transform">
+                                    <Building2 className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="hidden sm:block">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-black text-base tracking-tight store-name-text leading-none">RetailPRO</span>
-                                        <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-[9px] font-mono font-bold">v2.0</span>
+                                        <span className="font-black text-base tracking-tight text-white leading-none">KasirSewa</span>
+                                        <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md text-[9px] font-mono font-bold">SaaS</span>
                                     </div>
-                                    <span className="text-[10px] text-emerald-400 font-mono tracking-widest uppercase font-semibold block mt-0.5">Enterprise POS</span>
+                                    <span className="text-[10px] text-slate-400 font-mono tracking-widest uppercase font-semibold block mt-0.5">Multi-Tenant Platform</span>
                                 </div>
                             </Link>
 
@@ -371,11 +371,11 @@ export default function AppLayout({ title, children }: { title?: string; childre
                                         <button 
                                             type="button"
                                             onClick={() => setOutletDropdownOpen(!outletDropdownOpen)}
-                                            className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl text-xs transition cursor-pointer active:scale-95 shadow-inner"
+                                            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl text-xs transition cursor-pointer active:scale-95 shadow-inner"
                                         >
-                                            <Store className="w-4 h-4 text-emerald-400 shrink-0" />
-                                            <span className="font-black store-name-text max-w-[140px] sm:max-w-[220px] md:max-w-[280px] truncate">{currentOutlet.name}</span>
-                                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                            <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                                            <span className="font-bold store-name-text max-w-[100px] xs:max-w-[130px] sm:max-w-[200px] md:max-w-[280px] truncate">{currentOutlet.name}</span>
+                                            <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                                         </button>
                                     ) : (
                                         <div className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs">
@@ -549,9 +549,9 @@ export default function AppLayout({ title, children }: { title?: string; childre
                 
                 {/* HOME / DASHBOARD */}
                 <Link
-                    href="/dashboard"
+                    href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
                     className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                        isCurrentRoute('/dashboard') ? 'text-emerald-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                        (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard')) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
                     }`}
                 >
                     <LayoutDashboard className="w-5 h-5" />
