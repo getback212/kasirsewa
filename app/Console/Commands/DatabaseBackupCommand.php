@@ -7,7 +7,7 @@ use Exception;
 
 class DatabaseBackupCommand extends Command
 {
-    protected $signature = 'db:backup';
+    protected $signature = 'db:backup {--path= : Subdirektori penyimpanan file backup}';
     protected $description = 'Membuat backup database PostgreSQL terkompresi (.sql.gz) secara otomatis';
 
     public function handle(): int
@@ -20,7 +20,8 @@ class DatabaseBackupCommand extends Command
         $host = config('database.connections.pgsql.host');
         $port = config('database.connections.pgsql.port');
 
-        $backupDir = storage_path('app/private/backups');
+        $customPath = $this->option('path') ?: 'backups';
+        $backupDir = storage_path("app/private/{$customPath}");
         if (! file_exists($backupDir)) {
             mkdir($backupDir, 0777, true);
         }

@@ -13,17 +13,17 @@ class DatabaseRestoreCommand extends Command
     public function handle(): int
     {
         $filename = $this->argument('filename');
-        $backupDir = storage_path('app/private/backups');
-        $gzFilePath = "{$backupDir}/{$filename}";
+        $baseDir = storage_path('app/private');
+        $gzFilePath = "{$baseDir}/{$filename}";
 
         if (! file_exists($gzFilePath)) {
-            // Check without .gz or in storage/app/backups
-            if (file_exists("{$backupDir}/{$filename}.sql.gz")) {
-                $gzFilePath = "{$backupDir}/{$filename}.sql.gz";
-            } else {
-                $this->error("File backup {$filename} tidak ditemukan di direktori backup!");
-                return Command::FAILURE;
-            }
+            $backupDir = storage_path('app/private/backups');
+            $gzFilePath = "{$backupDir}/{$filename}";
+        }
+
+        if (! file_exists($gzFilePath)) {
+            $this->error("File backup {$filename} tidak ditemukan di direktori backup!");
+            return Command::FAILURE;
         }
 
         $this->info("Memulai proses pemulihan (restore) database dari file: {$filename}...");

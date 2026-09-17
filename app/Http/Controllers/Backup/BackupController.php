@@ -14,6 +14,16 @@ use Inertia\Response;
 
 class BackupController extends Controller
 {
+    protected function getBackupDir(Request $request): string
+    {
+        $user = $request->user();
+        if ($user->hasRole('SUPER_ADMIN')) {
+            return 'backups/saas_global';
+        }
+        $tenantId = session('active_tenant_id', $user->tenant_id ?? 'common');
+        return "backups/tenants/tenant_{$tenantId}";
+    }
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -21,7 +31,9 @@ class BackupController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola backup database.');
         }
 
-        $files = Storage::disk('local')->files('backups');
+        $backupDir = $this->getBackupDir($request);
+        $files = Storage::disk('local')->files($backupDir);
+
         $backups = collect($files)->map(function ($filePath) {
             $filename = basename($filePath);
             $size = Storage::disk('local')->exists($filePath) ? Storage::disk('local')->size($filePath) : 0;
@@ -36,6 +48,7 @@ class BackupController extends Controller
 
         return Inertia::render('Backups/Index', [
             'backups' => $backups,
+            'isSuperAdmin' => $user->hasRole('SUPER_ADMIN'),
         ]);
     }
 
@@ -46,15 +59,20 @@ class BackupController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk membuat backup database.');
         }
 
-        Artisan::call(DatabaseBackupCommand::class);
-        return back()->with('success', 'Backup database PostgreSQL berhasil dibuat!');
+        $backupDir = $this->getBackupDir($request);
+        Artisan::call(DatabaseBackupCommand::class, ['--path' => $backupDir]);
+
+        return back()->with('success', $user->hasRole('SUPER_ADMIN') 
+            ? 'Backup database global SaaS PostgreSQL berhasil dibuat!' 
+            : 'Backup data toko PostgreSQL berhasil dibuat!'
+        );
     }
 
     public function upload(Request $request): RedirectResponse
     {
         $user = $request->user();
         if (!$user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
-            abort(403, 'Hanya Pemilik Toko (Owner) yang memiliki wewenang untuk meng-upload file backup database.');
+            abort(403, 'Hanya Pemilik Toko (Owner) atau Super Admin yang memiliki wewenang meng-upload backup.');
         }
 
         $request->validate([
@@ -64,26 +82,29 @@ class BackupController extends Controller
         $file = $request->file('backup_file');
         $originalName = $file->getClientOriginalName();
         
-        // Sanitize filename to ensure clean extension
         $cleanName = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $originalName);
         if (!str_ends_with($cleanName, '.sql.gz') && !str_ends_with($cleanName, '.sql') && !str_ends_with($cleanName, '.gz')) {
             $cleanName .= '.sql.gz';
         }
 
-        $file->storeAs('backups', $cleanName, 'local');
+        $backupDir = $this->getBackupDir($request);
+        $file->storeAs($backupDir, $cleanName, 'local');
 
-        return back()->with('success', "File backup database '{$cleanName}' berhasil di-upload! File ini kini siap di-restore.");
+        return back()->with('success', "File backup database '{$cleanName}' berhasil di-upload!");
     }
 
     public function restore(Request $request, string $filename): RedirectResponse
     {
         $user = $request->user();
         if (!$user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
-            abort(403, 'Hanya Pemilik Toko (Owner) yang memiliki wewenang untuk memulihkan (restore) database.');
+            abort(403, 'Hanya Pemilik Toko (Owner) atau Super Admin yang berwenang memulihkan database.');
         }
 
+        $backupDir = $this->getBackupDir($request);
+        $filePath = "{$backupDir}/{$filename}";
+
         $exitCode = Artisan::call(DatabaseRestoreCommand::class, [
-            'filename' => $filename,
+            'filename' => $filePath,
         ]);
 
         if ($exitCode === 0) {
@@ -101,7 +122,9 @@ class BackupController extends Controller
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
-        $filePath = 'backups/' . $filename;
+        $backupDir = $this->getBackupDir($request);
+        $filePath = "{$backupDir}/{$filename}";
+
         if (!Storage::disk('local')->exists($filePath)) {
             abort(404, 'File backup tidak ditemukan.');
         }
@@ -116,7 +139,9 @@ class BackupController extends Controller
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
-        $filePath = 'backups/' . $filename;
+        $backupDir = $this->getBackupDir($request);
+        $filePath = "{$backupDir}/{$filename}";
+
         if (Storage::disk('local')->exists($filePath)) {
             Storage::disk('local')->delete($filePath);
             return back()->with('success', "File backup {$filename} berhasil dihapus!");
