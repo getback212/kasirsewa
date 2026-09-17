@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::post('/invoices/{id}/submit-payment', [InvoiceController::class, 'submitPayment'])->name('invoices.submit_payment');
     Route::post('/invoices/{id}/confirm-payment', [InvoiceController::class, 'confirmPayment'])->name('invoices.confirm_payment');
 
     // Dashboard & Executive Summary
