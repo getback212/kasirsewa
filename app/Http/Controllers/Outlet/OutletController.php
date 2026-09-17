@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Outlet;
 
 use App\Http\Controllers\Controller;
 use App\Models\Outlet;
+use App\Models\Tenant;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,7 +22,14 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data outlet toko.');
         }
 
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+
         $outlets = Outlet::where('company_id', $user->company_id)
+            ->where(function ($q) use ($tenantId) {
+                if ($tenantId) {
+                    $q->where('tenant_id', $tenantId);
+                }
+            })
             ->latest()
             ->get();
 
@@ -37,8 +46,28 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menambah outlet toko.');
         }
 
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+
+        // Enforce SaaS Plan Limit max_stores Guard
+        if ($tenantId) {
+            $tenant = Tenant::with('subscription.plan')->find($tenantId);
+            if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
+                $maxStores = $tenant->subscription->plan->max_stores;
+                $currentStores = Outlet::where('tenant_id', $tenantId)->count();
+
+                if ($currentStores >= $maxStores) {
+                    return back()->with('error', "Batas kuota outlet cabang toko Anda telah mencapai batas maksimal paket ({$maxStores} Outlet Stores). Silakan upgrade paket berlangganan SaaS Anda.");
+                }
+            }
+        }
+
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'unique:outlets,code'],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('outlets', 'code')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
@@ -48,8 +77,9 @@ class OutletController extends Controller
             'qris_image_url' => ['nullable', 'string'],
         ]);
 
-        Outlet::create([
+        $outlet = Outlet::create([
             'company_id' => $user->company_id,
+            'tenant_id' => $tenantId,
             'code' => strtoupper($validated['code']),
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
@@ -60,6 +90,8 @@ class OutletController extends Controller
             'qris_image_url' => $validated['qris_image_url'] ?? null,
             'is_active' => true,
         ]);
+
+        AuditLogService::log('OUTLET_CREATE', 'Outlet', $outlet->id, ['name' => $outlet->name, 'code' => $outlet->code]);
 
         return redirect()->back()->with('success', 'Outlet toko cabang baru berhasil ditambahkan!');
     }
@@ -72,10 +104,16 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengubah konfigurasi outlet toko.');
         }
 
+        $tenantId = session('active_tenant_id', $user->tenant_id);
         $outlet = Outlet::where('company_id', $user->company_id)->findOrFail($id);
 
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', Rule::unique('outlets', 'code')->ignore($outlet->id)],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('outlets', 'code')->ignore($outlet->id)->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
@@ -98,21 +136,21 @@ class OutletController extends Controller
             'is_active' => $validated['is_active'],
         ]);
 
-        return redirect()->back()->with('success', "Konfigurasi outlet cabang {$outlet->name} berhasil diperbarui!");
+        AuditLogService::log('OUTLET_UPDATE', 'Outlet', $outlet->id, ['name' => $outlet->name, 'code' => $outlet->code]);
+
+        return redirect()->back()->with('success', 'Konfigurasi data outlet toko berhasil diperbarui!');
     }
 
     public function switchOutlet(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
 
-        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
-            return redirect()->back()->with('error', 'Hanya Pemilik Toko (Owner) yang berwenang mengganti akses outlet cabang secara global.');
-        }
-
-        $outlet = Outlet::where('company_id', $user->company_id)->findOrFail($id);
+        $outlet = Outlet::where('company_id', $user->company_id)
+            ->where('is_active', true)
+            ->findOrFail($id);
 
         session(['active_outlet_id' => $outlet->id]);
 
-        return redirect()->back()->with('success', "Outlet aktif berhasil diubah ke {$outlet->name}!");
+        return redirect()->back()->with('success', "Berhasil berpindah ke outlet aktif: {$outlet->name}");
     }
 }
