@@ -923,7 +923,7 @@ export default function POSPage({
                                             </div>
 
                                             <Link
-                                                href={`/receipt/${sale.id}`}
+                                                href={`/pos/receipt/${sale.id}`}
                                                 className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 shrink-0"
                                             >
                                                 <Printer className="w-3.5 h-3.5 text-blue-400" />

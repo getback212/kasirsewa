@@ -138,6 +138,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pos/hold-cart', [POSController::class, 'holdCart'])->name('pos.hold_cart');
     Route::delete('/pos/hold-cart/{id}', [POSController::class, 'destroyHold'])->name('pos.destroy_hold');
     Route::get('/pos/receipt/{id}', [ReceiptController::class, 'show'])->name('pos.receipt');
+    Route::get('/receipt/{id}', [ReceiptController::class, 'show']);
     Route::get('/pos/customer-display', [POSController::class, 'customerDisplay'])->name('pos.customer_display');
 
     // Sales Return Routes
