@@ -786,7 +786,7 @@ export default function POSPage({
 
                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
                             <Link
-                                href={`/receipt/${completedSale.id}`}
+                                href={`/pos/receipt/${completedSale.id}`}
                                 className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition active:scale-95 cursor-pointer"
                             >
                                 <Printer className="w-4 h-4" />

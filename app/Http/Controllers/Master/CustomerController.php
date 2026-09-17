@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Tenant;
+use App\Models\Company;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,15 +23,22 @@ class CustomerController extends Controller
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
+        if (!$tenantId && $user->hasRole('SUPER_ADMIN')) {
+            $firstTenant = Tenant::first();
+            $tenantId = $firstTenant?->id ?? 1;
+        }
 
-        $query = Customer::where('tenant_id', $tenantId);
+        $query = Customer::query();
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%");
+                $q->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('phone', 'ILIKE', "%{$search}%")
+                  ->orWhere('code', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -56,7 +65,12 @@ class CustomerController extends Controller
         ]);
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        $companyId = $user->company_id ?? \App\Models\Company::first()?->id ?? 1;
+        if (!$tenantId && $user->hasRole('SUPER_ADMIN')) {
+            $firstTenant = Tenant::first();
+            $tenantId = $firstTenant?->id ?? 1;
+        }
+
+        $companyId = $user->company_id ?? Company::first()?->id ?? 1;
         $code = 'CUST-'.mt_rand(1000, 9999);
 
         $customer = Customer::create([
@@ -84,7 +98,7 @@ class CustomerController extends Controller
         $tenantId = session('active_tenant_id', $user->tenant_id);
         
         $query = Customer::query();
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (!$user->hasRole('SUPER_ADMIN') && $tenantId) {
             $query->where('tenant_id', $tenantId);
         }
 

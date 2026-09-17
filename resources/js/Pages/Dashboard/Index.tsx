@@ -214,7 +214,7 @@ export default function DashboardIndex({ dashboard }: DashboardPageProps) {
                                             <td className="p-4 font-sans text-slate-400">{sale.cashier_name}</td>
                                             <td className="p-4 text-right font-sans">
                                                 <Link
-                                                    href={`/receipt/${sale.id}`}
+                                                    href={`/pos/receipt/${sale.id}`}
                                                     className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg inline-flex items-center"
                                                     title="Cetak Struk Thermal"
                                                 >
