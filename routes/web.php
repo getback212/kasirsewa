@@ -25,6 +25,7 @@ use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminPaymentSettingController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Invoice\InvoiceController;
@@ -69,6 +70,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/plans', [PlanController::class, 'index'])->name('admin.plans.index');
     Route::post('/admin/plans', [PlanController::class, 'store'])->name('admin.plans.store');
     Route::put('/admin/plans/{id}', [PlanController::class, 'update'])->name('admin.plans.update');
+
+    Route::get('/admin/payment-settings', [AdminPaymentSettingController::class, 'index'])->name('admin.payment_settings.index');
+    Route::post('/admin/payment-settings', [AdminPaymentSettingController::class, 'update'])->name('admin.payment_settings.update');
 
     // Tenant SaaS Subscription & Billing Routes
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');

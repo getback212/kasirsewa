@@ -50,9 +50,19 @@ class InvoiceController extends Controller
 
         $invoice = $query->findOrFail($id);
 
+        $paymentSettings = [
+            'bank_bca_number' => \App\Models\SaaSSetting::get('bank_bca_number', '123-456-7890'),
+            'bank_bca_name' => \App\Models\SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
+            'bank_mandiri_number' => \App\Models\SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
+            'bank_mandiri_name' => \App\Models\SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
+            'qris_payload' => \App\Models\SaaSSetting::get('qris_payload', ''),
+            'payment_instructions' => \App\Models\SaaSSetting::get('payment_instructions', 'Silakan melakukan transfer sesuai nominal invoice.'),
+        ];
+
         return Inertia::render('Invoices/Show', [
             'invoice' => $invoice,
             'isSuperAdmin' => $isSuperAdmin,
+            'paymentSettings' => $paymentSettings,
         ]);
     }
 

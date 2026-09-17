@@ -7,9 +7,10 @@ import type { PageProps } from '@/Types';
 interface InvoiceShowProps extends PageProps {
     invoice?: any;
     isSuperAdmin?: boolean;
+    paymentSettings?: any;
 }
 
-export default function InvoiceShow({ invoice = {}, isSuperAdmin = false }: InvoiceShowProps) {
+export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymentSettings = {} }: InvoiceShowProps) {
     const { flash } = usePage<InvoiceShowProps>().props;
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -89,10 +90,10 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false }: Invo
                             <p className="text-slate-400 mt-1 font-mono">Owner: {invoice?.tenant?.owner?.name || '-'} ({invoice?.tenant?.owner?.email || '-'})</p>
                         </div>
                         <div className="text-left md:text-right space-y-1">
-                            <span className="text-slate-500 font-bold uppercase tracking-wider block">REKENING PEMBAYARAN SEWA</span>
-                            <p className="font-extrabold text-sm text-emerald-400">BCA / Mandiri / QRIS Resmi</p>
-                            <p className="text-slate-300 font-mono">BCA: 123-456-7890 (a.n PT KasirSewa SaaS)</p>
-                            <p className="text-slate-300 font-mono">Mandiri: 987-000-111-22 (a.n PT KasirSewa SaaS)</p>
+                            <span className="text-slate-500 font-bold uppercase tracking-wider block">REKENING PEMBAYARAN SEWA SAAS</span>
+                            <p className="font-extrabold text-sm text-emerald-400">BCA / Mandiri / Scan QRIS</p>
+                            <p className="text-slate-300 font-mono">BCA: {paymentSettings?.bank_bca_number || '123-456-7890'} (a.n {paymentSettings?.bank_bca_name || 'PT KasirSewa Indonesia'})</p>
+                            <p className="text-slate-300 font-mono">Mandiri: {paymentSettings?.bank_mandiri_number || '987-000-111-22'} (a.n {paymentSettings?.bank_mandiri_name || 'PT KasirSewa Indonesia'})</p>
                         </div>
                     </div>
 
