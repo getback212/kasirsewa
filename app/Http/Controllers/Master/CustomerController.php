@@ -71,4 +71,28 @@ class CustomerController extends Controller
 
         return redirect()->back()->with('success', "Pelanggan member {$customer->name} berhasil ditambahkan!");
     }
+
+    public function destroy(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('delete-customers')) {
+            abort(403, 'Anda tidak memiliki hak akses menghapus data pelanggan member.');
+        }
+
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        
+        $query = Customer::query();
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        $customer = $query->findOrFail($id);
+        $customerName = $customer->name;
+        $customer->delete();
+
+        AuditLogService::log('CUSTOMER_DELETE', 'Customer', $id, ['name' => $customerName]);
+
+        return redirect()->back()->with('success', "Data pelanggan member {$customerName} berhasil dihapus!");
+    }
 }

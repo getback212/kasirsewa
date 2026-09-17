@@ -7,11 +7,17 @@ use App\Models\Tenant;
 use App\Models\Subscription;
 use App\Models\Plan;
 use App\Models\User;
+use App\Models\Outlet;
+use App\Models\Company;
+use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\Stock;
 use App\Enums\UserRole;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -130,5 +136,31 @@ class TenantController extends Controller
         );
 
         return redirect()->back()->with('success', "Data tenant '{$tenant->name}' berhasil diperbarui!");
+    }
+
+    public function destroy(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Hanya Super Admin yang berwenang menghapus data tenant.');
+        }
+
+        $tenant = Tenant::findOrFail($id);
+        $tenantName = $tenant->name;
+
+        DB::transaction(function () use ($tenant) {
+            Subscription::where('tenant_id', $tenant->id)->delete();
+            Invoice::where('tenant_id', $tenant->id)->delete();
+            User::where('tenant_id', $tenant->id)->delete();
+            Outlet::where('tenant_id', $tenant->id)->delete();
+            Product::where('tenant_id', $tenant->id)->delete();
+            Stock::where('tenant_id', $tenant->id)->delete();
+            $tenant->delete();
+        });
+
+        AuditLogService::log('SAAS_TENANT_DELETE', 'Tenant', $id, ['name' => $tenantName]);
+
+        return redirect()->back()->with('success', "Tenant toko '{$tenantName}' beserta seluruh relasi data berhasil dihapus!");
     }
 }

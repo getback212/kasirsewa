@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/tenants', [TenantController::class, 'index'])->name('admin.tenants.index');
     Route::post('/admin/tenants', [TenantController::class, 'store'])->name('admin.tenants.store');
     Route::put('/admin/tenants/{id}', [TenantController::class, 'update'])->name('admin.tenants.update');
+    Route::delete('/admin/tenants/{id}', [TenantController::class, 'destroy'])->name('admin.tenants.destroy');
 
     Route::get('/admin/plans', [PlanController::class, 'index'])->name('admin.plans.index');
     Route::post('/admin/plans', [PlanController::class, 'store'])->name('admin.plans.store');
@@ -85,6 +86,7 @@ Route::middleware('auth')->group(function () {
     // Master Customers / Member Database Routes
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
     // Multi-Outlet Configuration Routes
     Route::get('/outlets', [OutletController::class, 'index'])->name('outlets.index');

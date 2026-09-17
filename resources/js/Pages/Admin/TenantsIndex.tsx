@@ -1,33 +1,33 @@
 import React, { useState } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Building2, Plus, Search, Edit, CheckCircle2, AlertCircle, Shield, CreditCard, Users, Store, ExternalLink } from 'lucide-react';
+import { Building2, Plus, Search, Edit, CheckCircle2, AlertCircle, Shield, Store, Users, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface TenantItem {
     id: number;
-    uuid: string;
     name: string;
     slug: string;
     domain: string | null;
     status: 'active' | 'past_due' | 'grace_period' | 'suspended' | 'expired' | 'cancelled';
     created_at: string;
-    owner?: { name: string; email: string };
+    owner?: {
+        name: string;
+        email: string;
+    };
     subscription?: {
         status: string;
-        expires_at: string;
-        plan?: { name: string; monthly_price: number };
+        plan?: {
+            name: string;
+        };
     };
     stores?: any[];
 }
 
-interface PlanItem {
+interface PlanOption {
     id: number;
     name: string;
-    slug: string;
     monthly_price: number;
-    max_users: number;
-    max_stores: number;
 }
 
 interface TenantsPageProps extends PageProps {
@@ -36,23 +36,24 @@ interface TenantsPageProps extends PageProps {
         links: any[];
         total: number;
     };
-    plans: PlanItem[];
+    plans: PlanOption[];
     filters: { search?: string };
 }
 
-export default function TenantsIndex({ tenants, plans, filters }: TenantsPageProps) {
+export default function TenantsIndex({ tenants, plans = [], filters }: TenantsPageProps) {
     const { flash } = usePage<TenantsPageProps>().props;
-    const [search, setSearch] = useState(filters.search || '');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingTenant, setEditingTenant] = useState<TenantItem | null>(null);
+    const [deletingTenant, setDeletingTenant] = useState<TenantItem | null>(null);
+    const [search, setSearch] = useState(filters.search || '');
 
     const createForm = useForm({
         name: '',
         domain: '',
-        plan_id: plans.length > 0 ? String(plans[0].id) : '',
+        plan_id: plans[0]?.id || 1,
         owner_name: '',
         owner_email: '',
-        owner_password: '',
+        owner_password: 'password',
     });
 
     const editForm = useForm({
@@ -94,9 +95,16 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
         });
     };
 
+    const handleDeleteTenant = () => {
+        if (!deletingTenant) return;
+        router.delete(`/admin/tenants/${deletingTenant.id}`, {
+            onSuccess: () => setDeletingTenant(null),
+        });
+    };
+
     return (
         <AppLayout title="Kelola Tenant SaaS">
-            <Head title="Manajemen Tenant & Pelanggan SaaS - Super Admin" />
+            <Head title="Manajemen Tenant SaaS Multi-Tenant - Super Admin" />
 
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 
@@ -104,10 +112,10 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-blue-400" /> Manajemen Tenant & Pelanggan SaaS
+                            <Building2 className="w-5 h-5 text-blue-400" /> Manajemen Tenant & Toko Penyewa SaaS
                         </h1>
                         <p className="text-xs text-slate-400 mt-1">
-                            Kelola registrasi tenant baru, kontrol akses langganan, dan pemantauan status toko multi-tenant.
+                            Kelola pendaftaran toko pelanggan, paket berlangganan, domain khusus, dan status keaktifan tenant.
                         </p>
                     </div>
 
@@ -116,7 +124,7 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
                         className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs rounded-2xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer"
                     >
                         <Plus className="w-4 h-4" />
-                        <span>+ Daftarkan Tenant Baru</span>
+                        <span>+ Tambah Tenant Baru</span>
                     </button>
                 </div>
 
@@ -192,12 +200,19 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
                                                     {t.status}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-right font-sans">
+                                            <td className="p-4 text-right font-sans space-x-2">
                                                 <button
                                                     onClick={() => openEditModal(t)}
                                                     className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
                                                 >
                                                     <Edit className="w-3.5 h-3.5 text-blue-400" /> Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeletingTenant(t)}
+                                                    className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                                    title="Hapus Tenant Toko"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Hapus
                                                 </button>
                                             </td>
                                         </tr>
@@ -214,85 +229,86 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
                         <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 text-xs">
                             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                                    <Building2 className="w-5 h-5 text-blue-400" /> pDaftarkan Tenant Toko Baru
+                                    <Building2 className="w-5 h-5 text-blue-400" /> Daftarkan Tenant Toko Baru
                                 </h3>
                                 <button type="button" onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-white">✕</button>
                             </div>
 
                             <form onSubmit={handleCreateSubmit} className="space-y-3">
                                 <div>
-                                    <label className="block text-slate-400 font-semibold mb-1">Nama Perusahaan / Tenant</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Nama Toko Tenant</label>
                                     <input
                                         type="text"
                                         required
                                         value={createForm.data.name}
                                         onChange={(e) => createForm.setData('name', e.target.value)}
-                                        placeholder="Contoh: Toko Sembako Jaya"
+                                        placeholder="Contoh: BerkahPRO Retail Enterprise"
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-slate-400 font-semibold mb-1">Subdomain (Opsional)</label>
-                                        <input
-                                            type="text"
-                                            value={createForm.data.domain}
-                                            onChange={(e) => createForm.setData('domain', e.target.value)}
-                                            placeholder="toko.kasirsewa.com"
-                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-semibold"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-slate-400 font-semibold mb-1">Paket Berlangganan</label>
-                                        <select
-                                            value={createForm.data.plan_id}
-                                            onChange={(e) => createForm.setData('plan_id', e.target.value)}
-                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
-                                        >
-                                            {plans.map((p) => (
-                                                <option key={p.id} value={p.id}>{p.name} (Rp {Number(p.monthly_price).toLocaleString('id-ID')}/bln)</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                <div>
+                                    <label className="block text-slate-400 font-semibold mb-1">Subdomain Khusus (Opsional)</label>
+                                    <input
+                                        type="text"
+                                        value={createForm.data.domain}
+                                        onChange={(e) => createForm.setData('domain', e.target.value)}
+                                        placeholder="berkah.kasirsewa.com"
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                                    />
                                 </div>
 
-                                <div className="pt-2 border-t border-slate-800 space-y-3">
-                                    <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">Informasi Akun Owner Pertama</span>
+                                <div>
+                                    <label className="block text-slate-400 font-semibold mb-1">Pilih Paket SaaS Berlangganan</label>
+                                    <select
+                                        value={createForm.data.plan_id}
+                                        onChange={(e) => createForm.setData('plan_id', Number(e.target.value))}
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                    >
+                                        {plans.map((p) => (
+                                            <option key={p.id} value={p.id}>
+                                                {p.name} - Rp {Number(p.monthly_price).toLocaleString('id-ID')}/bln
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="border-t border-slate-800 pt-3 space-y-3">
+                                    <span className="font-bold text-slate-300 block">Informasi Akun Pemilik (Owner Toko):</span>
+
                                     <div>
-                                        <label className="block text-slate-400 font-semibold mb-1">Nama Owner</label>
+                                        <label className="block text-slate-400 font-semibold mb-1">Nama Pemilik Toko</label>
                                         <input
                                             type="text"
                                             required
                                             value={createForm.data.owner_name}
                                             onChange={(e) => createForm.setData('owner_name', e.target.value)}
-                                            placeholder="Budi Owner"
+                                            placeholder="Nama Lengkap Pemilik"
                                             className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-slate-400 font-semibold mb-1">Email Owner</label>
-                                            <input
-                                                type="email"
-                                                required
-                                                value={createForm.data.owner_email}
-                                                onChange={(e) => createForm.setData('owner_email', e.target.value)}
-                                                placeholder="owner@toko.com"
-                                                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-semibold"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-slate-400 font-semibold mb-1">Password Owner</label>
-                                            <input
-                                                type="password"
-                                                required
-                                                value={createForm.data.owner_password}
-                                                onChange={(e) => createForm.setData('owner_password', e.target.value)}
-                                                placeholder="••••••••"
-                                                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-semibold"
-                                            />
-                                        </div>
+
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Email Owner</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={createForm.data.owner_email}
+                                            onChange={(e) => createForm.setData('owner_email', e.target.value)}
+                                            placeholder="owner@toko.com"
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Password Awal Owner</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={createForm.data.owner_password}
+                                            onChange={(e) => createForm.setData('owner_password', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-emerald-400 font-mono font-bold"
+                                        />
                                     </div>
                                 </div>
 
@@ -310,17 +326,17 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
                 {/* MODAL EDIT TENANT */}
                 {editingTenant && (
                     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-                        <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 text-xs">
+                        <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 text-xs">
                             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                                    <Edit className="w-5 h-5 text-blue-400" /> Edit Status Tenant #{editingTenant.id}
+                                    <Edit className="w-5 h-5 text-blue-400" /> Edit Tenant Toko: {editingTenant.name}
                                 </h3>
                                 <button type="button" onClick={() => setEditingTenant(null)} className="text-slate-400 hover:text-white">✕</button>
                             </div>
 
                             <form onSubmit={handleUpdateSubmit} className="space-y-3">
                                 <div>
-                                    <label className="block text-slate-400 font-semibold mb-1">Nama Tenant</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Nama Toko Tenant</label>
                                     <input
                                         type="text"
                                         required
@@ -329,28 +345,69 @@ export default function TenantsIndex({ tenants, plans, filters }: TenantsPagePro
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                                     />
                                 </div>
+
                                 <div>
-                                    <label className="block text-slate-400 font-semibold mb-1">Status Keaktifan Tenant</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Subdomain Khusus</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.data.domain}
+                                        onChange={(e) => editForm.setData('domain', e.target.value)}
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-400 font-semibold mb-1">Status Keaktifan Subskripsi</label>
                                     <select
                                         value={editForm.data.status}
                                         onChange={(e) => editForm.setData('status', e.target.value as any)}
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                                     >
-                                        <option value="active">Active (Aktif Berlangganan)</option>
-                                        <option value="past_due">Past Due (Jatuh Tempo)</option>
+                                        <option value="active">Active (Aktif Normal)</option>
+                                        <option value="past_due">Past Due (Menunggak Tagihan)</option>
                                         <option value="grace_period">Grace Period (Masa Tenggang)</option>
-                                        <option value="suspended">Suspended (Ditangguhkan)</option>
-                                        <option value="expired">Expired (Berakhir)</option>
+                                        <option value="suspended">Suspended (Ditangguhkan / Kunci Fitur)</option>
+                                        <option value="expired">Expired (Kadaluarsa)</option>
                                     </select>
                                 </div>
 
                                 <div className="flex gap-3 pt-3">
                                     <button type="button" onClick={() => setEditingTenant(null)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
                                     <button type="submit" disabled={editForm.processing} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg">
-                                        {editForm.processing ? '⏳ Menyimpan...' : 'Simpan Perubahan Tenant'}
+                                        {editForm.processing ? '⏳ Menyimpan...' : 'Perbarui Tenant'}
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL KONFIRMASI HAPUS TENANT */}
+                {deletingTenant && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+                            <div className="flex items-center gap-3 text-rose-400">
+                                <div className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/20">
+                                    <Trash2 className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-lg text-white">Hapus Tenant Toko?</h3>
+                                    <p className="text-xs text-slate-400">Tindakan ini akan menghapus toko & seluruh relasi data tenant.</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-1 text-xs">
+                                <p className="text-slate-300"><strong>Nama Tenant:</strong> {deletingTenant.name}</p>
+                                <p className="text-slate-300"><strong>Owner:</strong> {deletingTenant.owner?.name} ({deletingTenant.owner?.email})</p>
+                                <p className="text-slate-300"><strong>Paket SaaS:</strong> {deletingTenant.subscription?.plan?.name}</p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setDeletingTenant(null)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
+                                <button type="button" onClick={handleDeleteTenant} className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
+                                    <Trash2 className="w-4 h-4" /> Ya, Hapus Tenant
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

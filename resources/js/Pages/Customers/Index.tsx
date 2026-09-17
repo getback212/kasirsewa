@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Users, Plus, Search, CheckCircle2, Phone, MapPin } from 'lucide-react';
+import { Users, Plus, Search, CheckCircle2, Phone, MapPin, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface CustomerItem {
@@ -25,6 +25,7 @@ interface CustomersPageProps extends PageProps {
 export default function CustomersIndex({ customers, filters }: CustomersPageProps) {
     const { flash } = usePage<CustomersPageProps>().props;
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [deletingCustomer, setDeletingCustomer] = useState<CustomerItem | null>(null);
 
     const createForm = useForm({
         name: '',
@@ -39,6 +40,13 @@ export default function CustomersIndex({ customers, filters }: CustomersPageProp
                 setShowCreateModal(false);
                 createForm.reset();
             },
+        });
+    };
+
+    const handleDeleteCustomer = () => {
+        if (!deletingCustomer) return;
+        router.delete(`/customers/${deletingCustomer.id}`, {
+            onSuccess: () => setDeletingCustomer(null),
         });
     };
 
@@ -86,12 +94,13 @@ export default function CustomersIndex({ customers, filters }: CustomersPageProp
                                     <th className="p-4">NAMA PELANGGAN</th>
                                     <th className="p-4">NO. TELEPON / WA</th>
                                     <th className="p-4">ALAMAT</th>
+                                    <th className="p-4 text-right">AKSI</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
                                 {customers.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="p-8 text-center text-slate-500 font-sans">
+                                        <td colSpan={5} className="p-8 text-center text-slate-500 font-sans">
                                             Belum ada data pelanggan member.
                                         </td>
                                     </tr>
@@ -105,6 +114,15 @@ export default function CustomersIndex({ customers, filters }: CustomersPageProp
                                             </td>
                                             <td className="p-4 font-sans text-slate-400">
                                                 {c.address || '-'}
+                                            </td>
+                                            <td className="p-4 text-right font-sans">
+                                                <button
+                                                    onClick={() => setDeletingCustomer(c)}
+                                                    className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                                    title="Hapus Member Pelanggan"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Hapus
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -167,6 +185,36 @@ export default function CustomersIndex({ customers, filters }: CustomersPageProp
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL KONFIRMASI HAPUS CUSTOMER */}
+                {deletingCustomer && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+                            <div className="flex items-center gap-3 text-rose-400">
+                                <div className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/20">
+                                    <Trash2 className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-lg text-white">Hapus Member Pelanggan?</h3>
+                                    <p className="text-xs text-slate-400">Tindakan ini tidak dapat dibatalkan.</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-1 text-xs">
+                                <p className="text-slate-300"><strong>Kode Member:</strong> {deletingCustomer.code}</p>
+                                <p className="text-slate-300"><strong>Nama:</strong> {deletingCustomer.name}</p>
+                                <p className="text-slate-300"><strong>No. HP:</strong> {deletingCustomer.phone || '-'}</p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setDeletingCustomer(null)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
+                                <button type="button" onClick={handleDeleteCustomer} className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
+                                    <Trash2 className="w-4 h-4" /> Ya, Hapus Member
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
