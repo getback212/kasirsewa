@@ -26,7 +26,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
     const { flash, auth, tenantSubscription } = usePage<OutletsPageProps & { auth: any; tenantSubscription: any }>().props;
 
     const currentOutlet = auth?.currentOutlet;
-    const canCreateStore = tenantSubscription ? tenantSubscription.can_create_store : true;
+    const canCreateStore = Boolean(tenantSubscription?.can_create_store);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingOutlet, setEditingOutlet] = useState<OutletItem | null>(null);
@@ -222,9 +222,9 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
 
                                     <button
                                         onClick={() => openEditModal(outlet)}
-                                        className="px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1 transition cursor-pointer active:scale-95"
+                                        className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition cursor-pointer active:scale-95"
                                     >
-                                        <Edit className="w-3.5 h-3.5" /> Edit Konfigurasi
+                                        <Edit className="w-3.5 h-3.5" /> Edit Nama & Profil Toko
                                     </button>
                                 </div>
                             </div>
@@ -333,14 +333,14 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                         <form onSubmit={handleUpdateOutlet} className="w-full max-w-lg bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs max-h-[90vh] overflow-y-auto shadow-2xl my-auto">
                             <div className="flex justify-between items-center border-b border-slate-800 pb-3 sticky top-0 bg-slate-900 z-10">
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                    <Edit className="w-4 h-4 text-blue-400" /> Edit Konfigurasi Outlet #{editingOutlet.code}
+                                    <Edit className="w-4 h-4 text-blue-400" /> Edit Nama & Profil Toko (#{editingOutlet.code})
                                 </h3>
                                 <button type="button" onClick={() => setEditingOutlet(null)} className="text-slate-400 hover:text-white">✕</button>
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="col-span-1">
-                                    <label className="block text-slate-400 font-semibold mb-1">Kode Outlet</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Kode Toko</label>
                                     <input
                                         type="text"
                                         required
@@ -351,7 +351,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-slate-400 font-semibold mb-1">Nama Outlet Cabang</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Nama Toko / Outlet Utama</label>
                                     <input
                                         type="text"
                                         required
