@@ -19,13 +19,11 @@ class ReceiptController extends Controller
         $query = Sale::with(['outlet.company', 'cashier', 'customer', 'items', 'payments']);
 
         if (!$user->hasRole('SUPER_ADMIN')) {
-            $query->where(function ($q) use ($tenantId, $user) {
-                if ($tenantId) {
-                    $q->where('tenant_id', $tenantId)->orWhere('company_id', $user->company_id);
-                } else {
-                    $q->where('company_id', $user->company_id);
-                }
-            });
+            if ($tenantId) {
+                $query->where('tenant_id', $tenantId);
+            } else {
+                $query->where('outlet_id', session('active_outlet_id', $user->outlet_id));
+            }
         }
 
         $sale = $query->findOrFail($id);
