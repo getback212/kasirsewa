@@ -11,6 +11,11 @@ use Exception;
 
 class PaymentController extends Controller
 {
+    public function checkout(Request $request, CreateSaleAction $createSaleAction): JsonResponse
+    {
+        return $this->processCheckout($request, $createSaleAction);
+    }
+
     public function processCheckout(Request $request, CreateSaleAction $createSaleAction): JsonResponse
     {
         $user = $request->user();
