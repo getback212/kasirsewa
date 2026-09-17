@@ -156,7 +156,7 @@ export default function PlansIndex({ plans = [] }: PlansPageProps) {
                                         <td className="p-4 text-right font-sans">
                                             <button
                                                 onClick={() => openEditModal(p)}
-                                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
                                             >
                                                 <Edit className="w-3.5 h-3.5 text-blue-400" /> Edit
                                             </button>
@@ -238,10 +238,136 @@ export default function PlansIndex({ plans = [] }: PlansPageProps) {
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Max Produk</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={createForm.data.max_products}
+                                            onChange={(e) => createForm.setData('max_products', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Max Transaksi</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={createForm.data.max_transactions}
+                                            onChange={(e) => createForm.setData('max_transactions', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="flex gap-3 pt-3">
                                     <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
                                     <button type="submit" disabled={createForm.processing} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg">
                                         {createForm.processing ? '⏳ Menyimpan...' : 'Simpan Paket Baru'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL EDIT PLAN */}
+                {editingPlan && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+                        <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 text-xs">
+                            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                                    <Edit className="w-5 h-5 text-blue-400" /> Edit Paket SaaS: {editingPlan.name}
+                                </h3>
+                                <button type="button" onClick={() => setEditingPlan(null)} className="text-slate-400 hover:text-white">✕</button>
+                            </div>
+
+                            <form onSubmit={handleUpdateSubmit} className="space-y-3">
+                                <div>
+                                    <label className="block text-slate-400 font-semibold mb-1">Nama Paket</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editForm.data.name}
+                                        onChange={(e) => editForm.setData('name', e.target.value)}
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Harga Bulanan (Rp)</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editForm.data.monthly_price}
+                                            onChange={(e) => editForm.setData('monthly_price', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Harga Tahunan (Rp)</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editForm.data.yearly_price}
+                                            onChange={(e) => editForm.setData('yearly_price', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Max Outlet Toko</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editForm.data.max_stores}
+                                            onChange={(e) => editForm.setData('max_stores', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Max User Staff</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editForm.data.max_users}
+                                            onChange={(e) => editForm.setData('max_users', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Max Produk</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editForm.data.max_products}
+                                            onChange={(e) => editForm.setData('max_products', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-slate-400 font-semibold mb-1">Max Transaksi</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editForm.data.max_transactions}
+                                            onChange={(e) => editForm.setData('max_transactions', e.target.value)}
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-3">
+                                    <button type="button" onClick={() => setEditingPlan(null)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
+                                    <button type="submit" disabled={editForm.processing} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg">
+                                        {editForm.processing ? '⏳ Menyimpan...' : 'Perbarui Paket'}
                                     </button>
                                 </div>
                             </form>
