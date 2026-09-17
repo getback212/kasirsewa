@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Store, Plus, Edit, CheckCircle2, AlertCircle, Phone, MapPin, Percent } from 'lucide-react';
+import { Store, Plus, Edit, CheckCircle2, AlertCircle, Phone, MapPin, Percent, Lock } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface OutletItem {
@@ -23,9 +23,10 @@ interface OutletsPageProps extends PageProps {
 }
 
 export default function OutletsIndex({ outlets }: OutletsPageProps) {
-    const { flash, auth } = usePage<OutletsPageProps & { auth: any }>().props;
+    const { flash, auth, tenantSubscription } = usePage<OutletsPageProps & { auth: any; tenantSubscription: any }>().props;
 
     const currentOutlet = auth?.currentOutlet;
+    const canCreateStore = tenantSubscription ? tenantSubscription.can_create_store : true;
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingOutlet, setEditingOutlet] = useState<OutletItem | null>(null);
@@ -95,7 +96,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
 
     return (
         <AppLayout title="Pengaturan Outlet">
-            <Head title="🏬 Konfigurasi Outlet Toko Cabang - RetailPRO POS" />
+            <Head title="🏬 Konfigurasi Outlet Toko Cabang - KasirSewa" />
 
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 
@@ -103,20 +104,48 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                            <Store className="w-5 h-5 text-emerald-400" /> Konfigurasi Outlet Toko & Cabang Enterprise
+                            <Store className="w-5 h-5 text-emerald-400" /> Konfigurasi Outlet Toko Cabang
                         </h1>
                         <p className="text-xs text-slate-400 mt-1">
                             Pengaturan informasi toko, alamat cabang, kontak, default tarif PPN %, dan pembuatan outlet baru.
                         </p>
                     </div>
 
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" /> + Tambah Outlet Cabang Baru
-                    </button>
+                    {canCreateStore ? (
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                        >
+                            <Plus className="w-4 h-4" /> + Tambah Outlet Cabang Baru
+                        </button>
+                    ) : (
+                        <Link
+                            href="/subscription"
+                            className="px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-2xl flex items-center gap-2 transition cursor-pointer"
+                        >
+                            <Lock className="w-4 h-4 text-amber-400" />
+                            <span>Batas Kuota Toko Terpenuhi ({tenantSubscription?.current_stores_count}/{tenantSubscription?.max_stores}) • Upgrade Paket</span>
+                        </Link>
+                    )}
                 </div>
+
+                {/* SAAS LIMIT WARNING BANNER */}
+                {!canCreateStore && tenantSubscription && (
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-300 font-medium flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>
+                                Batas kuota toko cabang untuk paket berlangganan <strong>{tenantSubscription.plan_name}</strong> telah mencapai batas maksimal (<strong>{tenantSubscription.current_stores_count}/{tenantSubscription.max_stores} Outlet Store</strong>).
+                            </span>
+                        </div>
+                        <Link
+                            href="/subscription"
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] rounded-xl shrink-0 transition"
+                        >
+                            Upgrade Paket SaaS →
+                        </Link>
+                    </div>
+                )}
 
                 {/* FLASH NOTIFICATION */}
                 {flash.success && (
@@ -204,7 +233,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                 </div>
 
                 {/* MODAL TAMBAH OUTLET BARU */}
-                {showCreateModal && (
+                {showCreateModal && canCreateStore && (
                     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
                         <form onSubmit={handleCreateOutlet} className="w-full max-w-lg bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs max-h-[90vh] overflow-y-auto shadow-2xl my-auto">
                             <div className="flex justify-between items-center border-b border-slate-800 pb-3 sticky top-0 bg-slate-900 z-10">
@@ -233,7 +262,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                                         required
                                         value={createForm.data.name}
                                         onChange={(e) => createForm.setData('name', e.target.value)}
-                                        placeholder="e.g. RetailPRO Cabang Bandung"
+                                        placeholder="e.g. KasirSewa Cabang Bandung"
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium"
                                     />
                                 </div>

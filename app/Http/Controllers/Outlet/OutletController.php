@@ -53,10 +53,12 @@ class OutletController extends Controller
             $tenant = Tenant::with('subscription.plan')->find($tenantId);
             if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
                 $maxStores = $tenant->subscription->plan->max_stores;
-                $currentStores = Outlet::where('tenant_id', $tenantId)->count();
+                $currentStores = Outlet::where(function ($q) use ($tenantId, $user) {
+                    $q->where('tenant_id', $tenantId)->orWhere('company_id', $user->company_id);
+                })->count();
 
                 if ($currentStores >= $maxStores) {
-                    return back()->with('error', "Batas kuota outlet cabang toko Anda telah mencapai batas maksimal paket ({$maxStores} Outlet Stores). Silakan upgrade paket berlangganan SaaS Anda.");
+                    return back()->with('error', "Batas kuota outlet cabang toko Anda telah mencapai batas maksimal paket {$tenant->subscription->plan->name} ({$maxStores} Outlet Store). Silakan upgrade paket berlangganan SaaS Anda.");
                 }
             }
         }

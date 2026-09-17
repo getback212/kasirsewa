@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Users as UsersIcon, Plus, Search, Edit, Trash2, CheckCircle2, AlertCircle, Shield, Key } from 'lucide-react';
+import { Users as UsersIcon, Plus, Search, Edit, Trash2, CheckCircle2, AlertCircle, Shield, Key, Lock } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface UserRecord {
@@ -38,7 +38,8 @@ interface UsersPageProps extends PageProps {
 }
 
 export default function UsersIndex({ users, outlets, roles, filters }: UsersPageProps) {
-    const { flash } = usePage<UsersPageProps>().props;
+    const { flash, tenantSubscription } = usePage<UsersPageProps & { tenantSubscription: any }>().props;
+    const canCreateUser = tenantSubscription ? tenantSubscription.can_create_user : true;
 
     const [search, setSearch] = useState(filters.search || '');
     const [selectedRoleFilter, setSelectedRoleFilter] = useState(filters.role || '');
@@ -140,13 +141,41 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
                         </p>
                     </div>
 
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" /> + Tambah Staff Baru
-                    </button>
+                    {canCreateUser ? (
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                        >
+                            <Plus className="w-4 h-4" /> + Tambah Karyawan / Staff Baru
+                        </button>
+                    ) : (
+                        <Link
+                            href="/subscription"
+                            className="px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-2xl flex items-center gap-2 transition cursor-pointer"
+                        >
+                            <Lock className="w-4 h-4 text-amber-400" />
+                            <span>Batas Staff Terpenuhi ({tenantSubscription?.current_users_count}/{tenantSubscription?.max_users}) • Upgrade Paket</span>
+                        </Link>
+                    )}
                 </div>
+
+                {/* SAAS LIMIT WARNING BANNER */}
+                {!canCreateUser && tenantSubscription && (
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-300 font-medium flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>
+                                Batas kuota staff karyawan untuk paket berlangganan <strong>{tenantSubscription.plan_name}</strong> telah mencapai batas maksimal (<strong>{tenantSubscription.current_users_count}/{tenantSubscription.max_users} Staff Users</strong>).
+                            </span>
+                        </div>
+                        <Link
+                            href="/subscription"
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] rounded-xl shrink-0 transition"
+                        >
+                            Upgrade Paket SaaS →
+                        </Link>
+                    </div>
+                )}
 
                 {/* FLASH NOTIFICATION */}
                 {flash.success && (
