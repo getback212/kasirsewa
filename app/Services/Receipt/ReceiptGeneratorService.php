@@ -24,8 +24,12 @@ class ReceiptGeneratorService
         }
         $lines[] = $divider;
 
+        $formattedDate = $sale->sale_date instanceof \Carbon\Carbon 
+            ? $sale->sale_date->format('d/m/Y H:i') 
+            : \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y H:i');
+
         $lines[] = "No  : {$sale->invoice_number}";
-        $lines[] = "Tgl : " . $sale->sale_date->format('d/m/Y H:i');
+        $lines[] = "Tgl : {$formattedDate}";
         $lines[] = "Ksr : " . ($sale->cashier->name ?? 'Kasir');
         if ($sale->customer) {
             $lines[] = "Plg : " . $sale->customer->name;
