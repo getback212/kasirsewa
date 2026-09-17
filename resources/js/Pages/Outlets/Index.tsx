@@ -125,6 +125,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                         <span>{flash.success}</span>
                     </div>
                 )}
+
                 {flash.error && (
                     <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-400 font-semibold flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
@@ -132,78 +133,70 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                     </div>
                 )}
 
-                {/* OUTLETS CARDS GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {outlets.map((o) => {
-                        const isCurrent = currentOutlet?.id === o.id;
+                {/* OUTLETS GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {outlets.map((outlet) => {
+                        const isCurrentActive = currentOutlet?.id === outlet.id;
+
                         return (
                             <div
-                                key={o.id}
-                                className={`bg-slate-900 border rounded-3xl p-5 space-y-4 shadow-xl transition relative ${
-                                    isCurrent
-                                        ? 'border-emerald-500/60 ring-2 ring-emerald-500/20'
-                                        : 'border-slate-800 hover:border-slate-700'
+                                key={outlet.id}
+                                className={`bg-slate-900 border rounded-3xl p-6 space-y-4 flex flex-col justify-between shadow-xl relative transition ${
+                                    isCurrentActive ? 'border-emerald-500/60 ring-2 ring-emerald-500/20' : 'border-slate-800'
                                 }`}
                             >
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-3 rounded-2xl border ${
-                                            isCurrent ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-950 border-slate-800 text-slate-400'
-                                        }`}>
-                                            <Store className="w-6 h-6" />
-                                        </div>
+                                <div className="space-y-3 text-xs">
+                                    <div className="flex justify-between items-start gap-2">
                                         <div>
-                                            <span className="text-[10px] text-slate-500 font-mono block font-bold">{o.code}</span>
-                                            <h3 className="text-sm font-bold text-white">{o.name}</h3>
+                                            <span className="px-2.5 py-0.5 bg-slate-800 text-slate-300 rounded-md font-mono text-[10px] font-bold border border-slate-700">
+                                                {outlet.code}
+                                            </span>
+                                            <h3 className="font-extrabold text-sm text-white mt-1.5">{outlet.name}</h3>
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                            {isCurrentActive && (
+                                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full font-bold text-[10px] uppercase">
+                                                    AKTIF SEKARANG
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase border ${
-                                        o.is_active
-                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                                            : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                                    }`}>
-                                        {o.is_active ? 'AKTIF' : 'NON-AKTIF'}
-                                    </span>
-                                </div>
-
-                                <div className="space-y-2 text-xs text-slate-400 font-medium border-t border-b border-slate-800/60 py-3">
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                        <span>{o.phone || 'Belum ada nomor telepon'}</span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                                        <span className="line-clamp-2">{o.address || 'Belum ada alamat outlet'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 pt-1">
-                                        <Percent className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                                        <span className="font-mono text-slate-300 font-bold">
-                                            Default PPN: {o.enable_ppn ? `${Number(o.tax_percentage)}%` : '0% (Non-PPN)'}
-                                        </span>
+                                    <div className="space-y-1.5 text-slate-400">
+                                        <p className="flex items-center gap-2 font-mono text-[11px]">
+                                            <Phone className="w-3.5 h-3.5 text-slate-500" />
+                                            <span>{outlet.phone || 'Tidak Ada Kontak'}</span>
+                                        </p>
+                                        <p className="flex items-start gap-2 text-[11px] leading-relaxed">
+                                            <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                                            <span>{outlet.address || 'Alamat Belum Diatur'}</span>
+                                        </p>
+                                        <p className="flex items-center gap-2 font-mono text-[11px]">
+                                            <Percent className="w-3.5 h-3.5 text-blue-400" />
+                                            <span>PPN {outlet.enable_ppn ? `${outlet.tax_percentage}%` : 'Non-PPN (0%)'}</span>
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => openEditModal(o)}
-                                        className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
-                                    >
-                                        <Edit className="w-3.5 h-3.5 text-blue-400" /> Edit Konfigurasi
-                                    </button>
-
-                                    {!isCurrent ? (
+                                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                                    {!isCurrentActive ? (
                                         <button
-                                            onClick={() => handleSwitchOutlet(o.id)}
-                                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition cursor-pointer active:scale-95"
+                                            onClick={() => handleSwitchOutlet(outlet.id)}
+                                            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
                                         >
-                                            Ganti ke Cabang Ini
+                                            Ganti Ke Outlet Ini
                                         </button>
                                     ) : (
-                                        <span className="px-3 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px] rounded-xl flex items-center">
-                                            ✓ Sedang Aktif
-                                        </span>
+                                        <span className="text-[10px] text-emerald-400 font-bold font-mono">Sesi Aktif</span>
                                     )}
+
+                                    <button
+                                        onClick={() => openEditModal(outlet)}
+                                        className="px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1 transition cursor-pointer active:scale-95"
+                                    >
+                                        <Edit className="w-3.5 h-3.5" /> Edit Konfigurasi
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -212,9 +205,9 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
 
                 {/* MODAL TAMBAH OUTLET BARU */}
                 {showCreateModal && (
-                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-                        <form onSubmit={handleCreateOutlet} className="w-full max-w-md bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs">
-                            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+                        <form onSubmit={handleCreateOutlet} className="w-full max-w-lg bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs max-h-[90vh] overflow-y-auto shadow-2xl my-auto">
+                            <div className="flex justify-between items-center border-b border-slate-800 pb-3 sticky top-0 bg-slate-900 z-10">
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                                     <Store className="w-4 h-4 text-emerald-400" /> Tambah Outlet Toko Cabang Baru
                                 </h3>
@@ -295,7 +288,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2.5 pt-2">
+                            <div className="flex gap-2.5 pt-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 pb-1 z-10">
                                 <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl cursor-pointer">Batal</button>
                                 <button type="submit" disabled={createForm.processing} className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg cursor-pointer">
                                     {createForm.processing ? '⏳ Menyimpan...' : 'Simpan Outlet Baru'}
@@ -307,9 +300,9 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
 
                 {/* MODAL EDIT KONFIGURASI OUTLET */}
                 {editingOutlet && (
-                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-                        <form onSubmit={handleUpdateOutlet} className="w-full max-w-md bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs">
-                            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+                        <form onSubmit={handleUpdateOutlet} className="w-full max-w-lg bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs max-h-[90vh] overflow-y-auto shadow-2xl my-auto">
+                            <div className="flex justify-between items-center border-b border-slate-800 pb-3 sticky top-0 bg-slate-900 z-10">
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                                     <Edit className="w-4 h-4 text-blue-400" /> Edit Konfigurasi Outlet #{editingOutlet.code}
                                 </h3>
@@ -423,7 +416,7 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                                 </select>
                             </div>
 
-                            <div className="flex gap-2.5 pt-2">
+                            <div className="flex gap-2.5 pt-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 pb-1 z-10">
                                 <button type="button" onClick={() => setEditingOutlet(null)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl cursor-pointer">Batal</button>
                                 <button type="submit" disabled={editForm.processing} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg cursor-pointer">
                                     {editForm.processing ? '⏳ Update...' : 'Simpan Perubahan'}
