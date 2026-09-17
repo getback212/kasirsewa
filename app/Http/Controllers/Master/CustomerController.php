@@ -56,10 +56,11 @@ class CustomerController extends Controller
         ]);
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
+        $companyId = $user->company_id ?? \App\Models\Company::first()?->id ?? 1;
         $code = 'CUST-'.mt_rand(1000, 9999);
 
         $customer = Customer::create([
-            'company_id' => $user->company_id,
+            'company_id' => $companyId,
             'tenant_id' => $tenantId,
             'code' => $code,
             'name' => $request->name,

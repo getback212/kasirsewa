@@ -144,7 +144,7 @@ class RegisterController extends Controller
             Customer::create([
                 'company_id' => $company->id,
                 'tenant_id' => $tenant->id,
-                'code' => 'CUST-UMUM',
+                'code' => 'CUST-UMUM-'.$tenant->id,
                 'name' => 'Pelanggan Umum',
                 'phone' => '-',
             ]);
