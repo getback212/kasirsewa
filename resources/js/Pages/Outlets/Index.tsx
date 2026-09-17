@@ -209,15 +209,21 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                                 </div>
 
                                 <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                                    {!isCurrentActive ? (
-                                        <button
-                                            onClick={() => handleSwitchOutlet(outlet.id)}
-                                            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
-                                        >
-                                            Ganti Ke Outlet Ini
-                                        </button>
+                                    {(tenantSubscription?.max_stores ?? 1) > 1 && outlets.length > 1 ? (
+                                        !isCurrentActive ? (
+                                            <button
+                                                onClick={() => handleSwitchOutlet(outlet.id)}
+                                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
+                                            >
+                                                Ganti Ke Outlet Ini
+                                            </button>
+                                        ) : (
+                                            <span className="text-[10px] text-emerald-400 font-bold font-mono">Sesi Aktif</span>
+                                        )
                                     ) : (
-                                        <span className="text-[10px] text-emerald-400 font-bold font-mono">Sesi Aktif</span>
+                                        <span className="text-[10px] text-emerald-400 font-bold font-mono flex items-center gap-1">
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Toko Utama Aktif
+                                        </span>
                                     )}
 
                                     <button
