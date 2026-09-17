@@ -372,5 +372,15 @@ class RolePermissionSeeder extends Seeder
         );
 
         session()->forget('active_tenant_id');
+
+        // Sync PostgreSQL Primary Key Auto-Increment Sequences
+        if (config('database.default') === 'pgsql') {
+            $tables = ['companies', 'tenants', 'outlets', 'users', 'plans', 'subscriptions', 'invoices', 'customers', 'categories', 'units', 'products', 'suppliers'];
+            foreach ($tables as $table) {
+                try {
+                    DB::statement("SELECT setval('{$table}_id_seq', (SELECT COALESCE(MAX(id), 1) FROM {$table}));");
+                } catch (\Throwable $e) {}
+            }
+        }
     }
 }
