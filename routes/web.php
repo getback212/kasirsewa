@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Master\CustomerController;
+use App\Http\Controllers\Invoice\InvoiceController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', function () {
