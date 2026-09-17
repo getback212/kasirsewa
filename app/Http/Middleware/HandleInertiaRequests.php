@@ -57,17 +57,11 @@ class HandleInertiaRequests extends Middleware
                 if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
                     $plan = $tenant->subscription->plan;
 
-                    $storesCount = Outlet::where(function ($q) use ($tenantId, $companyId) {
-                        $q->where('tenant_id', $tenantId)->orWhere('company_id', $companyId);
-                    })->count();
+                    $storesCount = Outlet::where('tenant_id', $tenantId)->count();
 
-                    $usersCount = User::where(function ($q) use ($tenantId, $companyId) {
-                        $q->where('tenant_id', $tenantId)->orWhere('company_id', $companyId);
-                    })->count();
+                    $usersCount = User::where('tenant_id', $tenantId)->count();
 
-                    $productsCount = Product::where(function ($q) use ($tenantId, $companyId) {
-                        $q->where('tenant_id', $tenantId)->orWhere('company_id', $companyId);
-                    })->count();
+                    $productsCount = Product::where('tenant_id', $tenantId)->count();
 
                     $tenantSubscription = [
                         'status' => $tenant->subscription->status,
