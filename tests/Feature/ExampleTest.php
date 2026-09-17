@@ -11,10 +11,10 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_is_redirected_to_login(): void
+    public function test_guest_can_access_welcome_landing_page(): void
     {
         $response = $this->get('/');
-        $response->assertRedirect('/login');
+        $response->assertStatus(200);
     }
 
     public function test_authenticated_owner_can_access_dashboard(): void
@@ -23,7 +23,7 @@ class ExampleTest extends TestCase
 
         $user = User::where('email', 'owner@example.test')->first();
 
-        $response = $this->actingAs($user)->get('/');
+        $response = $this->actingAs($user)->get('/dashboard');
         $response->assertStatus(200);
     }
 }
