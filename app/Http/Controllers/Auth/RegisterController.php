@@ -67,7 +67,7 @@ class RegisterController extends Controller
             $outlet = Outlet::create([
                 'company_id' => $company->id,
                 'tenant_id' => $tenant->id,
-                'code' => 'OUT-001',
+                'code' => 'OUT-'.mt_rand(1000, 9999),
                 'name' => $request->store_name.' - Store Utama',
                 'phone' => $request->phone,
                 'address' => 'Alamat Utama Toko',
