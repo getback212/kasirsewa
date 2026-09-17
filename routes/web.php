@@ -25,7 +25,8 @@ use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Invoice\InvoiceController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Master\CustomerController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', function () {
@@ -33,6 +34,8 @@ Route::middleware('guest')->group(function () {
     });
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {
@@ -60,7 +63,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // Multi-Outlet Configuration Routes
+    // Master Customers / Member Database Routes
+    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
     Route::get('/outlets', [OutletController::class, 'index'])->name('outlets.index');
     Route::post('/outlets', [OutletController::class, 'store'])->name('outlets.store');
     Route::put('/outlets/{id}', [OutletController::class, 'update'])->name('outlets.update');

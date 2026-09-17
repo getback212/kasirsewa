@@ -216,6 +216,7 @@ export default function AppLayout({ title, children }: { title?: string; childre
             icon: Clock,
             items: [
                 { name: 'Shift & Kas Laci', path: '/shifts', icon: Clock, permission: 'open-shift' },
+                { name: 'Pelanggan Member', path: '/customers', icon: UsersIcon, permission: 'view-customers' },
                 { name: 'Biaya Operasional', path: '/expenses', icon: Receipt, permission: 'view-expenses' },
                 { name: 'Retur Penjualan', path: '/sales-returns', icon: PackageCheck, permission: 'process-return' },
                 { name: 'Manajemen Staff', path: '/users', icon: UsersIcon, permission: 'view-users' },
