@@ -86,54 +86,16 @@ export default function Login() {
                             disabled={processing}
                             className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-2xl shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 active:scale-95 mt-2"
                         >
-                            <span>{processing ? 'Memverifikasi Server...' : 'Masuk Ke Akun SaaS'}</span>
+                            <span>{processing ? 'Memverifikasi Server...' : 'Masuk Ke Akun Toko'}</span>
                             <ArrowRight className="w-4 h-4" />
                         </button>
                     </form>
 
-                    {/* QUICK DEMO ACCOUNT SELECTOR FOR PROSPECTIVE TENANTS */}
-                    <div className="pt-4 border-t border-slate-800 space-y-2.5">
-                        <div className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-                            <KeyRound className="w-3.5 h-3.5 text-blue-400" />
-                            <span>Pilih Akun Demo Toko (Klik untuk Auto-Fill):</span>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                            <a
-                                href="/super-admin/login"
-                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 rounded-xl text-left transition cursor-pointer group block"
-                            >
-                                <div className="font-bold text-purple-400 group-hover:text-purple-300">👑 Super Admin</div>
-                                <div className="text-[10px] text-slate-500">Portal Login Khusus →</div>
-                            </a>
-
-                            <button
-                                type="button"
-                                onClick={() => fillAccount('owner@example.test', 'password')}
-                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 rounded-xl text-left transition cursor-pointer group"
-                            >
-                                <div className="font-bold text-emerald-400 group-hover:text-emerald-300">🏪 Owner Toko</div>
-                                <div className="text-[10px] text-slate-500">Tenant Owner</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => fillAccount('cashier@example.test', 'password')}
-                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 rounded-xl text-left transition cursor-pointer group"
-                            >
-                                <div className="font-bold text-amber-400 group-hover:text-amber-300">🛒 Staff Kasir</div>
-                                <div className="text-[10px] text-slate-500">POS Operations</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => fillAccount('warehouse@example.test', 'password')}
-                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-blue-500/50 rounded-xl text-left transition cursor-pointer group"
-                            >
-                                <div className="font-bold text-blue-400 group-hover:text-blue-300">📦 Staff Gudang</div>
-                                <div className="text-[10px] text-slate-500">Stok & Restok</div>
-                            </button>
-                        </div>
+                    <div className="pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
+                        Belum punya akun toko?{' '}
+                        <a href="/register" className="text-blue-400 font-bold hover:underline">
+                            Daftar Toko Baru (Trial 14 Hari Gratis) →
+                        </a>
                     </div>
 
                 </div>

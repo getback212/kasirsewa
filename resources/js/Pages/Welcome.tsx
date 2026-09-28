@@ -60,16 +60,10 @@ export default function Welcome({ plans = [] }: { plans?: PlanProps[] }) {
 
                     <div className="flex items-center gap-2 sm:gap-3">
                         <Link
-                            href="/super-admin/login"
-                            className="px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold text-xs rounded-xl transition hidden md:inline-flex items-center gap-1.5"
-                        >
-                            👑 Portal Super Admin
-                        </Link>
-                        <Link
                             href="/login"
                             className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold text-xs rounded-xl transition"
                         >
-                            ⚡ Coba Demo / Login
+                            Masuk ke Toko
                         </Link>
                         <Link
                             href="/register"
@@ -107,7 +101,7 @@ export default function Welcome({ plans = [] }: { plans?: PlanProps[] }) {
                         href="/login"
                         className="w-full sm:w-auto px-8 py-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-bold text-sm rounded-2xl transition flex items-center justify-center gap-2"
                     >
-                        <span>⚡ Coba Demo Aplikasi Instan</span>
+                        <span>Masuk ke Akun Toko</span>
                     </Link>
                 </div>
             </section>
@@ -364,8 +358,7 @@ export default function Welcome({ plans = [] }: { plans?: PlanProps[] }) {
 
                     <div className="flex items-center gap-4 text-slate-400 font-bold">
                         <Link href="/login" className="hover:text-white transition">Login Toko</Link>
-                        <Link href="/super-admin/login" className="hover:text-purple-400 transition">Super Admin</Link>
-                        <Link href="/register" className="hover:text-blue-400 transition">Daftar Trial</Link>
+                        <Link href="/register" className="hover:text-blue-400 transition">Daftar Trial 14 Hari</Link>
                     </div>
 
                     <div className="font-mono text-[10px] text-slate-600">
