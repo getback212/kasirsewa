@@ -13,15 +13,11 @@ class AuditLogController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        if (!$user->hasPermissionTo('view-audit-logs')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk melihat audit log sistem.');
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Menu Audit Log System hanya berwenang diakses oleh Super Admin SaaS.');
         }
 
         $query = AuditLog::with('user:id,name,email');
-
-        if (!$user->hasRole('SUPER_ADMIN')) {
-            $query->where('company_id', $user->company_id);
-        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
