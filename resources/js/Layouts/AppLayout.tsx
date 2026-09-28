@@ -147,7 +147,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         return permissions.includes(permission);
     };
 
-    const canSwitchOutlet = roles.includes('SUPER_ADMIN') || roles.includes('OWNER');
+    const canSwitchOutlet = (roles.includes('SUPER_ADMIN') && Boolean(tenantSubscription)) || roles.includes('OWNER');
 
     const handleLogout = () => {
         router.post('/logout');
@@ -269,7 +269,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 {/* DIRECT DASHBOARD BUTTON */}
                                 {hasPermission('view-dashboard') && (
                                     <Link
-                                        href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
+                                        href={roles.includes('SUPER_ADMIN') && !tenantSubscription ? '/admin/dashboard' : '/dashboard'}
                                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                                             (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard'))
                                                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
@@ -277,7 +277,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                         }`}
                                     >
                                         <LayoutDashboard className="w-3.5 h-3.5" />
-                                        <span>Dashboard</span>
+                                        <span>{roles.includes('SUPER_ADMIN') && !tenantSubscription ? 'Dashboard SaaS' : 'Dashboard Toko'}</span>
                                     </Link>
                                 )}
 
@@ -371,7 +371,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                         <div className="flex items-center gap-3">
                             
                             {/* OUTLET BADGE / DROPDOWN */}
-                            {currentOutlet && (
+                            {currentOutlet && (!roles.includes('SUPER_ADMIN') || tenantSubscription) && (
                                 <div className="relative">
                                     {canSwitchOutlet ? (
                                         <button 
