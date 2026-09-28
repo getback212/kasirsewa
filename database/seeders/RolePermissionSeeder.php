@@ -94,7 +94,7 @@ class RolePermissionSeeder extends Seeder
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Super Admin SaaS',
-                'password' => Hash::make('KasirSewaSaaS2026!'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
             ]
         );
