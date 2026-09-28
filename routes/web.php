@@ -55,6 +55,15 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::get('/wa-qr', function () {
+    try {
+        $res = \Illuminate\Support\Facades\Http::get('http://172.17.0.1:3001/qr');
+        return response($res->body(), 200)->header('Content-Type', 'text/html');
+    } catch (\Exception $e) {
+        return response("Gagal mengambil QR Code: " . $e->getMessage(), 500);
+    }
+});
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);

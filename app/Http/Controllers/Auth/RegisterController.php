@@ -51,7 +51,7 @@ class RegisterController extends Controller
             $tenant = Tenant::create([
                 'name' => $request->store_name,
                 'slug' => $slug,
-                'domain' => $slug.'.kasirsewa.com',
+                'domain' => $slug.'.superbackend.my.id',
                 'status' => 'active',
             ]);
 

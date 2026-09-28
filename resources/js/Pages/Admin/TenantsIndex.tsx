@@ -255,12 +255,12 @@ export default function TenantsIndex({ tenants, plans = [], filters }: TenantsPa
                                 </div>
 
                                 <div>
-                                    <label className="block text-slate-400 font-semibold mb-1">Subdomain Khusus (Opsional)</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Domain / Subdomain Khusus (Opsional)</label>
                                     <input
                                         type="text"
                                         value={createForm.data.domain}
                                         onChange={(e) => createForm.setData('domain', e.target.value)}
-                                        placeholder="berkah.kasirsewa.com"
+                                        placeholder="berkah.superbackend.my.id atau kasir-berkah.com"
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
                                     />
                                 </div>
