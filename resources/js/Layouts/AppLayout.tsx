@@ -282,7 +282,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 )}
 
                                 {/* DIRECT POS KASIR BUTTON */}
-                                {hasPermission('access-pos') && (
+                                {hasPermission('access-pos') && (!roles.includes('SUPER_ADMIN') || tenantSubscription) && (
                                     <Link
                                         href="/pos"
                                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
@@ -298,7 +298,16 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                                 {/* CATEGORY DROPDOWN BUTTONS ON TOPBAR */}
                                 {navigationGroups.map((group) => {
-                                    const filteredItems = group.items.filter(item => hasPermission(item.permission));
+                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id !== 'saas_admin' && group.id !== 'laporan') {
+                                        return null;
+                                    }
+
+                                    let filteredItems = group.items.filter(item => hasPermission(item.permission));
+
+                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id === 'laporan') {
+                                        filteredItems = filteredItems.filter(item => item.path === '/audit-logs' || item.path === '/backups');
+                                    }
+
                                     if (filteredItems.length === 0) return null;
 
                                     const isCategoryActive = group.items.some(item => isCurrentRoute(item.path));
@@ -471,7 +480,16 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             {mobileMenuOpen && (
                 <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
                     {navigationGroups.map((group, idx) => {
-                        const filteredItems = group.items.filter(item => hasPermission(item.permission));
+                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id !== 'saas_admin' && group.id !== 'laporan') {
+                            return null;
+                        }
+
+                        let filteredItems = group.items.filter(item => hasPermission(item.permission));
+
+                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id === 'laporan') {
+                            filteredItems = filteredItems.filter(item => item.path === '/audit-logs' || item.path === '/backups');
+                        }
+
                         if (filteredItems.length === 0) return null;
 
                         return (
