@@ -17,8 +17,11 @@ class AuditLogController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk melihat audit log sistem.');
         }
 
-        $query = AuditLog::with('user:id,name,email')
-            ->where('company_id', $user->company_id);
+        $query = AuditLog::with('user:id,name,email');
+
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            $query->where('company_id', $user->company_id);
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -37,5 +40,30 @@ class AuditLogController extends Controller
             'logs' => $logs,
             'filters' => $request->only(['search']),
         ]);
+    }
+
+    public function destroy(Request $request, int $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Hanya Super Admin yang berwenang menghapus audit log.');
+        }
+
+        $log = AuditLog::findOrFail($id);
+        $log->delete();
+
+        return redirect()->back()->with('success', "Baris audit log #{$id} berhasil dihapus/disembunyikan.");
+    }
+
+    public function clear(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Hanya Super Admin yang berwenang membersihkan audit log.');
+        }
+
+        AuditLog::truncate();
+
+        return redirect()->back()->with('success', 'Seluruh riwayat audit log sistem berhasil dibersihkan.');
     }
 }

@@ -183,6 +183,8 @@ Route::middleware('auth')->group(function () {
 
     // System Audit Logs & Backup/Restore
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit_logs.index');
+    Route::delete('/audit-logs/clear', [AuditLogController::class, 'clear'])->name('audit_logs.clear');
+    Route::delete('/audit-logs/{id}', [AuditLogController::class, 'destroy'])->name('audit_logs.destroy');
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups/run', [BackupController::class, 'runBackup'])->name('backups.run');
     Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');

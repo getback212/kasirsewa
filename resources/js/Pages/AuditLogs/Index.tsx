@@ -52,9 +52,23 @@ export default function AuditLogsIndex({ logs, filters }: AuditLogsPageProps) {
                         </p>
                     </div>
 
-                    <span className="px-3.5 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-mono font-bold">
-                        {logs.total} Total Audit Records
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="px-3.5 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-mono font-bold">
+                            {logs.total} Total Audit Records
+                        </span>
+                        {auth.roles.includes('SUPER_ADMIN') && logs.total > 0 && (
+                            <button
+                                onClick={() => {
+                                    if (confirm('⚠️ Apakah Anda yakin ingin membersihkan SELURUH riwayat audit log sistem?')) {
+                                        router.delete('/audit-logs/clear');
+                                    }
+                                }}
+                                className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition cursor-pointer"
+                            >
+                                🧹 Bersihkan Semua Log
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* SEARCH TOOLBAR */}
@@ -116,13 +130,26 @@ export default function AuditLogsIndex({ logs, filters }: AuditLogsPageProps) {
                                                 {log.model_type ? `${log.model_type} #${log.model_id || ''}` : '-'}
                                             </td>
                                             <td className="p-4 text-slate-400">{log.ip_address}</td>
-                                            <td className="p-4 text-right font-sans">
+                                            <td className="p-4 text-right font-sans space-x-1.5">
                                                 <button
                                                     onClick={() => setSelectedLog(log)}
                                                     className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
                                                 >
                                                     <Eye className="w-3.5 h-3.5" /> Detail JSON
                                                 </button>
+                                                {auth.roles.includes('SUPER_ADMIN') && (
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm(`⚠️ Hapus baris audit log #${log.id}?`)) {
+                                                                router.delete(`/audit-logs/${log.id}`);
+                                                            }
+                                                        }}
+                                                        className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold cursor-pointer"
+                                                        title="Hapus baris log ini"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
