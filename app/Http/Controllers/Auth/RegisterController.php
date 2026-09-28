@@ -164,7 +164,7 @@ class RegisterController extends Controller
                 'active_outlet_id' => $outlet->id,
             ]);
 
-            return redirect('/')->with('success', "Selamat datang di KasirSewa! Toko {$tenant->name} berhasil mendaftar dengan Masa Trial Gratis 14 Hari.");
+            return redirect('/dashboard')->with('success', "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar dengan Masa Trial Gratis 14 Hari.");
         });
     }
 }
