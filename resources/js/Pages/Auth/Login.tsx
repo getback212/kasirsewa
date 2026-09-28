@@ -99,14 +99,13 @@ export default function Login() {
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                            <button
-                                type="button"
-                                onClick={() => fillAccount('admin@example.com', 'password')}
-                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 rounded-xl text-left transition cursor-pointer group"
+                            <a
+                                href="/super-admin/login"
+                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 rounded-xl text-left transition cursor-pointer group block"
                             >
                                 <div className="font-bold text-purple-400 group-hover:text-purple-300">👑 Super Admin</div>
-                                <div className="text-[10px] text-slate-500">SaaS Platform Owner</div>
-                            </button>
+                                <div className="text-[10px] text-slate-500">Portal Login Khusus →</div>
+                            </a>
 
                             <button
                                 type="button"

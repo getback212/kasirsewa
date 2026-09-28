@@ -18,13 +18,27 @@ class AuthenticatedSessionController extends Controller
         return Inertia::render('Auth/Login');
     }
 
+    public function createSuperAdmin(): Response
+    {
+        return Inertia::render('Auth/SuperAdminLogin');
+    }
+
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
-        $request->session()->regenerate();
-
         $user = Auth::user();
+
+        if ($user && $user->hasRole('SUPER_ADMIN')) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect('/super-admin/login')->withErrors([
+                'email' => '🔒 Akun Super Admin SaaS wajib masuk melalui Portal Login Khusus Super Admin (/super-admin/login).',
+            ]);
+        }
+
+        $request->session()->regenerate();
 
         if ($user) {
             session([
@@ -40,10 +54,6 @@ class AuthenticatedSessionController extends Controller
             newValues: ['email' => $user->email, 'name' => $user->name]
         );
 
-        if ($user && $user->hasRole('SUPER_ADMIN')) {
-            return redirect()->intended('/admin/dashboard');
-        }
-
         if ($user && $user->hasRole('CASHIER')) {
             return redirect()->intended('/pos');
         }
@@ -52,7 +62,34 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended('/inventory');
         }
 
-        return redirect()->intended('/');
+        return redirect()->intended('/dashboard');
+    }
+
+    public function storeSuperAdmin(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+
+        $user = Auth::user();
+
+        if ($user && !$user->hasRole('SUPER_ADMIN')) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect('/login')->withErrors([
+                'email' => '🔒 Portal ini khusus untuk Super Admin SaaS. Untuk akun Toko/Kasir, silahkan login di sini.',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        AuditLogService::log(
+            action: 'SUPER_ADMIN_LOGIN',
+            modelType: 'User',
+            modelId: $user->id,
+            newValues: ['email' => $user->email, 'name' => $user->name]
+        );
+
+        return redirect()->intended('/admin/dashboard');
     }
 
     public function destroy(Request $request): RedirectResponse

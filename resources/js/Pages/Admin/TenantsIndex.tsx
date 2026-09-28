@@ -202,6 +202,13 @@ export default function TenantsIndex({ tenants, plans = [], filters }: TenantsPa
                                             </td>
                                             <td className="p-4 text-right font-sans space-x-2">
                                                 <button
+                                                    onClick={() => router.post(`/admin/tenants/${t.id}/impersonate`)}
+                                                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                                    title="Login sebagai tenant ini"
+                                                >
+                                                    <Store className="w-3.5 h-3.5 text-emerald-400" /> Impersonate
+                                                </button>
+                                                <button
                                                     onClick={() => openEditModal(t)}
                                                     className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
                                                 >

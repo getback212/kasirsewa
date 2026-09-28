@@ -54,6 +54,8 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('/super-admin/login', [AuthenticatedSessionController::class, 'createSuperAdmin'])->name('superadmin.login');
+    Route::post('/super-admin/login', [AuthenticatedSessionController::class, 'storeSuperAdmin']);
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);
 });
@@ -67,6 +69,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/tenants', [TenantController::class, 'store'])->name('admin.tenants.store');
     Route::put('/admin/tenants/{id}', [TenantController::class, 'update'])->name('admin.tenants.update');
     Route::delete('/admin/tenants/{id}', [TenantController::class, 'destroy'])->name('admin.tenants.destroy');
+    Route::post('/admin/tenants/{id}/impersonate', [TenantController::class, 'impersonate'])->name('admin.tenants.impersonate');
+    Route::post('/admin/tenants/stop-impersonate', [TenantController::class, 'stopImpersonate'])->name('admin.tenants.stop_impersonate');
 
     Route::get('/admin/plans', [PlanController::class, 'index'])->name('admin.plans.index');
     Route::post('/admin/plans', [PlanController::class, 'store'])->name('admin.plans.store');

@@ -163,4 +163,31 @@ class TenantController extends Controller
 
         return redirect()->back()->with('success', "Tenant toko '{$tenantName}' beserta seluruh relasi data berhasil dihapus!");
     }
+
+    public function impersonate(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Aksi ini hanya untuk Super Admin.');
+        }
+
+        $tenant = Tenant::findOrFail($id);
+        session(['active_tenant_id' => $tenant->id]);
+
+        AuditLogService::log('SAAS_TENANT_IMPERSONATE', 'Tenant', $tenant->id, ['name' => $tenant->name]);
+
+        return redirect()->route('dashboard')->with('success', "Berhasil beralih konteks (Impersonate) ke Tenant '{$tenant->name}'!");
+    }
+
+    public function stopImpersonate(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            abort(403);
+        }
+
+        session()->forget('active_tenant_id');
+
+        return redirect()->route('admin.dashboard')->with('success', 'Kembali ke Konteks Super Admin SaaS.');
+    }
 }

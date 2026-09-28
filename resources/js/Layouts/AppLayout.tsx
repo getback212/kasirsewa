@@ -225,6 +225,22 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-white">
             
+            {/* IMPERSONATION NOTICE BANNER FOR SUPER ADMIN */}
+            {roles.includes('SUPER_ADMIN') && tenantSubscription && (
+                <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-slate-950 px-4 py-2 text-xs font-black flex items-center justify-between shadow-xl border-b border-amber-400">
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-slate-950 text-amber-400 rounded text-[10px] uppercase font-mono font-bold">IMPERSONATION MODE</span>
+                        <span>⚠️ Anda sedang dalam mode penyamaran/melihat toko tenant: <strong>{tenantSubscription.tenantName || 'Tenant Klien'}</strong></span>
+                    </div>
+                    <button 
+                        onClick={() => router.post('/admin/tenants/stop-impersonate')}
+                        className="px-3 py-1 bg-slate-950 hover:bg-slate-900 text-amber-300 rounded-lg text-[10px] font-extrabold uppercase border border-amber-400/40 cursor-pointer transition"
+                    >
+                        ✕ Stop Impersonate (Kembali ke SaaS Admin)
+                    </button>
+                </div>
+            )}
+
             {/* ========================================================================= */}
             {/* 🖥️ TOP NAVIGATION HEADER BAR (DI ATAS - COMPACT & MEWAH) */}
             {/* ========================================================================= */}
