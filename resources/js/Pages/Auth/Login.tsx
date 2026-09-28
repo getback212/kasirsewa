@@ -98,14 +98,23 @@ export default function Login() {
                             <span>Pilih Akun Demo Toko (Klik untuk Auto-Fill):</span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                            <button
+                                type="button"
+                                onClick={() => fillAccount('admin@example.com', 'password')}
+                                className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 rounded-xl text-left transition cursor-pointer group"
+                            >
+                                <div className="font-bold text-purple-400 group-hover:text-purple-300">👑 Super Admin</div>
+                                <div className="text-[10px] text-slate-500">SaaS Platform Owner</div>
+                            </button>
+
                             <button
                                 type="button"
                                 onClick={() => fillAccount('owner@example.test', 'password')}
                                 className="p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 rounded-xl text-left transition cursor-pointer group"
                             >
-                                <div className="font-bold text-emerald-400 group-hover:text-emerald-300">🏪 Owner BerkahPRO</div>
-                                <div className="text-[10px] text-slate-500">Tenant 1 (Full Access)</div>
+                                <div className="font-bold text-emerald-400 group-hover:text-emerald-300">🏪 Owner Toko</div>
+                                <div className="text-[10px] text-slate-500">Tenant Owner</div>
                             </button>
 
                             <button
