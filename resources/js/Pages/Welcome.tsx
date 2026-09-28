@@ -18,7 +18,7 @@ interface PlanProps {
     features?: string[];
 }
 
-export default function Welcome({ plans = [] }: { plans?: PlanProps[] }) {
+export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { plans?: PlanProps[]; waCsNumber?: string }) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -339,7 +339,7 @@ export default function Welcome({ plans = [] }: { plans?: PlanProps[] }) {
 
             {/* 6. FLOATING WHATSAPP CS BUTTON */}
             <a
-                href="https://wa.me/6281234567890?text=Halo%20Tim%20KasirSewa,%20saya%20ingin%20tanya%20mengenai%20platform%20SaaS%20POS%20Kasir"
+                href={`https://wa.me/${waCsNumber}?text=Halo%20Tim%20KasirSewa,%20saya%20ingin%20tanya%20mengenai%20platform%20SaaS%20POS%20Kasir`}
                 target="_blank"
                 rel="noreferrer"
                 className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-full shadow-2xl flex items-center gap-2 transition transform hover:scale-105"

@@ -48,7 +48,11 @@ Route::get('/', function () {
     }
     
     $plans = \App\Models\Plan::where('is_active', true)->get();
-    return \Inertia\Inertia::render('Welcome', ['plans' => $plans]);
+    $waCsNumber = \App\Models\SaaSSetting::get('wa_cs_number', '6281234567890');
+    return \Inertia\Inertia::render('Welcome', [
+        'plans' => $plans,
+        'waCsNumber' => $waCsNumber,
+    ]);
 })->name('home');
 
 Route::middleware('guest')->group(function () {

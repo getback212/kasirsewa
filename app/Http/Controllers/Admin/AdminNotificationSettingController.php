@@ -24,6 +24,7 @@ class AdminNotificationSettingController extends Controller
         $settings = [
             'wa_gateway_url' => SaaSSetting::get('wa_gateway_url', 'https://api.fonnte.com/send'),
             'wa_api_key' => SaaSSetting::get('wa_api_key', ''),
+            'wa_cs_number' => SaaSSetting::get('wa_cs_number', '6281234567890'),
             'enable_wa_notifications' => SaaSSetting::get('enable_wa_notifications', '1') === '1',
             'enable_email_notifications' => SaaSSetting::get('enable_email_notifications', '1') === '1',
             'scheduler_status' => 'ACTIVE 24/7 (Everyday at 00:00 WIB)',
@@ -45,12 +46,14 @@ class AdminNotificationSettingController extends Controller
         $validated = $request->validate([
             'wa_gateway_url' => ['required', 'string', 'url'],
             'wa_api_key' => ['nullable', 'string', 'max:255'],
+            'wa_cs_number' => ['required', 'string', 'max:30'],
             'enable_wa_notifications' => ['required', 'boolean'],
             'enable_email_notifications' => ['required', 'boolean'],
         ]);
 
         SaaSSetting::set('wa_gateway_url', $validated['wa_gateway_url']);
         SaaSSetting::set('wa_api_key', $validated['wa_api_key'] ?? '');
+        SaaSSetting::set('wa_cs_number', $validated['wa_cs_number']);
         SaaSSetting::set('enable_wa_notifications', $validated['enable_wa_notifications'] ? '1' : '0');
         SaaSSetting::set('enable_email_notifications', $validated['enable_email_notifications'] ? '1' : '0');
 

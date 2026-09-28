@@ -7,6 +7,7 @@ import type { PageProps } from '@/Types';
 interface SettingsData {
     wa_gateway_url: string;
     wa_api_key: string;
+    wa_cs_number: string;
     enable_wa_notifications: boolean;
     enable_email_notifications: boolean;
     scheduler_status: string;
@@ -22,6 +23,7 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
     const form = useForm({
         wa_gateway_url: settings?.wa_gateway_url || 'https://api.fonnte.com/send',
         wa_api_key: settings?.wa_api_key || '',
+        wa_cs_number: settings?.wa_cs_number || '6281234567890',
         enable_wa_notifications: settings?.enable_wa_notifications !== false,
         enable_email_notifications: settings?.enable_email_notifications !== false,
     });
@@ -149,6 +151,19 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
                                     className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono text-xs"
                                 />
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-slate-400 font-semibold mb-1">Nomor WhatsApp CS Support (Tombol Floating Landing Page)</label>
+                            <input
+                                type="text"
+                                required
+                                value={form.data.wa_cs_number}
+                                onChange={(e) => form.setData('wa_cs_number', e.target.value)}
+                                placeholder="6281234567890"
+                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono text-xs font-bold"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1">Nomor WA CS (format 62xxx) yang menerima pesan konsultasi calon klien dari tombol melayang di landing page.</p>
                         </div>
 
                         <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
