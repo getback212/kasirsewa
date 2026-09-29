@@ -277,7 +277,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register"
                             className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-2xl text-center shadow-lg shadow-blue-600/30 transition block mt-6"
                         >
-                            Daftar Business Pro
+                            Daftar Pro (Trial 7 Hari)
                         </Link>
                     </div>
 
@@ -358,7 +358,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
 
                     <div className="flex items-center gap-4 text-slate-400 font-bold">
                         <Link href="/login" className="hover:text-white transition">Login Toko</Link>
-                        <Link href="/register" className="hover:text-blue-400 transition">Daftar Trial 14 Hari</Link>
+                        <Link href="/register" className="hover:text-blue-400 transition">Daftar Trial 7 Hari</Link>
                     </div>
 
                     <div className="font-mono text-[10px] text-slate-600">

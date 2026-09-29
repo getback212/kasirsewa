@@ -36,7 +36,7 @@ export default function Register({ plans = [] }: RegisterProps) {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 font-sans selection:bg-blue-500 selection:text-white">
-            <Head title="Daftar Toko Baru - Trial Gratis 14 Hari KasirSewa" />
+            <Head title="Daftar Toko Baru - Trial Gratis 7 Hari KasirSewa" />
 
             <div className="w-full max-w-xl space-y-6 my-8">
                 
@@ -202,7 +202,7 @@ export default function Register({ plans = [] }: RegisterProps) {
                             className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-2xl shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 active:scale-95 mt-4"
                         >
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>{processing ? 'Mendaftarkan Toko...' : 'Mulai Masa Trial 14 Hari Gratis'}</span>
+                            <span>{processing ? 'Mendaftarkan Toko...' : 'Mulai Masa Trial 7 Hari Gratis'}</span>
                         </button>
                     </form>
 

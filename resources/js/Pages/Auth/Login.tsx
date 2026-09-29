@@ -94,7 +94,7 @@ export default function Login() {
                     <div className="pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
                         Belum punya akun toko?{' '}
                         <a href="/register" className="text-blue-400 font-bold hover:underline">
-                            Daftar Toko Baru (Trial 14 Hari Gratis) →
+                            Daftar Toko Baru (Trial 7 Hari Gratis) →
                         </a>
                     </div>
 

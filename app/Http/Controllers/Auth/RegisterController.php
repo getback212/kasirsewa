@@ -88,11 +88,12 @@ class RegisterController extends Controller
             $owner->assignRole(UserRole::OWNER->value);
             $tenant->update(['owner_id' => $owner->id]);
 
-            // 4. Create Initial Subscription (7-Day Free Trial ONLY for Starter plan)
+            // 4. Create Initial Subscription (7-Day Free Trial for Starter & Pro plans)
             $plan = Plan::findOrFail($request->plan_id);
-            $isStarter = str_contains(strtolower($plan->slug), 'starter');
+            $slugLower = strtolower($plan->slug);
+            $isTrialPlan = str_contains($slugLower, 'starter') || str_contains($slugLower, 'pro');
 
-            if ($isStarter) {
+            if ($isTrialPlan) {
                 $trialEndsAt = now()->addDays(7);
                 $status = 'trial';
                 $expiresAt = $trialEndsAt;
@@ -129,7 +130,7 @@ class RegisterController extends Controller
                 'due_at' => $trialEndsAt ?? now()->addDays(1),
             ]);
 
-            $desc = $isStarter 
+            $desc = $isTrialPlan 
                 ? "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle}) - Masa Trial 7 Hari"
                 : "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle})";
 
@@ -178,7 +179,7 @@ class RegisterController extends Controller
                 'active_outlet_id' => $outlet->id,
             ]);
 
-            $welcomeMsg = $isStarter 
+            $welcomeMsg = $isTrialPlan 
                 ? "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar dengan Masa Trial Gratis 7 Hari."
                 : "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar.";
 
