@@ -241,6 +241,22 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 </div>
             )}
 
+            {/* WHATSAPP VERIFICATION NOTICE BANNER FOR GOOGLE LOGGED-IN USERS */}
+            {user && user.google_id && !user.phone_verified_at && !roles.includes('SUPER_ADMIN') && (
+                <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-2.5 text-xs font-bold flex flex-col sm:flex-row items-center justify-between shadow-xl border-b border-blue-400 gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-white text-blue-900 rounded text-[10px] uppercase font-mono font-black">📲 VERIFIKASI WA</span>
+                        <span>⚠️ Akun Google Anda belum terverifikasi nomor WhatsApp. Silakan lengkapi dan verifikasi nomor WhatsApp untuk notifikasi transaksi toko.</span>
+                    </div>
+                    <Link 
+                        href="/users"
+                        className="px-3 py-1 bg-white text-blue-950 hover:bg-slate-100 rounded-lg text-[10px] font-black uppercase shadow cursor-pointer transition shrink-0"
+                    >
+                        Verifikasi WhatsApp Sekarang →
+                    </Link>
+                </div>
+            )}
+
             {/* ========================================================================= */}
             {/* 🖥️ TOP NAVIGATION HEADER BAR (DI ATAS - COMPACT & MEWAH) */}
             {/* ========================================================================= */}

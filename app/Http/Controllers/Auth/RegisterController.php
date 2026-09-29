@@ -81,7 +81,9 @@ class RegisterController extends Controller
                 'outlet_id' => $outlet->id,
                 'name' => $request->owner_name,
                 'email' => $request->email,
+                'phone' => $request->phone,
                 'password' => Hash::make($request->password),
+                'email_verified_at' => null,
                 'is_active' => true,
             ]);
 

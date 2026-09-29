@@ -18,10 +18,14 @@ class User extends Authenticatable
         'outlet_id',
         'name',
         'email',
+        'phone',
         'password',
         'google_id',
         'avatar',
         'is_active',
+        'phone_verified_at',
+        'phone_otp',
+        'phone_otp_expires_at',
     ];
 
     protected $hidden = [
@@ -33,6 +37,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'phone_otp_expires_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];

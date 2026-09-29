@@ -38,6 +38,15 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        if ($user && $user->google_id === null && $user->email_verified_at === null) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect('/login')->withErrors([
+                'email' => '✉️ Email Anda belum diverifikasi. Untuk akun yang mendaftar secara manual, silakan lakukan verifikasi email terlebih dahulu atau masuk via Google SSO.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
         if ($user) {
