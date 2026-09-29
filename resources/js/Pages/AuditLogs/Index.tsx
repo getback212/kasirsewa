@@ -26,7 +26,7 @@ interface AuditLogsPageProps extends PageProps {
     filters: { search?: string };
 }
 
-export default function AuditLogsIndex({ logs, filters }: AuditLogsPageProps) {
+export default function AuditLogsIndex({ auth, logs, filters }: AuditLogsPageProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
 
@@ -56,7 +56,7 @@ export default function AuditLogsIndex({ logs, filters }: AuditLogsPageProps) {
                         <span className="px-3.5 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-mono font-bold">
                             {logs.total} Total Audit Records
                         </span>
-                        {auth.roles.includes('SUPER_ADMIN') && logs.total > 0 && (
+                        {auth?.roles?.includes('SUPER_ADMIN') && logs.total > 0 && (
                             <button
                                 onClick={() => {
                                     if (confirm('⚠️ Apakah Anda yakin ingin membersihkan SELURUH riwayat audit log sistem?')) {
@@ -137,7 +137,7 @@ export default function AuditLogsIndex({ logs, filters }: AuditLogsPageProps) {
                                                 >
                                                     <Eye className="w-3.5 h-3.5" /> Detail JSON
                                                 </button>
-                                                {auth.roles.includes('SUPER_ADMIN') && (
+                                                {auth?.roles?.includes('SUPER_ADMIN') && (
                                                     <button
                                                         onClick={() => {
                                                             if (confirm(`⚠️ Hapus baris audit log #${log.id}?`)) {
