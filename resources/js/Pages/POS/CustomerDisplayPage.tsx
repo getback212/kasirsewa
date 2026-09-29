@@ -96,9 +96,22 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
         };
         window.addEventListener('storage', handleStorage);
 
+        // Polling fallback for cross-device dual display (Laptop Kasir <-> Tablet Pembeli)
+        const pollInterval = setInterval(() => {
+            fetch('/pos/customer-display/state')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.type) {
+                        updateStateIfValid(data);
+                    }
+                })
+                .catch(() => {});
+        }, 1000);
+
         return () => {
             channel.removeEventListener('message', handleMessage);
             window.removeEventListener('storage', handleStorage);
+            clearInterval(pollInterval);
             channel.close();
         };
     }, []);

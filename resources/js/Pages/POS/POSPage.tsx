@@ -253,6 +253,7 @@ export default function POSPage({
         };
         channel.postMessage(stateData);
         localStorage.setItem('pos_customer_display_state', JSON.stringify(stateData));
+        axios.post('/pos/customer-display/state', stateData).catch(() => {});
 
         return () => channel.close();
     }, [cart, subtotal, transactionDiscount, taxAmount, grandTotal]);

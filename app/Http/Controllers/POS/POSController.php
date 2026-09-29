@@ -127,6 +127,33 @@ class POSController extends Controller
         ]);
     }
 
+    public function broadcastState(Request $request)
+    {
+        $user = $request->user();
+        $outletId = session('active_outlet_id', $user->outlet_id ?? 1);
+        
+        \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outletId}", $request->all(), 3600);
+
+        return response()->json(['status' => true]);
+    }
+
+    public function getState(Request $request)
+    {
+        $user = $request->user();
+        $outletId = session('active_outlet_id', $user->outlet_id ?? 1);
+        
+        $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_{$outletId}", [
+            'type' => 'CART_UPDATE',
+            'items' => [],
+            'subtotal' => 0,
+            'discountAmount' => 0,
+            'taxAmount' => 0,
+            'grandTotal' => 0,
+        ]);
+
+        return response()->json($state);
+    }
+
     public function holdCart(Request $request): RedirectResponse
     {
         $user = $request->user();
