@@ -282,7 +282,7 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                 </div>
                             )}
                         </div>
-                    ) : (cartState.selectedMethod === 'qris' || cartState.qrisImgSrc || showQrisManual) ? (
+                    ) : (cartState.selectedMethod === 'qris' || cartState.qrisImgSrc || showQrisManual || cartState.type === 'CHECKOUT_START') ? (
                         <div className="bg-slate-900 border-2 border-emerald-500/40 p-6 rounded-3xl flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                             <div className="flex items-center gap-1.5 bg-white text-slate-950 px-3 py-1 rounded-lg font-black text-xs tracking-wider">
                                 <QrCode className="w-4 h-4 text-rose-600" />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { CreditCard, QrCode, Banknote, Landmark, AlertCircle, X } from 'lucide-react';
 
 interface PaymentModalProps {
@@ -64,6 +65,7 @@ export default function PaymentModal({
         };
         channel.postMessage(stateData);
         localStorage.setItem('pos_customer_display_state', JSON.stringify(stateData));
+        axios.post('/pos/customer-display/state', { ...stateData, outlet_id: currentOutlet?.id }).catch(() => {});
         return () => channel.close();
     }, [selectedMethod, grandTotal, items, subtotal, discountAmount, taxAmount, qrisImgSrc]);
 
@@ -157,6 +159,7 @@ export default function PaymentModal({
                 };
                 channel.postMessage(successState);
                 localStorage.setItem('pos_customer_display_state', JSON.stringify(successState));
+                axios.post('/pos/customer-display/state', { ...successState, outlet_id: currentOutlet?.id }).catch(() => {});
                 channel.close();
 
                 onSuccess(data.sale);
