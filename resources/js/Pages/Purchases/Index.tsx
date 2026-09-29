@@ -70,7 +70,7 @@ export default function PurchasesIndex({ purchases, suppliers, products }: Purch
     });
 
     const supplierForm = useForm({
-        code: `SUPP-00${suppliers.length + 1}`,
+        code: `SUPP-${Math.floor(100 + Math.random() * 900)}`,
         name: '',
         phone: '',
         email: '',

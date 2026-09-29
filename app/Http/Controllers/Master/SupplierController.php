@@ -51,8 +51,10 @@ class SupplierController extends Controller
 
         $supplier = Supplier::where('company_id', $user->company_id)->findOrFail($id);
 
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', Rule::unique('suppliers', 'code')->ignore($supplier->id)],
+            'code' => ['required', 'string', 'max:50', Rule::unique('suppliers', 'code')->ignore($supplier->id)->where('tenant_id', $tenantId)],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
