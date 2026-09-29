@@ -44,6 +44,7 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
         return outlet?.code || '';
     });
     const [showPairModal, setShowPairModal] = useState(false);
+    const [showQrisManual, setShowQrisManual] = useState(false);
 
     const handleSavePairing = (code: string) => {
         setPairingCode(code);
@@ -281,7 +282,7 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                 </div>
                             )}
                         </div>
-                    ) : isCheckoutPending && cartState.selectedMethod === 'qris' ? (
+                    ) : (cartState.selectedMethod === 'qris' || cartState.qrisImgSrc || showQrisManual) ? (
                         <div className="bg-slate-900 border-2 border-emerald-500/40 p-6 rounded-3xl flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                             <div className="flex items-center gap-1.5 bg-white text-slate-950 px-3 py-1 rounded-lg font-black text-xs tracking-wider">
                                 <QrCode className="w-4 h-4 text-rose-600" />
@@ -294,26 +295,41 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                         outlet?.qris_image_url ||
                                         (outlet?.qris_payload
                                             ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(outlet.qris_payload)}`
-                                            : `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=00020101021226680016ID.CO.QRIS.WWW01189360091800000000000215ID10203040506070303UMI52045812530336054${grandTotal}5802ID5913RETAILPRO POS6013JAKARTA SELATAN6304`)
+                                            : `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=00020101021226680016ID.CO.QRIS.WWW01189360091800000000000215ID10203040506070303UMI52045812530336054${grandTotal || 10000}5802ID5913${encodeURIComponent(cartState.outlet_name || outlet?.name || 'KasirSewa Store')}6013JAKARTA6304`)
                                     }
                                     alt="Kode QRIS Layar Pelanggan Toko Resmi"
-                                    className="w-52 h-52 object-contain rounded-lg"
+                                    className="w-56 h-56 object-contain rounded-lg"
                                 />
                             </div>
                             <div>
                                 <h4 className="font-black text-base text-white tracking-wide">SCAN KODE QRIS DI ATAS</h4>
                                 <p className="text-xs text-slate-400 mt-1 max-w-xs">Gunakan BCA Mobile, Livin Mandiri, BRImo, BSI, GoPay, OVO, ShopeePay, atau Dana.</p>
+                                <button
+                                    onClick={() => setShowQrisManual(false)}
+                                    className="mt-3 text-[11px] text-amber-400 hover:underline font-bold"
+                                >
+                                    ✕ Sembunyikan QRIS
+                                </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex items-center gap-4 shadow-lg">
-                            <div className="p-3 bg-emerald-600/20 text-emerald-400 rounded-2xl shrink-0">
-                                <Sparkles className="w-6 h-6" />
+                        <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex items-center justify-between shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-emerald-600/20 text-emerald-400 rounded-2xl shrink-0">
+                                    <Sparkles className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-extrabold text-xs text-white">KasirSewa Guarantee</h4>
+                                    <p className="text-[11px] text-slate-400 leading-snug">Jaminan harga pas & akurat. Layanan struk fisik & digital otomatis.</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-extrabold text-xs text-white">RetailPRO Guarantee</h4>
-                                <p className="text-[11px] text-slate-400 leading-snug">Jaminan harga pas & akurat. Layanan struk fisik & digital otomatis.</p>
-                            </div>
+                            <button
+                                onClick={() => setShowQrisManual(true)}
+                                className="px-3.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                            >
+                                <QrCode className="w-4 h-4" />
+                                <span>Tampilkan QRIS</span>
+                            </button>
                         </div>
                     )}
 
