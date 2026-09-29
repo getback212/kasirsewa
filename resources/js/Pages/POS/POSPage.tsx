@@ -430,18 +430,30 @@ export default function POSPage({
                                     <span className="hidden md:inline">Layar Pelanggan</span>
                                 </button>
                                 {activeOutlet?.id && (
-                                    <span
+                                    <button
+                                        type="button"
                                         onClick={() => {
                                             const codeToken = `DISP-${activeOutlet.id}`;
                                             const url = `https://superbackend.my.id/pos/customer-display?code=${codeToken}`;
-                                            navigator.clipboard.writeText(url);
-                                            alert(`📋 Link Layar Pembeli disalin!\n\nKode Pairing Unik: ${codeToken}\nBuka link ini di HP/Tablet kedua:\n${url}`);
+                                            if (navigator.clipboard && window.isSecureContext) {
+                                                navigator.clipboard.writeText(url);
+                                            } else {
+                                                const textArea = document.createElement("textarea");
+                                                textArea.value = url;
+                                                document.body.appendChild(textArea);
+                                                textArea.select();
+                                                document.execCommand('copy');
+                                                document.body.removeChild(textArea);
+                                            }
+                                            alert(`📋 LINK LAYAR PEMBELI BERHASIL DISALIN!\n\nKode Pairing: ${codeToken}\nTautan: ${url}\n\nSilakan buka / tempel (paste) link ini di peramban HP, Tablet, atau Smart TV kedua Anda.`);
                                         }}
-                                        className="px-3 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-2xl text-xs font-mono font-bold cursor-pointer transition flex items-center gap-1"
-                                        title="Klik untuk menyalin Link & Kode Pairing Layar Pembeli beda perangkat"
+                                        className="px-3.5 py-3 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-400 border border-amber-500/30 rounded-2xl text-xs font-mono font-bold cursor-pointer transition flex items-center gap-1.5 shadow-sm"
+                                        title="Klik untuk menyalin Link Layar Pembeli (Pairing Code)"
                                     >
-                                        🔑 DISP-{activeOutlet.id}
-                                    </span>
+                                        <span>🔑</span>
+                                        <span>DISP-{activeOutlet.id}</span>
+                                        <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-300 font-sans font-semibold">Salin Link</span>
+                                    </button>
                                 )}
                             </div>
                         </div>
