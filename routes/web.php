@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/outlets', [OutletController::class, 'index'])->name('outlets.index');
     Route::post('/outlets', [OutletController::class, 'store'])->name('outlets.store');
     Route::put('/outlets/{id}', [OutletController::class, 'update'])->name('outlets.update');
+    Route::post('/outlets/domain', [OutletController::class, 'updateDomain'])->name('outlets.update_domain');
     Route::post('/outlets/{id}/switch', [OutletController::class, 'switchOutlet'])->name('outlets.switch');
 
     // Product & Master Data Management

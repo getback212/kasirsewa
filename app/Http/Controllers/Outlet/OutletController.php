@@ -23,11 +23,14 @@ class OutletController extends Controller
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
+        $tenant = Tenant::find($tenantId);
 
-        $outlets = Outlet::where('company_id', $user->company_id)
-            ->where(function ($q) use ($tenantId) {
+        $outlets = Outlet::where(function ($q) use ($tenantId, $user) {
+                if ($user->company_id) {
+                    $q->where('company_id', $user->company_id);
+                }
                 if ($tenantId) {
-                    $q->where('tenant_id', $tenantId);
+                    $q->orWhere('tenant_id', $tenantId);
                 }
             })
             ->latest()
@@ -35,6 +38,7 @@ class OutletController extends Controller
 
         return Inertia::render('Outlets/Index', [
             'outlets' => $outlets,
+            'tenant' => $tenant,
         ]);
     }
 
@@ -152,6 +156,38 @@ class OutletController extends Controller
         AuditLogService::log('OUTLET_UPDATE', 'Outlet', $outlet->id, ['name' => $outlet->name, 'code' => $outlet->code]);
 
         return redirect()->back()->with('success', 'Konfigurasi data outlet toko berhasil diperbarui!');
+    }
+
+    public function updateDomain(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
+            abort(403, 'Hanya Pemilik Toko (Owner) atau Super Admin yang berwenang mengubah subdomain toko.');
+        }
+
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $tenant = Tenant::findOrFail($tenantId);
+
+        $validated = $request->validate([
+            'domain' => ['required', 'string', 'max:255', Rule::unique('tenants', 'domain')->ignore($tenant->id)],
+        ], [
+            'domain.required' => 'Subdomain / Domain khusus wajib diisi.',
+            'domain.unique' => 'Subdomain / Domain tersebut sudah digunakan oleh toko lain.',
+        ]);
+
+        $cleanDomain = strtolower(trim($validated['domain']));
+        if (!str_contains($cleanDomain, '.')) {
+            $cleanDomain .= '.superbackend.my.id';
+        }
+
+        $tenant->update([
+            'domain' => $cleanDomain,
+        ]);
+
+        AuditLogService::log('TENANT_DOMAIN_UPDATE', 'Tenant', $tenant->id, ['domain' => $cleanDomain]);
+
+        return redirect()->back()->with('success', "Subdomain / Custom domain toko berhasil diperbarui ke '{$cleanDomain}'!");
     }
 
     public function switchOutlet(Request $request, int $id): RedirectResponse

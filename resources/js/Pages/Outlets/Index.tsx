@@ -20,9 +20,15 @@ interface OutletItem {
 
 interface OutletsPageProps extends PageProps {
     outlets: OutletItem[];
+    tenant?: {
+        id: number;
+        name: string;
+        slug: string;
+        domain: string | null;
+    };
 }
 
-export default function OutletsIndex({ outlets }: OutletsPageProps) {
+export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
     const { flash, auth, tenantSubscription } = usePage<OutletsPageProps & { auth: any; tenantSubscription: any }>().props;
 
     const currentOutlet = auth?.currentOutlet;
@@ -53,6 +59,17 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
         qris_image_url: '',
         is_active: true,
     });
+
+    const domainForm = useForm({
+        domain: tenant?.domain || (tenant?.slug ? `${tenant.slug}.superbackend.my.id` : ''),
+    });
+
+    const handleUpdateDomain = (e: React.FormEvent) => {
+        e.preventDefault();
+        domainForm.post('/outlets/domain', {
+            preserveScroll: true,
+        });
+    };
 
     const handleCreateOutlet = (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,7 +164,53 @@ export default function OutletsIndex({ outlets }: OutletsPageProps) {
                     </div>
                 )}
 
-                {/* FLASH NOTIFICATION */}
+                {/* SUBDOMAIN & CUSTOM DOMAIN SETTING CARD */}
+                {auth?.roles?.includes('OWNER') && (
+                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+                            <div>
+                                <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                                    <Store className="w-5 h-5 text-blue-400" /> Pengaturan Subdomain & Custom Domain Toko
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-1">
+                                    Kelola alamat subdomain bawaan SaaS atau pasang domain pribadi toko Anda untuk branding profesional.
+                                </p>
+                            </div>
+
+                            <span className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-mono font-bold">
+                                {tenant?.domain || (tenant?.slug ? `${tenant.slug}.superbackend.my.id` : 'Domain Aktif')}
+                            </span>
+                        </div>
+
+                        <form onSubmit={handleUpdateDomain} className="space-y-4 pt-2">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-300 mb-1.5">Alamat Subdomain / Domain Pribadi Toko</label>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="text"
+                                        required
+                                        value={domainForm.data.domain}
+                                        onChange={(e) => domainForm.setData('domain', e.target.value)}
+                                        placeholder="contoh-toko.superbackend.my.id atau tokoberkah.id"
+                                        className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-xs text-white placeholder-slate-600 focus:border-blue-500 focus:outline-none font-mono"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={domainForm.processing}
+                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-xs rounded-2xl shadow-lg shadow-blue-600/30 transition cursor-pointer disabled:opacity-50 shrink-0"
+                                    >
+                                        {domainForm.processing ? '⏳ Menyimpan...' : 'Simpan Domain Toko'}
+                                    </button>
+                                </div>
+                                {domainForm.errors.domain && <p className="text-xs text-rose-400 mt-1">{domainForm.errors.domain}</p>}
+                            </div>
+
+                            <div className="p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl text-[11px] text-slate-400 leading-relaxed">
+                                💡 <strong>Panduan Custom Domain Pribadi:</strong> Jika menggunakan domain pribadi milik Anda sendiri (misal: <code>tokoberkah.com</code>), silakan arahkan DNS record <strong>CNAME</strong> atau <strong>A Record</strong> domain Anda ke IP VPS Server <code>superbackend.my.id</code>.
+                            </div>
+                        </form>
+                    </div>
+                )}
                 {flash.success && (
                     <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-semibold flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
