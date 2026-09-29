@@ -168,18 +168,19 @@ class UserController extends Controller
             }
         })->findOrFail($id);
 
-        if (!$request->filled('password')) {
-            $request->request->remove('password');
-        }
-
-        $validated = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:6'],
             'role' => ['required', 'string', Rule::in([UserRole::OWNER->value, UserRole::MANAGER->value, UserRole::CASHIER->value, UserRole::WAREHOUSE->value])],
             'outlet_id' => ['required', 'exists:outlets,id'],
             'is_active' => ['required', 'boolean'],
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = ['required', 'string', 'min:6'];
+        }
+
+        $validated = $request->validate($rules);
 
         $dataToUpdate = [
             'name' => $validated['name'],

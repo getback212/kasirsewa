@@ -102,10 +102,19 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
         e.preventDefault();
         if (!editingUser) return;
 
-        editForm.transform((data) => ({
-            ...data,
-            password: data.password ? data.password : undefined,
-        })).put(`/users/${editingUser.id}`, {
+        const payload: any = {
+            name: editForm.data.name,
+            email: editForm.data.email,
+            role: editForm.data.role,
+            outlet_id: editForm.data.outlet_id,
+            is_active: editForm.data.is_active,
+        };
+
+        if (editForm.data.password && editForm.data.password.trim() !== '') {
+            payload.password = editForm.data.password;
+        }
+
+        router.put(`/users/${editingUser.id}`, payload, {
             preserveScroll: true,
             onSuccess: () => {
                 setEditingUser(null);
