@@ -19,9 +19,11 @@ interface ReceiptPageProps extends PageProps {
     };
     textReceipt58: string;
     textReceipt80: string;
+    rawBtUrl58: string;
+    rawBtUrl80: string;
 }
 
-export default function ReceiptPage({ sale, textReceipt58, textReceipt80 }: ReceiptPageProps) {
+export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtUrl58, rawBtUrl80 }: ReceiptPageProps) {
     const [paperWidth, setPaperWidth] = useState<58 | 80>(58);
 
     const handlePrint = () => {
@@ -108,8 +110,15 @@ export default function ReceiptPage({ sale, textReceipt58, textReceipt80 }: Rece
                             onClick={handlePrint}
                             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
                         >
-                            <Printer className="w-4 h-4" /> Cetak Struk
+                            <Printer className="w-4 h-4" /> Cetak Browser
                         </button>
+
+                        <a
+                            href={paperWidth === 58 ? rawBtUrl58 : rawBtUrl80}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                        >
+                            <Printer className="w-4 h-4 text-blue-300" /> Cetak Bluetooth (RawBT)
+                        </a>
                     </div>
                 </div>
 

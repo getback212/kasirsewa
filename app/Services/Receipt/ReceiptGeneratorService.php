@@ -14,25 +14,25 @@ class ReceiptGeneratorService
         $width = $paperWidth === 80 ? 42 : 28;
         $divider = str_repeat('-', $width);
 
-        $lines = [];
-        $lines[] = $this->center(strtoupper($sale->outlet->name ?? 'STORE UTAMA'), $width);
+        $lines[] = $this->center('================================', $width);
+        $lines[] = $this->center(strtoupper($sale->outlet->name ?? 'KasirSewa Store'), $width);
         if ($sale->outlet->address) {
             $lines[] = $this->center($sale->outlet->address, $width);
         }
         if ($sale->outlet->phone) {
             $lines[] = $this->center("Telp: {$sale->outlet->phone}", $width);
         }
-        $lines[] = $divider;
+        $lines[] = $this->center('================================', $width);
 
         $formattedDate = $sale->sale_date instanceof \Carbon\Carbon 
             ? $sale->sale_date->format('d/m/Y H:i') 
             : \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y H:i');
 
-        $lines[] = "No  : {$sale->invoice_number}";
-        $lines[] = "Tgl : {$formattedDate}";
-        $lines[] = "Ksr : " . ($sale->cashier->name ?? 'Kasir');
+        $lines[] = "No Nota : {$sale->invoice_number}";
+        $lines[] = "Tgl Trans: {$formattedDate}";
+        $lines[] = "Kasir   : " . ($sale->cashier->name ?? 'Kasir Store');
         if ($sale->customer) {
-            $lines[] = "Plg : " . $sale->customer->name;
+            $lines[] = "Pembeli : " . $sale->customer->name;
         }
         $lines[] = $divider;
 
@@ -74,12 +74,19 @@ class ReceiptGeneratorService
         $lines[] = $this->twoColumns('Kembali', 'Rp ' . number_format($sale->change_amount, 0, ',', '.'), $width);
         $lines[] = $divider;
 
-        $lines[] = $this->center('Terima Kasih Atas Kunjungan Anda', $width);
+        $lines[] = $this->center('Terima Kasih Telah Berbelanja!', $width);
+        $lines[] = $this->center('Simpan Struk Ini Sebagai Bukti', $width);
         $lines[] = $this->center('Barang Yang Sudah Dibeli', $width);
         $lines[] = $this->center('Tidak Dapat Ditukar/Dikembalikan', $width);
-        $lines[] = $divider;
+        $lines[] = $this->center('================================', $width);
 
         return implode("\n", $lines);
+    }
+
+    public function generateRawBtUrl(Sale $sale, int $paperWidth = 58): string
+    {
+        $text = $this->formatTextReceipt($sale, $paperWidth);
+        return "intent:#Intent;scheme=rawbt;package=ru.a404.rawbt;S.txt=" . urlencode($text) . ";end;";
     }
 
     private function center(string $text, int $width): string
