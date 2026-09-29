@@ -88,17 +88,27 @@ class RegisterController extends Controller
             $owner->assignRole(UserRole::OWNER->value);
             $tenant->update(['owner_id' => $owner->id]);
 
-            // 4. Create Initial Subscription (14-Day Free Trial)
+            // 4. Create Initial Subscription (7-Day Free Trial ONLY for Starter plan)
             $plan = Plan::findOrFail($request->plan_id);
-            $trialEndsAt = now()->addDays(14);
+            $isStarter = str_contains(strtolower($plan->slug), 'starter');
+
+            if ($isStarter) {
+                $trialEndsAt = now()->addDays(7);
+                $status = 'trial';
+                $expiresAt = $trialEndsAt;
+            } else {
+                $trialEndsAt = null;
+                $status = 'pending_payment';
+                $expiresAt = $request->billing_cycle === 'yearly' ? now()->addYear() : now()->addMonth();
+            }
 
             $subscription = Subscription::create([
                 'tenant_id' => $tenant->id,
                 'plan_id' => $plan->id,
-                'status' => 'trial',
+                'status' => $status,
                 'billing_cycle' => $request->billing_cycle,
                 'starts_at' => now(),
-                'expires_at' => $trialEndsAt,
+                'expires_at' => $expiresAt,
                 'trial_ends_at' => $trialEndsAt,
                 'auto_renew' => true,
             ]);
@@ -116,12 +126,16 @@ class RegisterController extends Controller
                 'tax' => 0,
                 'total' => $price,
                 'status' => 'pending',
-                'due_at' => $trialEndsAt,
+                'due_at' => $trialEndsAt ?? now()->addDays(1),
             ]);
+
+            $desc = $isStarter 
+                ? "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle}) - Masa Trial 7 Hari"
+                : "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle})";
 
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'description' => "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle}) - Masa Trial 14 Hari",
+                'description' => $desc,
                 'amount' => $price,
             ]);
 
@@ -164,7 +178,11 @@ class RegisterController extends Controller
                 'active_outlet_id' => $outlet->id,
             ]);
 
-            return redirect('/dashboard')->with('success', "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar dengan Masa Trial Gratis 14 Hari.");
+            $welcomeMsg = $isStarter 
+                ? "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar dengan Masa Trial Gratis 7 Hari."
+                : "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar.";
+
+            return redirect('/dashboard')->with('success', $welcomeMsg);
         });
     }
 }

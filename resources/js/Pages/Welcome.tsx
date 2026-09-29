@@ -69,7 +69,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register"
                             className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition active:scale-95"
                         >
-                            <span>Daftar Toko (Trial 14 Hari)</span>
+                            <span>Daftar Toko (Trial 7 Hari)</span>
                             <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
@@ -95,7 +95,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                         href="/register"
                         className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm rounded-2xl shadow-2xl shadow-blue-600/40 flex items-center justify-center gap-2 transition active:scale-95"
                     >
-                        <span>🚀 Daftar Toko Baru (Trial 14 Hari Gratis)</span>
+                        <span>🚀 Daftar Toko Baru (Trial 7 Hari Starter)</span>
                     </Link>
                     <Link
                         href="/login"
@@ -246,7 +246,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register"
                             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-2xl text-center transition block mt-6"
                         >
-                            Daftar Starter (Trial 14 Hari)
+                            Daftar Starter (Trial 7 Hari)
                         </Link>
                     </div>
 
@@ -277,7 +277,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register"
                             className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-2xl text-center shadow-lg shadow-blue-600/30 transition block mt-6"
                         >
-                            Daftar Pro (Trial 14 Hari)
+                            Daftar Business Pro
                         </Link>
                     </div>
 
@@ -304,7 +304,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register"
                             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-2xl text-center transition block mt-6"
                         >
-                            Daftar Enterprise (Trial 14 Hari)
+                            Daftar Enterprise Unlimited
                         </Link>
                     </div>
                 </div>

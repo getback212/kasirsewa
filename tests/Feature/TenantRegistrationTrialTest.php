@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class TenantRegistrationTrialTest extends TestCase
 {
-    public function test_prospective_tenant_can_register_and_starts_14_day_free_trial()
+    public function test_prospective_tenant_can_register_and_starts_7_day_free_trial_for_starter_plan()
     {
         $this->seed(\Database\Seeders\RolePermissionSeeder::class);
 
@@ -44,7 +44,7 @@ class TenantRegistrationTrialTest extends TestCase
         $this->assertNotNull($owner);
         $this->assertEquals($tenant->id, $owner->tenant_id);
 
-        // 3. Verify subscription is status 'trial' with 14-day duration
+        // 3. Verify subscription is status 'trial' with 7-day duration
         $subscription = Subscription::where('tenant_id', $tenant->id)->first();
         $this->assertNotNull($subscription);
         $this->assertEquals('trial', $subscription->status);

@@ -46,7 +46,7 @@ export default function Register({ plans = [] }: RegisterProps) {
                         <Building2 className="w-8 h-8" />
                     </div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[11px] font-bold text-emerald-400">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Trial Gratis 14 Hari • Tanpa Kartu Kredit
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Trial Gratis 7 Hari (Paket Starter) • Tanpa Kartu Kredit
                     </div>
                     <h1 className="text-2xl font-black tracking-tight text-white">Daftarkan Toko Anda di KasirSewa</h1>
                     <p className="text-xs text-slate-400 font-medium">Platform POS Kasir SaaS Multi-Tenant & Multi-Outlet Terpercaya</p>
