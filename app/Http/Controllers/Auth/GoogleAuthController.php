@@ -1,0 +1,196 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Outlet;
+use App\Models\Plan;
+use App\Models\Subscription;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\Unit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+
+class GoogleAuthController extends Controller
+{
+    public function redirectToGoogle(Request $request)
+    {
+        if ($request->has('plan_id')) {
+            session(['google_plan_id' => $request->input('plan_id')]);
+        }
+        if ($request->has('billing_cycle')) {
+            session(['google_billing_cycle' => $request->input('billing_cycle')]);
+        }
+
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            $user = User::where('google_id', $googleUser->getId())
+                ->orWhere('email', $googleUser->getEmail())
+                ->first();
+
+            if (!$user) {
+                // Self-register new Tenant via Google SSO
+                DB::transaction(function () use ($googleUser, &$user) {
+                    $googleName = $googleUser->getName() ?? $googleUser->getNickname() ?? 'Pengguna Google';
+                    $storeName = 'Toko ' . $googleName;
+                    $slug = Str::slug($storeName) . '-' . rand(100, 999);
+
+                    $tenant = Tenant::create([
+                        'name' => $storeName,
+                        'slug' => $slug,
+                        'domain' => $slug . '.superbackend.my.id',
+                        'status' => 'active',
+                    ]);
+
+                    $company = Company::create([
+                        'tenant_id' => $tenant->id,
+                        'name' => $storeName,
+                        'phone' => '0812' . rand(10000000, 99999999),
+                        'email' => $googleUser->getEmail(),
+                        'address' => 'Alamat Utama Store',
+                    ]);
+
+                    $outlet = Outlet::create([
+                        'company_id' => $company->id,
+                        'tenant_id' => $tenant->id,
+                        'name' => 'Outlet Pusat ' . $storeName,
+                        'code' => 'OUT-01',
+                        'phone' => '0812' . rand(10000000, 99999999),
+                        'address' => 'Alamat Outlet Pusat',
+                        'is_main' => true,
+                        'is_active' => true,
+                    ]);
+
+                    $user = User::create([
+                        'company_id' => $company->id,
+                        'tenant_id' => $tenant->id,
+                        'outlet_id' => $outlet->id,
+                        'name' => $googleName,
+                        'email' => $googleUser->getEmail(),
+                        'password' => Hash::make(Str::random(16)),
+                        'google_id' => $googleUser->getId(),
+                        'avatar' => $googleUser->getAvatar(),
+                        'is_active' => true,
+                    ]);
+
+                    $user->assignRole(UserRole::OWNER->value);
+                    $tenant->update(['owner_id' => $user->id]);
+
+                    $planId = session()->pull('google_plan_id');
+                    $billingCycle = session()->pull('google_billing_cycle', 'monthly');
+
+                    $plan = $planId ? Plan::find($planId) : null;
+                    if (!$plan) {
+                        $plan = Plan::where('slug', 'starter-basic')->first() ?? Plan::first();
+                    }
+
+                    $slugLower = strtolower($plan->slug ?? '');
+                    $isTrialPlan = str_contains($slugLower, 'starter') || str_contains($slugLower, 'pro');
+
+                    if ($isTrialPlan) {
+                        $trialEndsAt = now()->addDays(7);
+                        $status = 'trial';
+                        $expiresAt = $trialEndsAt;
+                    } else {
+                        $trialEndsAt = null;
+                        $status = 'pending_payment';
+                        $expiresAt = $billingCycle === 'yearly' ? now()->addYear() : now()->addMonth();
+                    }
+
+                    $subscription = Subscription::create([
+                        'tenant_id' => $tenant->id,
+                        'plan_id' => $plan->id,
+                        'status' => $status,
+                        'billing_cycle' => $billingCycle,
+                        'starts_at' => now(),
+                        'expires_at' => $expiresAt,
+                        'trial_ends_at' => $trialEndsAt,
+                        'auto_renew' => true,
+                    ]);
+
+                    $price = $billingCycle === 'yearly' ? $plan->yearly_price : $plan->monthly_price;
+                    $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+
+                    $invoice = Invoice::create([
+                        'tenant_id' => $tenant->id,
+                        'subscription_id' => $subscription->id,
+                        'invoice_number' => $invoiceNumber,
+                        'subtotal' => $price,
+                        'discount' => 0,
+                        'tax' => 0,
+                        'total' => $price,
+                        'status' => 'pending',
+                        'due_at' => $trialEndsAt ?? now()->addDays(1),
+                    ]);
+
+                    $desc = $isTrialPlan 
+                        ? "Biaya Berlangganan SaaS {$plan->name} ({$billingCycle}) - Masa Trial 7 Hari"
+                        : "Biaya Berlangganan SaaS {$plan->name} ({$billingCycle})";
+
+                    InvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'description' => $desc,
+                        'amount' => $price,
+                    ]);
+
+                    Category::create([
+                        'company_id' => $company->id,
+                        'tenant_id' => $tenant->id,
+                        'name' => 'Umum / Lainnya',
+                        'slug' => 'umum',
+                        'is_active' => true,
+                    ]);
+
+                    Unit::create([
+                        'company_id' => $company->id,
+                        'tenant_id' => $tenant->id,
+                        'name' => 'Pcs',
+                        'short_name' => 'pcs',
+                    ]);
+
+                    Customer::create([
+                        'company_id' => $company->id,
+                        'tenant_id' => $tenant->id,
+                        'code' => 'CUST-' . rand(1000, 9999),
+                        'name' => 'Pelanggan Umum',
+                        'phone' => '081200000000',
+                    ]);
+                });
+            } else {
+                $user->update([
+                    'google_id' => $googleUser->getId(),
+                    'avatar' => $googleUser->getAvatar() ?? $user->avatar,
+                ]);
+            }
+
+            Auth::login($user, true);
+
+            session([
+                'active_tenant_id' => $user->tenant_id,
+                'active_outlet_id' => $user->outlet_id,
+            ]);
+
+            return redirect('/dashboard')->with('success', "✅ Selamat datang kembali, {$user->name}!");
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Google Auth Failed: ' . $e->getMessage());
+            return redirect('/login')->with('error', 'Gagal masuk menggunakan Google: ' . $e->getMessage());
+        }
+    }
+}
