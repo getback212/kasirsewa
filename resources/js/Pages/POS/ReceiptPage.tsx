@@ -34,15 +34,15 @@ export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtU
         <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 flex flex-col items-center justify-center font-sans print:bg-white print:p-0 print:m-0 print:min-h-0">
             <Head title={`Struk Thermal #${sale.invoice_number}`} />
 
-            {/* PRINT CSS OVERRIDE STYLES FOR THERMAL PRINTER HARDWARE (58mm Roll: 58x210mm) */}
+            {/* PRINT CSS OVERRIDE STYLES FOR THERMAL PRINTER HARDWARE */}
             <style font-sans="true">{`
                 @media print {
                     @page {
-                        size: ${paperWidth === 58 ? '48mm' : '72mm'} auto;
+                        size: ${paperWidth === 58 ? '56mm' : '78mm'} auto;
                         margin: 0mm;
                     }
                     html, body {
-                        width: ${paperWidth === 58 ? '48mm' : '72mm'} !important;
+                        width: ${paperWidth === 58 ? '56mm' : '78mm'} !important;
                         background-color: #ffffff !important;
                         color: #000000 !important;
                         margin: 0 !important;
@@ -52,9 +52,9 @@ export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtU
                         display: none !important;
                     }
                     .printable-receipt {
-                        width: ${paperWidth === 58 ? '48mm' : '72mm'} !important;
-                        max-width: ${paperWidth === 58 ? '48mm' : '72mm'} !important;
-                        padding: 0mm !important;
+                        width: ${paperWidth === 58 ? '56mm' : '78mm'} !important;
+                        max-width: ${paperWidth === 58 ? '56mm' : '78mm'} !important;
+                        padding: 1mm !important;
                         margin: 0 auto !important;
                         box-sizing: border-box !important;
                         box-shadow: none !important;
@@ -64,9 +64,9 @@ export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtU
                     }
                     .printable-pre {
                         font-family: 'Consolas', 'Courier New', Courier, monospace !important;
-                        font-size: ${paperWidth === 58 ? '9.5px' : '11.5px'} !important;
-                        line-height: 1.25 !important;
-                        letter-spacing: -0.2px !important;
+                        font-size: ${paperWidth === 58 ? '11px' : '13px'} !important;
+                        line-height: 1.3 !important;
+                        letter-spacing: 0px !important;
                         white-space: pre !important;
                         overflow: visible !important;
                         word-break: normal !important;
@@ -132,11 +132,11 @@ export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtU
             {/* THERMAL RECEIPT DISPLAY & PRINT CONTAINER */}
             <div className="flex justify-center items-center w-full my-4">
                 <div
-                    className={`printable-receipt bg-white text-black px-6 py-5 font-mono text-[11px] leading-tight rounded-2xl shadow-2xl border border-slate-300 flex flex-col items-center justify-center text-center ${
-                        paperWidth === 58 ? 'w-[300px]' : 'w-[400px]'
+                    className={`printable-receipt bg-white text-black px-6 py-6 font-mono text-[12px] leading-snug rounded-2xl shadow-2xl border border-slate-300 flex flex-col items-center justify-center text-center ${
+                        paperWidth === 58 ? 'w-[340px]' : 'w-[440px]'
                     }`}
                 >
-                    <pre className="printable-pre whitespace-pre font-mono tracking-tighter text-black mx-auto inline-block text-left">
+                    <pre className="printable-pre whitespace-pre font-mono tracking-normal text-black mx-auto inline-block text-left">
                         {paperWidth === 58 ? textReceipt58 : textReceipt80}
                     </pre>
                 </div>
