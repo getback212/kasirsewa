@@ -116,8 +116,8 @@ class RegisterController extends Controller
                 'auto_renew' => true,
             ]);
 
-            // 5. Create Initial Registration Invoice
-            $price = $request->billing_cycle === 'yearly' ? $plan->yearly_price : $plan->monthly_price;
+            // 5. Create Initial Registration Invoice (Rp 0 / Lunas during 7-Day Free Trial)
+            $price = $isTrialPlan ? 0.00 : ($request->billing_cycle === 'yearly' ? (float) $plan->yearly_price : (float) $plan->monthly_price);
             $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
             $invoice = Invoice::create([
@@ -128,12 +128,12 @@ class RegisterController extends Controller
                 'discount' => 0,
                 'tax' => 0,
                 'total' => $price,
-                'status' => 'pending',
+                'status' => $isTrialPlan ? 'paid' : 'pending',
                 'due_at' => $trialEndsAt ?? now()->addDays(1),
             ]);
 
             $desc = $isTrialPlan 
-                ? "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle}) - Masa Trial 7 Hari"
+                ? "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})"
                 : "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle})";
 
             InvoiceItem::create([

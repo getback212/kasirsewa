@@ -49,7 +49,7 @@ class SubscriptionController extends Controller
         $tenant = Tenant::findOrFail($tenantId);
         $plan = Plan::findOrFail($validated['plan_id']);
 
-        $price = $validated['billing_cycle'] === 'yearly' ? (float) $plan.yearly_price : (float) $plan->monthly_price;
+        $price = $validated['billing_cycle'] === 'yearly' ? (float) $plan->yearly_price : (float) $plan->monthly_price;
         $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
         DB::transaction(function () use ($tenant, $plan, $validated, $price, $invoiceNumber) {

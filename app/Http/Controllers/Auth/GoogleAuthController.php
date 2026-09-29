@@ -125,7 +125,8 @@ class GoogleAuthController extends Controller
                         'auto_renew' => true,
                     ]);
 
-                    $price = $billingCycle === 'yearly' ? $plan->yearly_price : $plan->monthly_price;
+                    // Initial registration invoice (Rp 0 / Lunas during 7-Day Free Trial)
+                    $price = $isTrialPlan ? 0.00 : ($billingCycle === 'yearly' ? (float) $plan->yearly_price : (float) $plan->monthly_price);
                     $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
                     $invoice = Invoice::create([
@@ -136,12 +137,12 @@ class GoogleAuthController extends Controller
                         'discount' => 0,
                         'tax' => 0,
                         'total' => $price,
-                        'status' => 'pending',
+                        'status' => $isTrialPlan ? 'paid' : 'pending',
                         'due_at' => $trialEndsAt ?? now()->addDays(1),
                     ]);
 
                     $desc = $isTrialPlan 
-                        ? "Biaya Berlangganan SaaS {$plan->name} ({$billingCycle}) - Masa Trial 7 Hari"
+                        ? "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})"
                         : "Biaya Berlangganan SaaS {$plan->name} ({$billingCycle})";
 
                     InvoiceItem::create([
