@@ -80,6 +80,11 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
+    // WhatsApp OTP Verification Routes
+    Route::get('/verify-otp', [\App\Http\Controllers\Auth\VerifyOtpController::class, 'show'])->name('verify.otp');
+    Route::post('/verify-otp/send', [\App\Http\Controllers\Auth\VerifyOtpController::class, 'sendOtp'])->name('verify.otp.send');
+    Route::post('/verify-otp/verify', [\App\Http\Controllers\Auth\VerifyOtpController::class, 'verifyOtp'])->name('verify.otp.verify');
+
     // Super Admin Tenant, Plan & Dashboard Routes
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/tenants', [TenantController::class, 'index'])->name('admin.tenants.index');

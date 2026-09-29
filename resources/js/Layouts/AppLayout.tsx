@@ -249,7 +249,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                         <span>⚠️ Akun Google Anda belum terverifikasi nomor WhatsApp. Silakan lengkapi dan verifikasi nomor WhatsApp untuk notifikasi transaksi toko.</span>
                     </div>
                     <Link 
-                        href="/users"
+                        href="/verify-otp"
                         className="px-3 py-1 bg-white text-blue-950 hover:bg-slate-100 rounded-lg text-[10px] font-black uppercase shadow cursor-pointer transition shrink-0"
                     >
                         Verifikasi WhatsApp Sekarang →
