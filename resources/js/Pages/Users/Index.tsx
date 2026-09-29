@@ -57,9 +57,11 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
     const createForm = useForm({
         name: '',
         email: '',
+        phone: '',
         password: 'password',
         role: 'CASHIER',
         outlet_id: outlets.length > 0 ? String(outlets[0].id) : '',
+        send_invite: true,
     });
 
     const editForm = useForm({
@@ -340,16 +342,39 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
                             </div>
 
                             <div>
-                                <label className="block text-slate-400 font-semibold mb-1">Email Login Staff</label>
+                                <label className="block text-slate-400 font-semibold mb-1">Email Gmail Staff (Untuk Google SSO)</label>
                                 <input
                                     type="email"
                                     required
                                     value={createForm.data.email}
                                     onChange={(e) => createForm.setData('email', e.target.value)}
-                                    placeholder="e.g. kasir2@example.test"
+                                    placeholder="e.g. kasirsanti@gmail.com"
                                     className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono font-medium"
                                 />
                             </div>
+
+                            <div>
+                                <label className="block text-slate-400 font-semibold mb-1">Nomor WhatsApp Staff (Opsional)</label>
+                                <input
+                                    type="text"
+                                    value={createForm.data.phone}
+                                    onChange={(e) => createForm.setData('phone', e.target.value)}
+                                    placeholder="e.g. 081234567890"
+                                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono font-medium"
+                                />
+                            </div>
+
+                            <label className="flex items-center gap-2 p-3 bg-slate-950 border border-slate-800 rounded-2xl cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={createForm.data.send_invite}
+                                    onChange={(e) => createForm.setData('send_invite', e.target.checked)}
+                                    className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-xs text-slate-300 font-semibold">
+                                    ✉️ Kirim Undangan Bergabung Otomatis via Gmail & WhatsApp
+                                </span>
+                            </label>
 
                             <div>
                                 <label className="block text-slate-400 font-semibold mb-1">Password Awal Login Staff</label>
@@ -361,7 +386,7 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
                                     placeholder="Masukkan password awal"
                                     className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-emerald-400 font-mono font-bold"
                                 />
-                                <p className="text-[10px] text-slate-500 mt-1">Default password awal: <span className="font-mono text-emerald-400 font-bold">password</span> (Dapat diganti oleh staff saat login).</p>
+                                <p className="text-[10px] text-slate-500 mt-1">Default password awal: <span className="font-mono text-emerald-400 font-bold">password</span> (Staf dapat login via Google SSO atau Password).</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">

@@ -121,10 +121,20 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', 'min:6'],
             'role' => ['required', 'string', Rule::in([UserRole::OWNER->value, UserRole::MANAGER->value, UserRole::CASHIER->value, UserRole::WAREHOUSE->value])],
             'outlet_id' => ['required', 'exists:outlets,id'],
+            'send_invite' => ['nullable', 'boolean'],
         ]);
+
+        $cleanPhone = null;
+        if (!empty($validated['phone'])) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            if (str_starts_with($cleanPhone, '0')) {
+                $cleanPhone = '62' . substr($cleanPhone, 1);
+            }
+        }
 
         $user = User::create([
             'company_id' => $currentUser->company_id ?? 1,
@@ -132,11 +142,51 @@ class UserController extends Controller
             'outlet_id' => $validated['outlet_id'],
             'name' => $validated['name'],
             'email' => strtolower($validated['email']),
+            'phone' => $cleanPhone,
             'password' => Hash::make($validated['password']),
+            'email_verified_at' => now(),
             'is_active' => true,
         ]);
 
         $user->syncRoles([$validated['role']]);
+
+        // Send Email & WhatsApp Invitation if enabled
+        if ($request->boolean('send_invite', true)) {
+            $roleLabel = match($validated['role']) {
+                'MANAGER' => 'Manager Toko',
+                'CASHIER' => 'Kasir',
+                'WAREHOUSE' => 'Staf Gudang',
+                default => 'Staf Toko',
+            };
+
+            // 1. WhatsApp Invitation via Baileys Gateway
+            if (!empty($cleanPhone)) {
+                $waGatewayUrl = \App\Models\SaaSSetting::get('wa_gateway_url', 'http://172.17.0.1:3001/send');
+                $waApiKey = \App\Models\SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
+                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\n\nHalo *{$user->name}*,\n\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\n\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\nhttps://superbackend.my.id/login";
+
+                try {
+                    \Illuminate\Support\Facades\Http::withHeaders([
+                        'Authorization' => $waApiKey,
+                    ])->timeout(5)->post($waGatewayUrl, [
+                        'target' => $cleanPhone,
+                        'phone' => $cleanPhone,
+                        'message' => $waMsg,
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send staff WA invite: ' . $e->getMessage());
+                }
+            }
+
+            // 2. Email Invitation
+            try {
+                \Illuminate\Support\Facades\Mail::raw("Halo {$user->name},\n\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\n\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
+                    $mail->to($user->email)->subject("✉️ Undangan Bergabung Staf Toko - KasirSewa POS");
+                });
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send staff email invite: ' . $e->getMessage());
+            }
+        }
 
         AuditLogService::log(
             action: 'USER_CREATE',
