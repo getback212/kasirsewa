@@ -135,8 +135,8 @@ class POSController extends Controller
         $payload = $request->all();
         $payload['outlet_id'] = $outletId;
 
+        // Store isolated realtime state by globally unique outlet ID
         \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outletId}", $payload, 3600);
-        \Illuminate\Support\Facades\Cache::put("customer_display_state_global_latest", $payload, 3600);
 
         return response()->json(['status' => true]);
     }
@@ -144,31 +144,41 @@ class POSController extends Controller
     public function getState(Request $request)
     {
         $user = $request->user();
-        $pairCode = $request->input('pair_code') ?? $request->input('code');
+        $pairCode = trim($request->input('pair_code') ?? $request->input('code') ?? '');
         $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id);
 
-        if ($pairCode) {
-            $outlet = \App\Models\Outlet::where('code', 'ILIKE', trim($pairCode))
-                ->orWhere('id', is_numeric($pairCode) ? (int)$pairCode : 0)
-                ->first();
-            if ($outlet) {
-                $outletId = $outlet->id;
+        if (!empty($pairCode)) {
+            // Strip any prefix e.g. "DISP-15" or "15"
+            $numericId = preg_replace('/[^0-9]/', '', $pairCode);
+            if (!empty($numericId)) {
+                $outlet = \App\Models\Outlet::find((int)$numericId);
+                if ($outlet) {
+                    $outletId = $outlet->id;
+                }
+            }
+
+            if (!$outletId) {
+                $outlet = \App\Models\Outlet::where('code', 'ILIKE', $pairCode)->first();
+                if ($outlet) {
+                    $outletId = $outlet->id;
+                }
             }
         }
 
+        $state = null;
         if ($outletId) {
             $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_{$outletId}");
         }
 
         if (empty($state)) {
-            $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_global_latest", [
+            $state = [
                 'type' => 'CART_UPDATE',
                 'items' => [],
                 'subtotal' => 0,
                 'discountAmount' => 0,
                 'taxAmount' => 0,
                 'grandTotal' => 0,
-            ]);
+            ];
         }
 
         return response()->json($state);

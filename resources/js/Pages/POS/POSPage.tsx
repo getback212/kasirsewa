@@ -429,17 +429,18 @@ export default function POSPage({
                                     <Monitor className="w-4 h-4 text-emerald-400" />
                                     <span className="hidden md:inline">Layar Pelanggan</span>
                                 </button>
-                                {activeOutlet?.code && (
+                                {activeOutlet?.id && (
                                     <span
                                         onClick={() => {
-                                            const url = `https://superbackend.my.id/pos/customer-display?code=${activeOutlet.code}`;
+                                            const codeToken = `DISP-${activeOutlet.id}`;
+                                            const url = `https://superbackend.my.id/pos/customer-display?code=${codeToken}`;
                                             navigator.clipboard.writeText(url);
-                                            alert(`📋 Link Layar Pembeli disalin!\n\nBuka link ini di HP/Tablet kedua:\n${url}`);
+                                            alert(`📋 Link Layar Pembeli disalin!\n\nKode Pairing Unik: ${codeToken}\nBuka link ini di HP/Tablet kedua:\n${url}`);
                                         }}
                                         className="px-3 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-2xl text-xs font-mono font-bold cursor-pointer transition flex items-center gap-1"
-                                        title="Klik untuk menyalin Link Layar Pembeli beda perangkat"
+                                        title="Klik untuk menyalin Link & Kode Pairing Layar Pembeli beda perangkat"
                                     >
-                                        🔑 {activeOutlet.code}
+                                        🔑 DISP-{activeOutlet.id}
                                     </span>
                                 )}
                             </div>
