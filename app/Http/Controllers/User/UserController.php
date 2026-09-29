@@ -26,8 +26,18 @@ class UserController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data staff pengguna.');
         }
 
+        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
+        $companyId = $currentUser->company_id;
+
         $query = User::with(['roles', 'outlet'])
-            ->where('company_id', $currentUser->company_id);
+            ->where(function ($q) use ($tenantId, $companyId) {
+                if ($tenantId) {
+                    $q->where('tenant_id', $tenantId);
+                }
+                if ($companyId) {
+                    $q->orWhere('company_id', $companyId);
+                }
+            });
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -58,7 +68,14 @@ class UserController extends Controller
                 ];
             });
 
-        $outlets = Outlet::where('company_id', $currentUser->company_id)
+        $outlets = Outlet::where(function ($q) use ($tenantId, $companyId) {
+                if ($tenantId) {
+                    $q->where('tenant_id', $tenantId);
+                }
+                if ($companyId) {
+                    $q->orWhere('company_id', $companyId);
+                }
+            })
             ->where('is_active', true)
             ->get(['id', 'code', 'name']);
 
@@ -139,7 +156,17 @@ class UserController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengedit staff.');
         }
 
-        $user = User::where('company_id', $currentUser->company_id)->findOrFail($id);
+        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
+        $companyId = $currentUser->company_id;
+
+        $user = User::where(function ($q) use ($tenantId, $companyId) {
+            if ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            }
+            if ($companyId) {
+                $q->orWhere('company_id', $companyId);
+            }
+        })->findOrFail($id);
 
         if (!$request->filled('password')) {
             $request->request->remove('password');
@@ -189,7 +216,17 @@ class UserController extends Controller
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
-        $user = User::where('company_id', $currentUser->company_id)->findOrFail($id);
+        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
+        $companyId = $currentUser->company_id;
+
+        $user = User::where(function ($q) use ($tenantId, $companyId) {
+            if ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            }
+            if ($companyId) {
+                $q->orWhere('company_id', $companyId);
+            }
+        })->findOrFail($id);
         $user->update(['is_active' => !$user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
@@ -208,7 +245,17 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif!');
         }
 
-        $user = User::where('company_id', $currentUser->company_id)->findOrFail($id);
+        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
+        $companyId = $currentUser->company_id;
+
+        $user = User::where(function ($q) use ($tenantId, $companyId) {
+            if ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            }
+            if ($companyId) {
+                $q->orWhere('company_id', $companyId);
+            }
+        })->findOrFail($id);
 
         if ($user->hasRole([UserRole::SUPER_ADMIN->value, UserRole::OWNER->value])) {
             return back()->with('error', 'Akun Pemilik Toko / Owner Utama dilindungi dan tidak dapat dihapus!');
