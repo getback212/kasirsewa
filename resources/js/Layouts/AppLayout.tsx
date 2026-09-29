@@ -212,8 +212,8 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             icon: BarChart3,
             items: [
                 { name: 'Laporan Keuangan', path: '/reports', icon: BarChart3, permission: 'view-reports-financial' },
-                { name: 'Audit Logs System', path: '/audit-logs', icon: ShieldAlert, permission: 'manage-tenants' },
-                { name: 'Backup & Restore', path: '/backups', icon: Database, permission: 'manage-tenants' },
+                { name: 'Audit Logs System', path: '/audit-logs', icon: ShieldAlert, permission: 'view-audit-logs' },
+                { name: 'Backup & Restore', path: '/backups', icon: Database, permission: 'view-audit-logs' },
             ]
         }
     ];

@@ -13,11 +13,25 @@ class AuditLogController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        if (!$user->hasRole('SUPER_ADMIN')) {
-            abort(403, 'Menu Audit Log System hanya berwenang diakses oleh Super Admin SaaS.');
+        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('view-audit-logs')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat audit log sistem.');
         }
 
         $query = AuditLog::with('user:id,name,email');
+
+        // Scoping: Tenant Owner only sees their own store logs
+        if (!$user->hasRole('SUPER_ADMIN')) {
+            $companyId = $user->company_id;
+            $tenantId = session('active_tenant_id', $user->tenant_id);
+            $query->where(function ($q) use ($companyId, $tenantId) {
+                if ($companyId) {
+                    $q->where('company_id', $companyId);
+                }
+                if ($tenantId) {
+                    $q->orWhere('tenant_id', $tenantId);
+                }
+            });
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
