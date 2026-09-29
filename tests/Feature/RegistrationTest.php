@@ -49,6 +49,6 @@ class RegistrationTest extends TestCase
         $this->assertNotNull($owner);
         $this->assertEquals($tenant->id, $owner->tenant_id);
 
-        $response->assertRedirect('/');
+        $response->assertRedirect('/dashboard');
     }
 }

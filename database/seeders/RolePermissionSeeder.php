@@ -95,6 +95,7 @@ class RolePermissionSeeder extends Seeder
             [
                 'name' => 'Super Admin SaaS',
                 'password' => Hash::make('password'),
+                'email_verified_at' => now(),
                 'is_active' => true,
             ]
         );
@@ -186,6 +187,7 @@ class RolePermissionSeeder extends Seeder
                 'outlet_id' => $outlet1->id,
                 'name' => 'Owner Pemilik Toko',
                 'password' => Hash::make('password'),
+                'email_verified_at' => now(),
                 'is_active' => true,
             ]
         );
@@ -200,6 +202,7 @@ class RolePermissionSeeder extends Seeder
                 'outlet_id' => $outlet1->id,
                 'name' => 'Kasir Santi',
                 'password' => Hash::make('password'),
+                'email_verified_at' => now(),
                 'is_active' => true,
             ]
         );
@@ -213,6 +216,7 @@ class RolePermissionSeeder extends Seeder
                 'outlet_id' => $outlet1->id,
                 'name' => 'Staf Gudang Budi',
                 'password' => Hash::make('password'),
+                'email_verified_at' => now(),
                 'is_active' => true,
             ]
         );

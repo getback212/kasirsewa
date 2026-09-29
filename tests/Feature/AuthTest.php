@@ -31,7 +31,7 @@ class AuthTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/');
+        $response->assertRedirect('/dashboard');
     }
 
     public function test_cashier_authenticates_and_redirects_to_pos(): void

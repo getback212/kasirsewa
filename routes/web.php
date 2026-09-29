@@ -77,6 +77,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
+// Public Customer Display (Layar Pembeli Tanpa Login di Perangkat Kedua - Accessible to Guest & Auth)
+Route::get('/pos/customer-display', [POSController::class, 'customerDisplay'])->name('pos.customer_display');
+Route::get('/pos/customer-display/state', [POSController::class, 'getState'])->name('pos.customer_display.state');
+Route::post('/pos/customer-display/state', [POSController::class, 'broadcastState'])->name('pos.customer_display.broadcast');
+
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
@@ -170,9 +175,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/pos/hold-cart/{id}', [POSController::class, 'destroyHold'])->name('pos.destroy_hold');
     Route::get('/pos/receipt/{id}', [ReceiptController::class, 'show'])->name('pos.receipt');
     Route::get('/receipt/{id}', [ReceiptController::class, 'show']);
-    Route::get('/pos/customer-display', [POSController::class, 'customerDisplay'])->name('pos.customer_display');
-    Route::post('/pos/customer-display/state', [POSController::class, 'broadcastState'])->name('pos.customer_display.broadcast');
-    Route::get('/pos/customer-display/state', [POSController::class, 'getState'])->name('pos.customer_display.state');
 
     // Sales Return Routes
     Route::get('/sales-returns', [SalesReturnController::class, 'index'])->name('sales_returns.index');
