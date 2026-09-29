@@ -167,6 +167,30 @@ export default function PaymentModal({
                 setErrorMessage(data.message || 'Gagal memproses transaksi checkout.');
             }
         } catch (err: any) {
+            if (!navigator.onLine || err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+                const offlineSale = {
+                    id: 'OFFLINE-' + Date.now(),
+                    invoice_number: 'INV/OFFLINE/' + Date.now(),
+                    sale_date: new Date().toISOString(),
+                    grand_total: grandTotal,
+                    paid_amount: paidAmountNum,
+                    change_amount: changeAmount,
+                    items: items,
+                    payments: [{ method: selectedMethod, amount: paidAmountNum }],
+                    is_offline: true,
+                    payload: payload,
+                };
+
+                const existingQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
+                existingQueue.push(offlineSale);
+                localStorage.setItem('pos_offline_sales_queue', JSON.stringify(existingQueue));
+
+                alert('⚠️ Koneksi internet terputus!\n\nTransaksi kasir berhasil disimpan di memori Offline KasirSewa dan akan disinkronkan otomatis ke cloud server saat internet terhubung kembali.');
+
+                onSuccess(offlineSale);
+                return;
+            }
+
             setErrorMessage('Terjadi kesalahan koneksi server: ' + (err?.message || 'Network error'));
         } finally {
             setProcessing(false);

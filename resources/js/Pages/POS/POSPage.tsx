@@ -132,6 +132,72 @@ export default function POSPage({
     const [completedSale, setCompletedSale] = useState<any | null>(null);
     const [holdingCart, setHoldingCart] = useState<boolean>(false);
 
+    // Offline Resilience & Auto-Sync Engine
+    const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const [pendingOfflineCount, setPendingOfflineCount] = useState<number>(0);
+
+    const syncOfflineQueue = async () => {
+        const queue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
+        if (queue.length === 0) return;
+
+        let successCount = 0;
+        const remainingQueue: any[] = [];
+
+        const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+
+        for (const offlineSale of queue) {
+            try {
+                const res = await fetch('/pos/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify(offlineSale.payload),
+                });
+                if (res.ok) {
+                    successCount++;
+                } else {
+                    remainingQueue.push(offlineSale);
+                }
+            } catch (err) {
+                remainingQueue.push(offlineSale);
+            }
+        }
+
+        localStorage.setItem('pos_offline_sales_queue', JSON.stringify(remainingQueue));
+        setPendingOfflineCount(remainingQueue.length);
+
+        if (successCount > 0) {
+            alert(`✅ SINKRONISASI OTOMATIS BERHASIL!\n\n${successCount} transaksi offline berhasil dikirim dan dicatat ke cloud server.`);
+        }
+    };
+
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            syncOfflineQueue();
+        };
+        const handleOffline = () => {
+            setIsOnline(false);
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        const initialQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
+        setPendingOfflineCount(initialQueue.length);
+        if (navigator.onLine && initialQueue.length > 0) {
+            syncOfflineQueue();
+        }
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
     // Hardware Barcode Scanner Listener
     useBarcodeScanner({
         onScan: (barcode) => {
@@ -398,6 +464,31 @@ export default function POSPage({
                                     className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none shadow-inner"
                                 />
                             </div>
+
+                            {/* NETWORK STATUS / OFFLINE AUTO-SYNC BADGE */}
+                            {!isOnline ? (
+                                <div
+                                    className="px-3 py-3 bg-amber-500/20 border border-amber-500/40 text-amber-300 rounded-2xl text-xs font-bold flex items-center gap-1.5 shrink-0 animate-pulse"
+                                    title="Koneksi Terputus: Kasir berjalan di Mode Offline & menyimpan transaksi di memori lokal peramban"
+                                >
+                                    <span>⚠️</span>
+                                    <span>OFFLINE MODE</span>
+                                    {pendingOfflineCount > 0 && (
+                                        <span className="px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black rounded-full text-[10px]">
+                                            {pendingOfflineCount}
+                                        </span>
+                                    )}
+                                </div>
+                            ) : pendingOfflineCount > 0 ? (
+                                <button
+                                    onClick={syncOfflineQueue}
+                                    className="px-3 py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-lg shadow-blue-600/30"
+                                    title="Klik untuk mengirim ulang transaksi offline ke server"
+                                >
+                                    <span>🔄</span>
+                                    <span>Sync {pendingOfflineCount} Offline</span>
+                                </button>
+                            ) : null}
 
                             {/* SALES HISTORY BUTTON */}
                             <button
