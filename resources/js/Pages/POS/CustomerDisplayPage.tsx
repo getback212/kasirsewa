@@ -22,6 +22,8 @@ interface CartItemData {
 
 interface BroadcastState {
     type: 'CART_UPDATE' | 'CLEAR_CART' | 'CHECKOUT_START' | 'CHECKOUT_SUCCESS';
+    outlet_id?: number;
+    outlet_name?: string;
     items?: CartItemData[];
     subtotal?: number;
     discountAmount?: number;
@@ -164,7 +166,7 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                         </h1>
                         <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
                             <Store className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>{outlet?.name || 'KasirSewa Store'}</span>
+                            <span>{cartState.outlet_name || outlet?.name || 'KasirSewa Store'}</span>
                         </p>
                     </div>
                 </div>

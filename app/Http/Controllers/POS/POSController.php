@@ -119,12 +119,31 @@ class POSController extends Controller
     public function customerDisplay(Request $request): Response
     {
         $user = $request->user();
-        $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id ?? 1);
-        $outlet = \App\Models\Outlet::find($outletId) ?? \App\Models\Outlet::first();
+        $pairCode = trim($request->input('code') ?? $request->input('pair_code') ?? '');
+        $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id);
+        $outlet = null;
+
+        if (!empty($pairCode)) {
+            $numericId = preg_replace('/[^0-9]/', '', $pairCode);
+            if (!empty($numericId)) {
+                $outlet = \App\Models\Outlet::find((int)$numericId);
+            }
+            if (!$outlet) {
+                $outlet = \App\Models\Outlet::where('code', 'ILIKE', $pairCode)->first();
+            }
+        }
+
+        if (!$outlet && $outletId) {
+            $outlet = \App\Models\Outlet::find($outletId);
+        }
+
+        if (!$outlet) {
+            $outlet = \App\Models\Outlet::first();
+        }
 
         return Inertia::render('POS/CustomerDisplayPage', [
             'outlet' => $outlet,
-            'outletId' => $outletId,
+            'outletId' => $outlet?->id,
         ]);
     }
 
@@ -132,8 +151,11 @@ class POSController extends Controller
     {
         $user = $request->user();
         $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id ?? 1);
+        $outlet = \App\Models\Outlet::find($outletId);
+
         $payload = $request->all();
         $payload['outlet_id'] = $outletId;
+        $payload['outlet_name'] = $outlet?->name ?? 'KasirSewa Store';
 
         // Store isolated realtime state by globally unique outlet ID
         \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outletId}", $payload, 3600);
