@@ -419,15 +419,30 @@ export default function POSPage({
                                 <span className="sm:hidden">({safeHeldCarts.length})</span>
                             </button>
 
-                            {/* DUAL DISPLAY CUSTOMER MONITOR BUTTON */}
-                            <button
-                                onClick={openCustomerDisplay}
-                                className="px-4 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 active:scale-95 border border-emerald-500/30 text-emerald-400 rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
-                                title="Buka Layar Monitor Pelanggan 2 (Dual Screen Display)"
-                            >
-                                <Monitor className="w-4 h-4 text-emerald-400" />
-                                <span className="hidden md:inline">Layar Pelanggan (Dual Display)</span>
-                            </button>
+                            {/* DUAL DISPLAY CUSTOMER MONITOR BUTTON & PAIRING CODE BADGE */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                    onClick={openCustomerDisplay}
+                                    className="px-4 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 active:scale-95 border border-emerald-500/30 text-emerald-400 rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer"
+                                    title="Buka Layar Monitor Pelanggan 2 (Dual Screen Display)"
+                                >
+                                    <Monitor className="w-4 h-4 text-emerald-400" />
+                                    <span className="hidden md:inline">Layar Pelanggan</span>
+                                </button>
+                                {activeOutlet?.code && (
+                                    <span
+                                        onClick={() => {
+                                            const url = `https://superbackend.my.id/pos/customer-display?code=${activeOutlet.code}`;
+                                            navigator.clipboard.writeText(url);
+                                            alert(`📋 Link Layar Pembeli disalin!\n\nBuka link ini di HP/Tablet kedua:\n${url}`);
+                                        }}
+                                        className="px-3 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-2xl text-xs font-mono font-bold cursor-pointer transition flex items-center gap-1"
+                                        title="Klik untuk menyalin Link Layar Pembeli beda perangkat"
+                                    >
+                                        🔑 {activeOutlet.code}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* CATEGORIES HORIZONTAL SCROLL BAR */}

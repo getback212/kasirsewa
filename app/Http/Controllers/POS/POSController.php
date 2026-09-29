@@ -144,7 +144,17 @@ class POSController extends Controller
     public function getState(Request $request)
     {
         $user = $request->user();
+        $pairCode = $request->input('pair_code') ?? $request->input('code');
         $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id);
+
+        if ($pairCode) {
+            $outlet = \App\Models\Outlet::where('code', 'ILIKE', trim($pairCode))
+                ->orWhere('id', is_numeric($pairCode) ? (int)$pairCode : 0)
+                ->first();
+            if ($outlet) {
+                $outletId = $outlet->id;
+            }
+        }
 
         if ($outletId) {
             $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_{$outletId}");

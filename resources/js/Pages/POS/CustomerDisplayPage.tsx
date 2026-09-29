@@ -34,6 +34,20 @@ interface BroadcastState {
 }
 
 export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
+    const [pairingCode, setPairingCode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const queryCode = new URLSearchParams(window.location.search).get('pair_code') || new URLSearchParams(window.location.search).get('code');
+            return queryCode || localStorage.getItem('pos_paired_code') || outlet?.code || '';
+        }
+        return outlet?.code || '';
+    });
+    const [showPairModal, setShowPairModal] = useState(false);
+
+    const handleSavePairing = (code: string) => {
+        setPairingCode(code);
+        localStorage.setItem('pos_paired_code', code);
+        setShowPairModal(false);
+    };
     const [cartState, setCartState] = useState<BroadcastState>({
         type: 'CART_UPDATE',
         items: [],
@@ -98,8 +112,9 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
 
         // Polling fallback for cross-device dual display (Laptop Kasir <-> Tablet Pembeli)
         const pollInterval = setInterval(() => {
-            const queryOutlet = new URLSearchParams(window.location.search).get('outlet_id') || outletId || '';
-            const fetchUrl = queryOutlet ? `/pos/customer-display/state?outlet_id=${queryOutlet}` : '/pos/customer-display/state';
+            const queryCode = new URLSearchParams(window.location.search).get('pair_code') || new URLSearchParams(window.location.search).get('code');
+            const activeCode = queryCode || localStorage.getItem('pos_paired_code') || pairingCode || '';
+            const fetchUrl = activeCode ? `/pos/customer-display/state?code=${encodeURIComponent(activeCode)}` : '/pos/customer-display/state';
             fetch(fetchUrl)
                 .then(res => res.json())
                 .then(data => {
@@ -138,12 +153,18 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                     </div>
                     <div>
                         <h1 className="font-black text-lg text-white tracking-tight leading-tight flex items-center gap-2">
-                            <span>RetailPRO Enterprise POS</span>
-                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-[10px] font-mono font-bold">DISPLAY MONITOR</span>
+                            <span>KasirSewa Enterprise POS</span>
+                            <button
+                                onClick={() => setShowPairModal(true)}
+                                className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition flex items-center gap-1"
+                                title="Klik untuk ubah Kode Pairing Toko"
+                            >
+                                🔑 {pairingCode ? `PAIR: ${pairingCode}` : 'HUBUNGKAN KODE KASIR'}
+                            </button>
                         </h1>
                         <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
                             <Store className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>{outlet?.name || 'RetailPRO Store Cabang'}</span>
+                            <span>{outlet?.name || 'KasirSewa Store'}</span>
                         </p>
                     </div>
                 </div>
@@ -297,6 +318,55 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                 </div>
 
             </div>
+
+            {/* PAIRING CODE MODAL */}
+            {showPairModal && (
+                <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 text-xs shadow-2xl">
+                        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                                🔑 Hubungkan Kode Kasir (Pairing Code)
+                            </h3>
+                            <button onClick={() => setShowPairModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                        </div>
+
+                        <p className="text-slate-400 leading-relaxed">
+                            Masukkan Kode Outlet / Kode Kasir (Contoh: <strong className="text-amber-400">OUT-001</strong>) untuk menghubungkan layar HP/Tablet ini dengan laci kasir aktif Anda:
+                        </p>
+
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const formEl = e.target as HTMLFormElement;
+                            const inputEl = formEl.elements.namedItem('pairInput') as HTMLInputElement;
+                            handleSavePairing(inputEl.value.trim());
+                        }} className="space-y-4">
+                            <input
+                                name="pairInput"
+                                type="text"
+                                defaultValue={pairingCode}
+                                placeholder="Contoh: OUT-001"
+                                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm font-mono font-bold text-center text-amber-400 uppercase tracking-widest focus:border-amber-500 focus:outline-none"
+                            />
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPairModal(false)}
+                                    className="w-1/2 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="w-1/2 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/20"
+                                >
+                                    Simpan & Hubungkan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
