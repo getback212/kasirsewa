@@ -13,8 +13,10 @@ class ReceiptGeneratorService
         // Standard ESC/POS Character Matrix Width: 58mm = 28 chars (Ultra Safe), 80mm = 42 chars
         $width = $paperWidth === 80 ? 42 : 28;
         $divider = str_repeat('-', $width);
+        $dividerEquals = str_repeat('=', $width);
 
-        $lines[] = $this->center('================================', $width);
+        $lines = [];
+        $lines[] = $dividerEquals;
         $lines[] = $this->center(strtoupper($sale->outlet->name ?? 'KasirSewa Store'), $width);
         if ($sale->outlet->address) {
             $lines[] = $this->center($sale->outlet->address, $width);
@@ -22,7 +24,7 @@ class ReceiptGeneratorService
         if ($sale->outlet->phone) {
             $lines[] = $this->center("Telp: {$sale->outlet->phone}", $width);
         }
-        $lines[] = $this->center('================================', $width);
+        $lines[] = $dividerEquals;
 
         $formattedDate = $sale->sale_date instanceof \Carbon\Carbon 
             ? $sale->sale_date->format('d/m/Y H:i') 
@@ -78,7 +80,7 @@ class ReceiptGeneratorService
         $lines[] = $this->center('Simpan Struk Ini Sebagai Bukti', $width);
         $lines[] = $this->center('Barang Yang Sudah Dibeli', $width);
         $lines[] = $this->center('Tidak Dapat Ditukar/Dikembalikan', $width);
-        $lines[] = $this->center('================================', $width);
+        $lines[] = $dividerEquals;
 
         return implode("\n", $lines);
     }
