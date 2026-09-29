@@ -138,6 +138,17 @@ class OutletController extends Controller
             'is_active' => $validated['is_active'],
         ]);
 
+        // Sync main outlet name update with Tenant & Company models for Super Admin UI
+        if ($outlet->is_main || \App\Models\Outlet::where('tenant_id', $tenantId)->count() === 1) {
+            $tenant = \App\Models\Tenant::find($tenantId);
+            if ($tenant) {
+                $tenant->update(['name' => $validated['name']]);
+            }
+            if ($user->company_id) {
+                \App\Models\Company::where('id', $user->company_id)->update(['name' => $validated['name']]);
+            }
+        }
+
         AuditLogService::log('OUTLET_UPDATE', 'Outlet', $outlet->id, ['name' => $outlet->name, 'code' => $outlet->code]);
 
         return redirect()->back()->with('success', 'Konfigurasi data outlet toko berhasil diperbarui!');
