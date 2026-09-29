@@ -98,7 +98,9 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
 
         // Polling fallback for cross-device dual display (Laptop Kasir <-> Tablet Pembeli)
         const pollInterval = setInterval(() => {
-            fetch('/pos/customer-display/state')
+            const queryOutlet = new URLSearchParams(window.location.search).get('outlet_id') || outletId || '';
+            const fetchUrl = queryOutlet ? `/pos/customer-display/state?outlet_id=${queryOutlet}` : '/pos/customer-display/state';
+            fetch(fetchUrl)
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.type) {

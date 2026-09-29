@@ -239,6 +239,7 @@ export default function POSPage({
         const channel = new BroadcastChannel('pos_customer_display');
         const stateData = {
             type: 'CART_UPDATE',
+            outlet_id: currentOutlet?.id || activeOutletId,
             items: cart.map(i => ({
                 product_id: i.product.id,
                 name: i.product.name,

@@ -132,8 +132,11 @@ class POSController extends Controller
     {
         $user = $request->user();
         $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id ?? 1);
-        
-        \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outletId}", $request->all(), 3600);
+        $payload = $request->all();
+        $payload['outlet_id'] = $outletId;
+
+        \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outletId}", $payload, 3600);
+        \Illuminate\Support\Facades\Cache::put("customer_display_state_global_latest", $payload, 3600);
 
         return response()->json(['status' => true]);
     }
@@ -141,16 +144,22 @@ class POSController extends Controller
     public function getState(Request $request)
     {
         $user = $request->user();
-        $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id ?? 1);
-        
-        $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_{$outletId}", [
-            'type' => 'CART_UPDATE',
-            'items' => [],
-            'subtotal' => 0,
-            'discountAmount' => 0,
-            'taxAmount' => 0,
-            'grandTotal' => 0,
-        ]);
+        $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id);
+
+        if ($outletId) {
+            $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_{$outletId}");
+        }
+
+        if (empty($state)) {
+            $state = \Illuminate\Support\Facades\Cache::get("customer_display_state_global_latest", [
+                'type' => 'CART_UPDATE',
+                'items' => [],
+                'subtotal' => 0,
+                'discountAmount' => 0,
+                'taxAmount' => 0,
+                'grandTotal' => 0,
+            ]);
+        }
 
         return response()->json($state);
     }
