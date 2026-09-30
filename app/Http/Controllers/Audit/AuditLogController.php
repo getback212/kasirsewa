@@ -19,16 +19,21 @@ class AuditLogController extends Controller
 
         $query = AuditLog::with('user:id,name,email');
 
-        // Scoping: Tenant Owner only sees their own store logs
+        // Scoping: Tenant Owner only sees their own store logs and staff user logs
         if (!$user->hasRole('SUPER_ADMIN')) {
             $companyId = $user->company_id;
             $tenantId = session('active_tenant_id', $user->tenant_id);
-            $query->where(function ($q) use ($companyId, $tenantId) {
+            $staffUserIds = \App\Models\User::where('tenant_id', $tenantId)->pluck('id')->toArray();
+
+            $query->where(function ($q) use ($companyId, $tenantId, $staffUserIds) {
                 if ($companyId) {
                     $q->where('company_id', $companyId);
                 }
                 if ($tenantId) {
                     $q->orWhere('tenant_id', $tenantId);
+                }
+                if (!empty($staffUserIds)) {
+                    $q->orWhereIn('user_id', $staffUserIds);
                 }
             });
         }

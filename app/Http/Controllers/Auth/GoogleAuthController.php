@@ -188,6 +188,17 @@ class GoogleAuthController extends Controller
                 'active_outlet_id' => $user->outlet_id,
             ]);
 
+            \App\Services\Audit\AuditLogService::log(
+                action: 'USER_LOGIN',
+                modelType: 'User',
+                modelId: $user->id,
+                newValues: [
+                    'email' => $user->email,
+                    'name' => $user->name,
+                    'login_method' => 'Google SSO',
+                ]
+            );
+
             $targetRoute = '/dashboard';
             if ($user->hasRole(UserRole::CASHIER->value)) {
                 $targetRoute = '/pos';

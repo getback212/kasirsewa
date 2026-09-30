@@ -16,13 +16,15 @@ class AuditLogService
         ?array $newValues = null
     ): AuditLog {
         $user = Auth::user();
+        $tenantId = session('active_tenant_id', $user?->tenant_id);
 
         // Strip passwords, tokens, and secrets from audit entries
         $sanitizedOld = self::sanitize($oldValues);
         $sanitizedNew = self::sanitize($newValues);
 
         return AuditLog::create([
-            'company_id' => $user?->company_id ?? 1,
+            'company_id' => $user?->company_id,
+            'tenant_id' => $tenantId,
             'user_id' => $user?->id,
             'action' => strtoupper($action),
             'model_type' => $modelType,
