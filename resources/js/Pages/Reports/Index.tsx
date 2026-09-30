@@ -80,13 +80,23 @@ export default function ReportsIndex({ analytics }: ReportsPageProps) {
                         </form>
 
                         <a
-                            href={`/reports/export-excel?start_date=${startDate}&end_date=${endDate}`}
+                            href={`/reports/export/excel?start_date=${startDate}&end_date=${endDate}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl cursor-pointer transition shadow-lg shadow-emerald-900/30 active:scale-95 text-center"
                         >
                             <FileSpreadsheet className="w-4 h-4 shrink-0" />
-                            <span>Export (.CSV)</span>
+                            <span>Export Excel (.xlsx)</span>
+                        </a>
+
+                        <a
+                            href={`/reports/export/pdf?start_date=${startDate}&end_date=${endDate}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-2xl cursor-pointer transition shadow-lg shadow-rose-900/30 active:scale-95 text-center"
+                        >
+                            <Receipt className="w-4 h-4 shrink-0" />
+                            <span>Cetak PDF (.pdf)</span>
                         </a>
                     </div>
                 </div>

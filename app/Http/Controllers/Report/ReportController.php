@@ -117,4 +117,27 @@ class ReportController extends Controller
             fclose($file);
         }, 200, $headers);
     }
+
+    public function exportPdf(Request $request, ReportService $reportService)
+    {
+        $user = $request->user();
+
+        if (! $user->hasPermissionTo('view-reports-financial')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mencetak Laporan Keuangan!');
+        }
+
+        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $outlet = \App\Models\Outlet::find($activeOutletId);
+        $outletName = $outlet?->name ?? 'KasirSewa Store';
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $analytics = $reportService->getAnalyticsSummary($activeOutletId, $startDate, $endDate);
+
+        return view('reports.pdf', [
+            'analytics' => $analytics,
+            'outletName' => $outletName,
+        ]);
+    }
 }

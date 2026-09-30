@@ -201,6 +201,8 @@ Route::middleware('auth')->group(function () {
 
     // Reports & Financial Insights
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export_excel');
+    Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export_pdf');
 
     // System Audit Logs & Backup/Restore
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit_logs.index');
