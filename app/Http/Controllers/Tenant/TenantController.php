@@ -152,10 +152,15 @@ class TenantController extends Controller
         DB::transaction(function () use ($tenant) {
             Subscription::where('tenant_id', $tenant->id)->delete();
             Invoice::where('tenant_id', $tenant->id)->delete();
+            if ($tenant->owner_id) {
+                User::where('id', $tenant->owner_id)->delete();
+            }
             User::where('tenant_id', $tenant->id)->delete();
+            Company::where('tenant_id', $tenant->id)->delete();
             Outlet::where('tenant_id', $tenant->id)->delete();
             Product::where('tenant_id', $tenant->id)->delete();
             Stock::where('tenant_id', $tenant->id)->delete();
+            Customer::where('tenant_id', $tenant->id)->delete();
             $tenant->delete();
         });
 
