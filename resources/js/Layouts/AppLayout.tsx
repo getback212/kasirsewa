@@ -317,11 +317,12 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                         return null;
                                     }
 
-                                    let filteredItems = group.items.filter(item => hasPermission(item.permission));
-
-                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id === 'laporan') {
-                                        filteredItems = filteredItems.filter(item => item.path === '/audit-logs' || item.path === '/backups');
+                                    // Hide store operational menus from Super Admin when NOT impersonating a tenant
+                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription) {
+                                        return null;
                                     }
+
+                                    let filteredItems = group.items.filter(item => hasPermission(item.permission));
 
                                     if (filteredItems.length === 0) return null;
 
@@ -619,15 +620,11 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             {mobileMenuOpen && (
                 <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
                     {navigationGroups.map((group, idx) => {
-                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id !== 'saas_admin' && group.id !== 'laporan') {
+                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && (group.id === 'stok' || group.id === 'operasional' || group.id === 'laporan')) {
                             return null;
                         }
 
                         let filteredItems = group.items.filter(item => hasPermission(item.permission));
-
-                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id === 'laporan') {
-                            filteredItems = filteredItems.filter(item => item.path === '/audit-logs' || item.path === '/backups');
-                        }
 
                         if (filteredItems.length === 0) return null;
 
