@@ -55,7 +55,9 @@ class VerifyOtpController extends Controller
         $waGatewayUrl = SaaSSetting::get('wa_gateway_url', 'http://172.17.0.1:3001/send');
         $waApiKey = SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
 
-        $message = "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{$otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda.";
+        $defaultTemplate = "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda.";
+        $template = SaaSSetting::get('wa_otp_template', $defaultTemplate);
+        $message = str_replace('{otp}', $otp, $template);
 
         try {
             $res = Http::withHeaders([

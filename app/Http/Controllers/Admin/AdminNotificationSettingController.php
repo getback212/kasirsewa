@@ -22,9 +22,10 @@ class AdminNotificationSettingController extends Controller
         }
 
         $settings = [
-            'wa_gateway_url' => SaaSSetting::get('wa_gateway_url', 'https://api.fonnte.com/send'),
-            'wa_api_key' => SaaSSetting::get('wa_api_key', ''),
+            'wa_gateway_url' => SaaSSetting::get('wa_gateway_url', 'http://172.17.0.1:3001/send'),
+            'wa_api_key' => SaaSSetting::get('wa_api_key', 'baileys_free_gateway'),
             'wa_cs_number' => SaaSSetting::get('wa_cs_number', '6281234567890'),
+            'wa_otp_template' => SaaSSetting::get('wa_otp_template', "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda."),
             'enable_wa_notifications' => SaaSSetting::get('enable_wa_notifications', '1') === '1',
             'enable_email_notifications' => SaaSSetting::get('enable_email_notifications', '1') === '1',
             'scheduler_status' => 'ACTIVE 24/7 (Everyday at 00:00 WIB)',
@@ -47,6 +48,7 @@ class AdminNotificationSettingController extends Controller
             'wa_gateway_url' => ['required', 'string', 'url'],
             'wa_api_key' => ['nullable', 'string', 'max:255'],
             'wa_cs_number' => ['required', 'string', 'max:30'],
+            'wa_otp_template' => ['required', 'string', 'max:1000'],
             'enable_wa_notifications' => ['required', 'boolean'],
             'enable_email_notifications' => ['required', 'boolean'],
         ]);
@@ -54,6 +56,7 @@ class AdminNotificationSettingController extends Controller
         SaaSSetting::set('wa_gateway_url', $validated['wa_gateway_url']);
         SaaSSetting::set('wa_api_key', $validated['wa_api_key'] ?? '');
         SaaSSetting::set('wa_cs_number', $validated['wa_cs_number']);
+        SaaSSetting::set('wa_otp_template', $validated['wa_otp_template']);
         SaaSSetting::set('enable_wa_notifications', $validated['enable_wa_notifications'] ? '1' : '0');
         SaaSSetting::set('enable_email_notifications', $validated['enable_email_notifications'] ? '1' : '0');
 

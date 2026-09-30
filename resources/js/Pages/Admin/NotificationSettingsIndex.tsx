@@ -8,6 +8,7 @@ interface SettingsData {
     wa_gateway_url: string;
     wa_api_key: string;
     wa_cs_number: string;
+    wa_otp_template: string;
     enable_wa_notifications: boolean;
     enable_email_notifications: boolean;
     scheduler_status: string;
@@ -21,9 +22,10 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
     const { flash } = usePage<NotificationSettingsPageProps>().props;
 
     const form = useForm({
-        wa_gateway_url: settings?.wa_gateway_url || 'https://api.fonnte.com/send',
-        wa_api_key: settings?.wa_api_key || '',
+        wa_gateway_url: settings?.wa_gateway_url || 'http://172.17.0.1:3001/send',
+        wa_api_key: settings?.wa_api_key || 'baileys_free_gateway',
         wa_cs_number: settings?.wa_cs_number || '6281234567890',
+        wa_otp_template: settings?.wa_otp_template || "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda.",
         enable_wa_notifications: settings?.enable_wa_notifications !== false,
         enable_email_notifications: settings?.enable_email_notifications !== false,
     });
@@ -164,6 +166,19 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
                                 className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono text-xs font-bold"
                             />
                             <p className="text-[10px] text-slate-500 mt-1">Nomor WA CS (format 62xxx) yang menerima pesan konsultasi calon klien dari tombol melayang di landing page.</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-slate-400 font-semibold mb-1">Template Pesan OTP WhatsApp (Gunakan placeholder {'{otp}'})</label>
+                            <textarea
+                                rows={3}
+                                required
+                                value={form.data.wa_otp_template}
+                                onChange={(e) => form.setData('wa_otp_template', e.target.value)}
+                                placeholder="🔐 Kode OTP Anda adalah: {otp}"
+                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono text-xs leading-relaxed"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1">Template pesan pengiriman OTP WhatsApp otomatis ke pemilik toko (Owner).</p>
                         </div>
 
                         <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
