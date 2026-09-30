@@ -266,16 +266,13 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                         
                         {/* LEFT BRAND LOGO */}
                         <div className="flex items-center gap-4">
-                            <Link href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'} className="flex items-center gap-2.5 group">
-                                <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition transform">
-                                    <Building2 className="w-5 h-5 text-white" />
+                            <Link href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'} className="flex items-center gap-2.5 group shrink-0">
+                                <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl shadow-md shadow-blue-600/20 group-hover:scale-105 transition transform">
+                                    <Building2 className="w-4 h-4 text-white" />
                                 </div>
-                                <div className="hidden sm:block">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-black text-base tracking-tight text-white leading-none">KasirSewa</span>
-                                        <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md text-[9px] font-mono font-bold">SaaS</span>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 font-mono tracking-widest uppercase font-semibold block mt-0.5">Multi-Tenant Platform</span>
+                                <div className="hidden sm:flex items-center gap-1.5">
+                                    <span className="font-extrabold text-base tracking-tight text-white">KasirSewa</span>
+                                    <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md text-[9px] font-mono font-bold">POS</span>
                                 </div>
                             </Link>
 
@@ -386,20 +383,20 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                         {/* RIGHT: OUTLET SWITCHER & USER PROFILE */}
                         <div className="flex items-center gap-3">
 
-                            {/* TRIAL REMAINING COUNT BADGE FOR OWNER */}
+                            {/* TRIAL REMAINING COUNT BADGE FOR OWNER (SLEEK MINIMALIST) */}
                             {tenantSubscription?.is_trial && roles.includes('OWNER') && (
                                 <Link
                                     href="/subscription"
-                                    className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-bold transition shadow-sm shrink-0 group cursor-pointer"
-                                    title="Masa trial gratis 7 hari aktif. Klik untuk bayar berlangganan sekarang."
+                                    className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-full text-xs font-bold transition shrink-0 group cursor-pointer"
+                                    title="Masa trial 7 hari aktif. Klik untuk berlangganan sekarang."
                                 >
                                     <span className="relative flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                                     </span>
-                                    <span>⏳ Trial: {tenantSubscription.remaining_trial_days > 0 ? `Sisa ${tenantSubscription.remaining_trial_days} Hari` : `${tenantSubscription.remaining_trial_hours} Jam`}</span>
-                                    <span className="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-black rounded-lg uppercase tracking-wider group-hover:scale-105 transition">
-                                        💳 Bayar Sekarang
+                                    <span>Trial {tenantSubscription.remaining_trial_days > 0 ? `${tenantSubscription.remaining_trial_days} Hari` : `${tenantSubscription.remaining_trial_hours} Jam`}</span>
+                                    <span className="text-[10px] font-extrabold text-amber-400 group-hover:text-amber-200 underline underline-offset-2 ml-0.5">
+                                        Bayar →
                                     </span>
                                 </Link>
                             )}
