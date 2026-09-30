@@ -175,7 +175,7 @@ class TenantController extends Controller
             // 5. Delete stock movements, opnames & transfers
             DB::table('stock_movements')->where('tenant_id', $tenantId)->delete();
 
-            DB::table('stock_opname_details')->whereIn('stock_opname_id', function ($q) use ($tenantId) {
+            DB::table('stock_opname_items')->whereIn('stock_opname_id', function ($q) use ($tenantId) {
                 $q->select('id')->from('stock_opnames')->where('tenant_id', $tenantId);
             })->delete();
             DB::table('stock_opnames')->where('tenant_id', $tenantId)->delete();
@@ -205,11 +205,16 @@ class TenantController extends Controller
             DB::table('outlets')->where('tenant_id', $tenantId)->delete();
 
             // 9. Delete users & companies
+            $companyIds = DB::table('users')->where('tenant_id', $tenantId)->pluck('company_id')->filter()->toArray();
+
             if ($ownerId) {
                 DB::table('users')->where('id', $ownerId)->delete();
             }
             DB::table('users')->where('tenant_id', $tenantId)->delete();
-            DB::table('companies')->where('tenant_id', $tenantId)->delete();
+
+            if (!empty($companyIds)) {
+                DB::table('companies')->whereIn('id', $companyIds)->delete();
+            }
 
             // 10. Finally delete the tenant record
             $tenant->delete();
