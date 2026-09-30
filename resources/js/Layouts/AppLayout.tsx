@@ -241,8 +241,8 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 </div>
             )}
 
-            {/* WHATSAPP VERIFICATION NOTICE BANNER FOR GOOGLE LOGGED-IN USERS */}
-            {user && user.google_id && !user.phone_verified_at && !roles.includes('SUPER_ADMIN') && (
+            {/* WHATSAPP VERIFICATION NOTICE BANNER (EXCLUSIVE FOR OWNER ROLE) */}
+            {user && user.google_id && !user.phone_verified_at && roles.includes('OWNER') && (
                 <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-4 py-2.5 text-xs font-bold flex flex-col sm:flex-row items-center justify-between shadow-xl border-b border-blue-400 gap-2">
                     <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-white text-blue-900 rounded text-[10px] uppercase font-mono font-black">📲 VERIFIKASI WA</span>

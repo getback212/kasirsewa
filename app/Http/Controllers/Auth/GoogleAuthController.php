@@ -188,7 +188,14 @@ class GoogleAuthController extends Controller
                 'active_outlet_id' => $user->outlet_id,
             ]);
 
-            return redirect('/dashboard')->with('success', "✅ Selamat datang kembali, {$user->name}!");
+            $targetRoute = '/dashboard';
+            if ($user->hasRole(UserRole::CASHIER->value)) {
+                $targetRoute = '/pos';
+            } elseif ($user->hasRole(UserRole::WAREHOUSE->value)) {
+                $targetRoute = '/stock';
+            }
+
+            return redirect($targetRoute)->with('success', "✅ Selamat datang kembali, {$user->name}!");
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Google Auth Failed: ' . $e->getMessage());
             return redirect('/login')->with('error', 'Gagal masuk menggunakan Google: ' . $e->getMessage());
