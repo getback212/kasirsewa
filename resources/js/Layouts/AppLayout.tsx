@@ -25,6 +25,7 @@ import {
     Building2,
     Sparkles,
     CreditCard,
+    Globe,
     Maximize,
     Minimize,
     Sun,
