@@ -46,6 +46,13 @@ Route::get('/', function () {
         }
         return redirect()->route('dashboard');
     }
+
+    $host = strtolower(request()->getHost());
+    $isMainDomain = in_array($host, ['superbackend.my.id', 'saas.superbackend.my.id', '127.0.0.1', 'localhost', '172.17.0.1']);
+
+    if (!$isMainDomain) {
+        return redirect()->route('login');
+    }
     
     $plans = \App\Models\Plan::where('is_active', true)->get();
     $waCsNumber = \App\Models\SaaSSetting::get('wa_cs_number', '6281234567890');
