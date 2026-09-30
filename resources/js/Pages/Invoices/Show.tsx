@@ -14,6 +14,11 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
     const { flash } = usePage<InvoiceShowProps>().props;
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+    const latestPayment = invoice?.payments && invoice.payments.length > 0 ? invoice.payments[invoice.payments.length - 1] : null;
+    const proofUrl = latestPayment?.payload?.proof_url;
+    const senderBank = latestPayment?.payload?.sender_bank;
+    const senderName = latestPayment?.payload?.sender_name;
+
     const paymentForm = useForm({
         payment_method: 'manual_transfer',
         sender_bank: 'Bank BCA',
@@ -153,6 +158,62 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
                             </tbody>
                         </table>
                     </div>
+
+                    {/* SUBMITTED PAYMENT PROOF DETAILS CARD FOR SUPER ADMIN & OWNER */}
+                    {latestPayment && (
+                        <div className="bg-slate-950 border-2 border-blue-500/40 p-6 rounded-3xl shadow-xl space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                                    <ShieldCheck className="w-5 h-5 text-blue-400" /> Bukti Konfirmasi Transfer Pembayaran Tenant
+                                </h3>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                    latestPayment.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                                }`}>
+                                    STATUS: {latestPayment.status === 'completed' ? 'VERIFIED LUNAS' : 'MENUNGGU VERIFIKASI SUPER ADMIN'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase block">Bank / Metode Pengirim</span>
+                                    <p className="font-bold text-white mt-0.5">{senderBank || latestPayment.payment_method || 'Transfer Bank'}</p>
+                                </div>
+                                <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase block">Nama Pemilik Rekening</span>
+                                    <p className="font-bold text-white mt-0.5">{senderName || '-'}</p>
+                                </div>
+                                <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase block">Waktu Submit Bukti</span>
+                                    <p className="font-bold text-slate-300 font-mono mt-0.5">{new Date(latestPayment.created_at).toLocaleString('id-ID')}</p>
+                                </div>
+                            </div>
+
+                            {/* DISPLAY PROOF IMAGE IF UPLOADED */}
+                            {proofUrl ? (
+                                <div className="space-y-2 pt-2 border-t border-slate-800">
+                                    <span className="text-xs font-bold text-slate-300 block">Lampiran Bukti Foto Transfer:</span>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                        <a href={proofUrl} target="_blank" rel="noopener noreferrer" className="group relative block rounded-2xl overflow-hidden border border-slate-700 hover:border-blue-400 transition bg-slate-900 p-2">
+                                            <img src={proofUrl} alt="Bukti Transfer Tenant" className="max-h-56 object-contain" />
+                                            <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs transition">
+                                                🔍 Klik Untuk Memperbesar
+                                            </div>
+                                        </a>
+                                        <a
+                                            href={proofUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-4 py-2.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl font-bold text-xs inline-flex items-center gap-1.5 transition"
+                                        >
+                                            👁️ Buka Foto Bukti Transfer Di Tab Baru ↗
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-500 italic pt-2">Tenant tidak mengunggah file foto (Konfirmasi transfer manual via bank pengirim & nama rekening).</p>
+                            )}
+                        </div>
+                    )}
 
                     {/* TOTAL & CONFIRMATION ACTIONS */}
                     <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-800 gap-4">
