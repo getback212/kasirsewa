@@ -88,6 +88,32 @@ export default function SubscriptionIndex({ tenant, subscription, plans, invoice
                     </div>
                 )}
 
+                {/* PROMINENT TRIAL BANNER FOR OWNER */}
+                {subscription?.status === 'trial' && (
+                    <div className="bg-gradient-to-r from-amber-900/40 via-orange-950/50 to-amber-900/40 border-2 border-amber-500/50 p-6 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="space-y-1 text-center md:text-left">
+                            <div className="flex items-center justify-center md:justify-start gap-2">
+                                <span className="px-2.5 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-black uppercase rounded-full">🎁 MASA UJI COBA GRATIS 7 HARI</span>
+                                <span className="text-xs font-mono font-bold text-amber-300">
+                                    Berakhir pada {subscription.trial_ends_at ? new Date(subscription.trial_ends_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '7 Hari'}
+                                </span>
+                            </div>
+                            <h2 className="text-lg font-extrabold text-white">Ingin Berlangganan Sekarang Tanpa Menunggu Trial Habis?</h2>
+                            <p className="text-xs text-amber-200/80">
+                                Anda dapat langsung memproses pembayaran paket berlangganan kapan saja via QRIS Instant atau Transfer Bank BCA/Mandiri.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => handleRenewSubmit(currentPlan?.id || selectedPlanId)}
+                            className="px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs rounded-2xl shadow-xl shadow-amber-500/20 shrink-0 transition active:scale-95 cursor-pointer flex items-center gap-2"
+                        >
+                            <CreditCard className="w-4 h-4" />
+                            <span>💳 Bayar Berlangganan Sekarang</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* CURRENT SUBSCRIPTION METRICS SUMMARY CARD */}
                 <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-2 border-emerald-500/40 p-6 rounded-3xl shadow-2xl grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>

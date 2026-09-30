@@ -89,6 +89,6 @@ class SubscriptionController extends Controller
             newValues: ['plan' => $plan->name, 'cycle' => $validated['billing_cycle'], 'total' => $price]
         );
 
-        return redirect()->back()->with('success', "Tagihan invoice perpanjangan paket '{$plan->name}' berhasil dibuat! Silakan lakukan pembayaran.");
+        return redirect('/invoices')->with('success', "Tagihan invoice berlangganan paket '{$plan->name}' (Rp " . number_format($price, 0, ',', '.') . ") berhasil dibuat! Silakan lakukan pembayaran via QRIS atau Transfer Bank.");
     }
 }

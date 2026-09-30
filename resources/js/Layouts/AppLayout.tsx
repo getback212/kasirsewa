@@ -385,6 +385,25 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                         {/* RIGHT: OUTLET SWITCHER & USER PROFILE */}
                         <div className="flex items-center gap-3">
+
+                            {/* TRIAL REMAINING COUNT BADGE FOR OWNER */}
+                            {tenantSubscription?.is_trial && roles.includes('OWNER') && (
+                                <Link
+                                    href="/subscription"
+                                    className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-bold transition shadow-sm shrink-0 group cursor-pointer"
+                                    title="Masa trial gratis 7 hari aktif. Klik untuk bayar berlangganan sekarang."
+                                >
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                    </span>
+                                    <span>⏳ Trial: {tenantSubscription.remaining_trial_days > 0 ? `Sisa ${tenantSubscription.remaining_trial_days} Hari` : `${tenantSubscription.remaining_trial_hours} Jam`}</span>
+                                    <span className="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-black rounded-lg uppercase tracking-wider group-hover:scale-105 transition">
+                                        💳 Bayar Sekarang
+                                    </span>
+                                </Link>
+                            )}
+
                             
                             {/* OUTLET BADGE / DROPDOWN */}
                             {currentOutlet && (!roles.includes('SUPER_ADMIN') || tenantSubscription) && (

@@ -63,9 +63,25 @@ class HandleInertiaRequests extends Middleware
 
                     $productsCount = Product::where('tenant_id', $tenantId)->count();
 
+                    $trialEndsAt = $tenant->subscription->trial_ends_at;
+                    $expiresAt = $tenant->subscription->expires_at;
+
+                    $remainingDays = 0;
+                    $remainingHours = 0;
+                    if ($trialEndsAt) {
+                        $remainingHours = max(0, (int) round(now()->diffInHours($trialEndsAt, false)));
+                        $remainingDays = max(0, (int) ceil($remainingHours / 24));
+                    }
+
                     $tenantSubscription = [
                         'status' => $tenant->subscription->status,
                         'plan_name' => $plan->name,
+                        'plan_id' => $plan->id,
+                        'is_trial' => $tenant->subscription->status === 'trial',
+                        'trial_ends_at' => $trialEndsAt ? $trialEndsAt->format('Y-m-d H:i:s') : null,
+                        'expires_at' => $expiresAt ? $expiresAt->format('Y-m-d H:i:s') : null,
+                        'remaining_trial_days' => $remainingDays,
+                        'remaining_trial_hours' => $remainingHours,
                         'max_stores' => $plan->max_stores,
                         'max_users' => $plan->max_users,
                         'max_products' => $plan->max_products,
