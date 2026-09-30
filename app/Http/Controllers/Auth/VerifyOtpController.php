@@ -82,8 +82,10 @@ class VerifyOtpController extends Controller
         ]);
 
         $user = $request->user();
+        $inputOtp = trim((string) $request->otp);
+        $dbOtp = trim((string) $user->phone_otp);
 
-        if (!$user->phone_otp || $user->phone_otp !== $request->otp) {
+        if (empty($dbOtp) || $dbOtp !== $inputOtp) {
             return redirect()->back()->withErrors([
                 'otp' => '❌ Kode OTP 6-digit yang Anda masukkan salah atau tidak cocok.',
             ]);
