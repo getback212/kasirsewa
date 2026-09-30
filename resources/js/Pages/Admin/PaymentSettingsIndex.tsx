@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { CreditCard, CheckCircle2, Building2, Plus, Trash2, Save, FileText } from 'lucide-react';
+import { CreditCard, CheckCircle2, Building2, Plus, Trash2, Save, FileText, QrCode } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface BankAccount {
@@ -19,6 +19,7 @@ interface SettingsData {
     bank_mandiri_number?: string;
     bank_mandiri_name?: string;
     qris_payload?: string;
+    qris_image_url?: string;
     payment_instructions?: string;
 }
 
@@ -39,6 +40,7 @@ export default function PaymentSettingsIndex({ settings }: PaymentSettingsPagePr
     const form = useForm({
         bank_accounts: initialBankAccounts,
         qris_payload: settings?.qris_payload || '',
+        qris_image_url: settings?.qris_image_url || '',
         payment_instructions: settings?.payment_instructions || '',
     });
 
@@ -183,6 +185,39 @@ export default function PaymentSettingsIndex({ settings }: PaymentSettingsPagePr
                                 </div>
                             </div>
                         ))}
+                    </div>
+
+                    {/* QRIS PAYMENT SETTINGS */}
+                    <div className="space-y-4 bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <div className="font-extrabold text-sm text-purple-400 flex items-center gap-2">
+                            <QrCode className="w-4 h-4" /> Pengaturan QRIS Pembayaran SaaS (All e-Wallet & m-Banking)
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-slate-400 font-semibold mb-1">String Payload QRIS Statis / NMP</label>
+                                <textarea
+                                    rows={2}
+                                    value={form.data.qris_payload}
+                                    onChange={(e) => form.setData('qris_payload', e.target.value)}
+                                    placeholder="00020101021226670016COM.NOBUBANK.WWW..."
+                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-purple-300 font-mono text-xs"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">Payload string QRIS untuk generate barcode otomatis di halaman invoice sewa tenant.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-400 font-semibold mb-1">URL Gambar / Foto Barcode QRIS (Opsional)</label>
+                                <input
+                                    type="text"
+                                    value={form.data.qris_image_url}
+                                    onChange={(e) => form.setData('qris_image_url', e.target.value)}
+                                    placeholder="https://domain.com/qris-merchant.png"
+                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono text-xs"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">Link URL gambar atau QR code toko dari Gopay, ShopeePay, DANA, OVO, Nobu, BCA, dll.</p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* INSTRUCTIONS */}

@@ -47,7 +47,8 @@ class AdminPaymentSettingController extends Controller
             'bank_mandiri_number' => SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
             'bank_mandiri_name' => SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
             'qris_payload' => SaaSSetting::get('qris_payload', ''),
-            'payment_instructions' => SaaSSetting::get('payment_instructions', 'Silakan melakukan transfer sesuai nominal invoice.'),
+            'qris_image_url' => SaaSSetting::get('qris_image_url', ''),
+            'payment_instructions' => SaaSSetting::get('payment_instructions', 'Silakan melakukan transfer atau scan QRIS sesuai nominal invoice.'),
         ];
 
         return Inertia::render('Admin/PaymentSettingsIndex', [
@@ -74,6 +75,7 @@ class AdminPaymentSettingController extends Controller
             'bank_mandiri_number' => ['nullable', 'string', 'max:100'],
             'bank_mandiri_name' => ['nullable', 'string', 'max:100'],
             'qris_payload' => ['nullable', 'string'],
+            'qris_image_url' => ['nullable', 'string'],
             'payment_instructions' => ['nullable', 'string'],
         ]);
 
@@ -81,12 +83,9 @@ class AdminPaymentSettingController extends Controller
             SaaSSetting::set('bank_accounts', json_encode($validated['bank_accounts']));
         }
 
-        if (!empty($validated['qris_payload'])) {
-            SaaSSetting::set('qris_payload', $validated['qris_payload']);
-        }
-        if (!empty($validated['payment_instructions'])) {
-            SaaSSetting::set('payment_instructions', $validated['payment_instructions']);
-        }
+        SaaSSetting::set('qris_payload', $validated['qris_payload'] ?? '');
+        SaaSSetting::set('qris_image_url', $validated['qris_image_url'] ?? '');
+        SaaSSetting::set('payment_instructions', $validated['payment_instructions'] ?? '');
 
         AuditLogService::log('SAAS_PAYMENT_SETTINGS_UPDATE', 'SaaSSetting', 1, $validated);
 
