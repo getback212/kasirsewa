@@ -313,7 +313,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                                 {/* CATEGORY DROPDOWN BUTTONS ON TOPBAR */}
                                 {navigationGroups.map((group) => {
-                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id !== 'saas_admin' && group.id !== 'laporan') {
+                                    if (group.id === 'saas_admin') {
                                         return null;
                                     }
 
@@ -478,6 +478,55 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                         </div>
 
                                         <div className="py-1 border-b border-slate-800/80">
+                                            {roles.includes('SUPER_ADMIN') && (
+                                                <>
+                                                    <div className="px-3 py-1 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                                        SaaS Admin Management
+                                                    </div>
+                                                    <Link
+                                                        href="/admin/dashboard"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
+                                                        <span>Dashboard SaaS Global</span>
+                                                    </Link>
+                                                    <Link
+                                                        href="/admin/tenants"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                                                        <span>Kelola Tenant SaaS</span>
+                                                    </Link>
+                                                    <Link
+                                                        href="/admin/plans"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                                                        <span>Pengaturan Paket SaaS</span>
+                                                    </Link>
+                                                    <Link
+                                                        href="/admin/payment-settings"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                                                        <span>Rekening Pembayaran SaaS</span>
+                                                    </Link>
+                                                    <Link
+                                                        href="/admin/notification-settings"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                                                        <span>Notifikasi WA & Email</span>
+                                                    </Link>
+                                                    <div className="my-1 border-t border-slate-800/80" />
+                                                </>
+                                            )}
+
                                             {roles.includes('OWNER') && (
                                                 <>
                                                     <Link
@@ -534,14 +583,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 )}
                             </div>
 
-                            {/* DIRECT QUICK LOGOUT BUTTON ALWAYS VISIBLE */}
-                            <button
-                                onClick={handleLogout}
-                                className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl transition cursor-pointer active:scale-95 shrink-0"
-                                title="Logout Keluar Sistem"
-                            >
-                                <LogOut className="w-4 h-4" />
-                            </button>
+                            {/* MOBILE MENU TOGGLE */}
 
                             {/* MOBILE MENU TOGGLE */}
                             <button
