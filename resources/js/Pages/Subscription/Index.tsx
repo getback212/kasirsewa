@@ -55,7 +55,7 @@ export default function SubscriptionIndex({ tenant, subscription, plans, invoice
         <AppLayout title="Status Berlangganan SaaS">
             <Head title="Paket Berlangganan & Status Subscription - KasirSewa" />
 
-            <div className="max-w-6xl mx-auto p-6 space-y-6">
+            <div className="w-full space-y-6">
                 
                 {/* HEADER BANNER */}
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
