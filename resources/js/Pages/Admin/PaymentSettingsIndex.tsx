@@ -148,13 +148,13 @@ export default function PaymentSettingsIndex({ settings }: PaymentSettingsPagePr
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-slate-400 font-semibold mb-1">Nama Bank / Provider</label>
+                                        <label className="block text-slate-400 font-semibold mb-1">Nama Bank / Provider E-Wallet</label>
                                         <input
                                             type="text"
                                             required
                                             value={bank.bank_name}
                                             onChange={(e) => updateBankField(index, 'bank_name', e.target.value)}
-                                            placeholder="Bank BCA / BRI / Mandiri / BSI"
+                                            placeholder="BCA / Mandiri / BRI / Gopay / OVO / DANA"
                                             className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-white font-bold"
                                         />
                                     </div>

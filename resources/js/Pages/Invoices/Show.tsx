@@ -260,37 +260,48 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
 
                             <form onSubmit={handleTenantSubmitPayment} className="space-y-3">
                                 <div>
-                                    <label className="block text-slate-400 font-semibold mb-1">Metode Pembayaran</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Metode Pembayaran Tujuan</label>
                                     <select
                                         value={paymentForm.data.payment_method}
                                         onChange={(e) => paymentForm.setData('payment_method', e.target.value)}
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                                     >
-                                        <option value="manual_transfer">Transfer Bank Manual (BCA / Mandiri)</option>
-                                        <option value="qris">Scan QRIS Resmi</option>
+                                        <option value="manual_transfer">🏦 Transfer Rekening Bank (BCA / Mandiri / BRI / BNI / BSI / Jago)</option>
+                                        <option value="ewallet">📱 E-Wallet (Gopay / OVO / DANA / ShopeePay / LinkAja)</option>
+                                        <option value="qris">📲 Scan Barcode QRIS Statis / Dynamic</option>
                                     </select>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-slate-400 font-semibold mb-1">Bank Pengirim</label>
-                                        <input
-                                            type="text"
-                                            required
+                                        <label className="block text-slate-400 font-semibold mb-1">Bank / E-Wallet Pengirim</label>
+                                        <select
                                             value={paymentForm.data.sender_bank}
                                             onChange={(e) => paymentForm.setData('sender_bank', e.target.value)}
-                                            placeholder="e.g. BCA / Mandiri / BRI"
-                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
-                                        />
+                                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold text-xs"
+                                        >
+                                            <option value="Bank BCA">Bank BCA</option>
+                                            <option value="Bank Mandiri">Bank Mandiri</option>
+                                            <option value="Bank BRI">Bank BRI</option>
+                                            <option value="Bank BNI">Bank BNI</option>
+                                            <option value="Bank BSI">Bank BSI (Syariah)</option>
+                                            <option value="Bank Jago">Bank Jago / Seabank</option>
+                                            <option value="Gopay">Gopay / Gojek</option>
+                                            <option value="OVO">OVO</option>
+                                            <option value="DANA">DANA</option>
+                                            <option value="ShopeePay">ShopeePay</option>
+                                            <option value="LinkAja">LinkAja</option>
+                                            <option value="Lainnya">Lainnya (Bank/E-Wallet Lain)</option>
+                                        </select>
                                     </div>
                                     <div>
-                                        <label className="block text-slate-400 font-semibold mb-1">Nama Pemilik Rekening</label>
+                                        <label className="block text-slate-400 font-semibold mb-1">Nama Pemilik Rekening / Akun</label>
                                         <input
                                             type="text"
                                             required
                                             value={paymentForm.data.sender_name}
                                             onChange={(e) => paymentForm.setData('sender_name', e.target.value)}
-                                            placeholder="Nama Pengirim Transfer"
+                                            placeholder="Nama Pemilik Akun / Pengirim"
                                             className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                                         />
                                     </div>
