@@ -523,6 +523,14 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                                         <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                                                         <span>Notifikasi WA & Email</span>
                                                     </Link>
+                                                    <Link
+                                                        href="/invoices"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <Receipt className="w-3.5 h-3.5 text-emerald-400" />
+                                                        <span>Riwayat Tagihan Invoice</span>
+                                                    </Link>
                                                     <div className="my-1 border-t border-slate-800/80" />
                                                 </>
                                             )}
@@ -544,6 +552,14 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                                     >
                                                         <CreditCard className="w-3.5 h-3.5 text-amber-400" />
                                                         <span>Masa Langganan & Billing</span>
+                                                    </Link>
+                                                    <Link
+                                                        href="/invoices"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <Receipt className="w-3.5 h-3.5 text-emerald-400" />
+                                                        <span>Riwayat Tagihan Invoice</span>
                                                     </Link>
                                                 </>
                                             )}
