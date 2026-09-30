@@ -223,7 +223,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-white">
+        <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-white">
             
             {/* IMPERSONATION NOTICE BANNER FOR SUPER ADMIN */}
             {roles.includes('SUPER_ADMIN') && tenantSubscription && (
