@@ -41,4 +41,33 @@ class WhatsAppOtpVerificationTest extends TestCase
 
         $this->assertNotNull($googleUser->fresh()->phone_verified_at);
     }
+
+    public function test_cashier_can_send_otp_and_verify_whatsapp_redirecting_to_pos()
+    {
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+
+        $cashier = User::factory()->create([
+            'phone' => '081299998888',
+            'phone_verified_at' => null,
+        ]);
+        $cashier->assignRole(UserRole::CASHIER->value);
+
+        $response = $this->actingAs($cashier)->get('/verify-otp');
+        $response->assertStatus(200);
+
+        $sendResponse = $this->actingAs($cashier)->post('/verify-otp/send', [
+            'phone' => '085236267731',
+        ]);
+        $sendResponse->assertRedirect();
+
+        $cashier->refresh();
+        $this->assertNotNull($cashier->phone_otp);
+
+        $verifyResponse = $this->actingAs($cashier)->post('/verify-otp/verify', [
+            'otp' => $cashier->phone_otp,
+        ]);
+        $verifyResponse->assertRedirect('/pos');
+
+        $this->assertNotNull($cashier->fresh()->phone_verified_at);
+    }
 }

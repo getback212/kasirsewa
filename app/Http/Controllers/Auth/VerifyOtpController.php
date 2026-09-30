@@ -101,6 +101,13 @@ class VerifyOtpController extends Controller
             'phone_otp_expires_at' => null,
         ]);
 
-        return redirect('/dashboard')->with('success', '✅ Nomor WhatsApp berhasil diverifikasi! Akun toko Anda kini 100% aktif dan terverifikasi.');
+        $targetRoute = '/dashboard';
+        if ($user->hasRole('CASHIER')) {
+            $targetRoute = '/pos';
+        } elseif ($user->hasRole('WAREHOUSE')) {
+            $targetRoute = '/stock';
+        }
+
+        return redirect($targetRoute)->with('success', '✅ Nomor WhatsApp berhasil diverifikasi! Akun Anda kini 100% aktif dan terverifikasi.');
     }
 }
