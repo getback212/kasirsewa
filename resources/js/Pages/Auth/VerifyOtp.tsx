@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Smartphone, CheckCircle2, ShieldCheck, ArrowRight, RefreshCw } from 'lucide-react';
+import { Smartphone, CheckCircle2, ShieldCheck, ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface VerifyOtpProps {
     user: {
@@ -52,6 +52,20 @@ export default function VerifyOtp({ user }: VerifyOtpProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* FLASH NOTIFICATION BANNER */}
+                {flash?.success && (
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-bold flex items-center gap-2 shadow-lg animate-in fade-in duration-200">
+                        <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                        <span>{flash.success}</span>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-400 font-bold flex items-center gap-2 shadow-lg animate-in fade-in duration-200">
+                        <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+                        <span>{flash.error}</span>
+                    </div>
+                )}
 
                 {/* STATUS BADGE */}
                 {user.is_verified ? (

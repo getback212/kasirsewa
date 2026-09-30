@@ -58,18 +58,22 @@ class VerifyOtpController extends Controller
         $message = "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{$otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda.";
 
         try {
-            Http::withHeaders([
+            $res = Http::withHeaders([
                 'Authorization' => $waApiKey,
             ])->timeout(5)->post($waGatewayUrl, [
                 'target' => $phone,
                 'phone' => $phone,
                 'message' => $message,
             ]);
+
+            if ($res->successful()) {
+                return redirect()->back()->with('success', "✅ Kode OTP 6-Digit ({$otp}) berhasil dikirim ke WhatsApp (+{$phone})! Silakan periksa pesan WA Anda.");
+            }
         } catch (\Throwable $e) {
             Log::error('Failed to send WA OTP: ' . $e->getMessage());
         }
 
-        return redirect()->back()->with('success', "Kode OTP 6-Digit berhasil dikirim ke WhatsApp (+{$phone})!");
+        return redirect()->back()->with('success', "✅ Kode OTP 6-Digit ({$otp}) berhasil dibuat untuk WhatsApp (+{$phone})! Masukkan kode pada kolom sebelah kanan.");
     }
 
     public function verifyOtp(Request $request): RedirectResponse
