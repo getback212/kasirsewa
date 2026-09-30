@@ -67,13 +67,13 @@ class VerifyOtpController extends Controller
             ]);
 
             if ($res->successful()) {
-                return redirect()->back()->with('success', "✅ Kode OTP 6-Digit ({$otp}) berhasil dikirim ke WhatsApp (+{$phone})! Silakan periksa pesan WA Anda.");
+                return redirect()->back()->with('success', "✅ Kode OTP 6-Digit berhasil dikirim ke nomor WhatsApp Anda! Silakan periksa pesan WA yang masuk.");
             }
         } catch (\Throwable $e) {
             Log::error('Failed to send WA OTP: ' . $e->getMessage());
         }
 
-        return redirect()->back()->with('success', "✅ Kode OTP 6-Digit ({$otp}) berhasil dibuat untuk WhatsApp (+{$phone})! Masukkan kode pada kolom sebelah kanan.");
+        return redirect()->back()->with('success', "✅ Kode OTP 6-Digit berhasil dikirim ke nomor WhatsApp Anda! Silakan periksa pesan WA yang masuk.");
     }
 
     public function verifyOtp(Request $request): RedirectResponse
