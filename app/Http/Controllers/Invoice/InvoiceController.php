@@ -77,6 +77,7 @@ class InvoiceController extends Controller
             'bank_mandiri_number' => \App\Models\SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
             'bank_mandiri_name' => \App\Models\SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
             'qris_payload' => \App\Models\SaaSSetting::get('qris_payload', ''),
+            'qris_image_url' => \App\Models\SaaSSetting::get('qris_image_url', ''),
             'payment_instructions' => \App\Models\SaaSSetting::get('payment_instructions', 'Silakan melakukan transfer sesuai nominal invoice.'),
         ];
 

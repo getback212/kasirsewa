@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, usePage, Link, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { CheckCircle2, ArrowLeft, Upload, CreditCard, AlertCircle, Building2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ArrowLeft, Upload, CreditCard, AlertCircle, Building2, ShieldCheck, QrCode } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface InvoiceShowProps extends PageProps {
@@ -105,6 +105,34 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
                             )}
                         </div>
                     </div>
+
+                    {/* QRIS PAYMENT BOX */}
+                    {(paymentSettings?.qris_payload || paymentSettings?.qris_image_url) && invoice?.status !== 'paid' && (
+                        <div className="bg-slate-950 border-2 border-purple-500/40 p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="space-y-2 text-center md:text-left">
+                                <span className="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1">
+                                    <QrCode className="w-3.5 h-3.5" /> 📱 BAYAR INSTAN VIA QRIS
+                                </span>
+                                <h3 className="text-lg font-bold text-white">Scan Barcode QRIS Untuk Pembayaran Instan</h3>
+                                <p className="text-xs text-slate-400 max-w-md">
+                                    Gunakan aplikasi e-Wallet (Gopay, ShopeePay, DANA, OVO, LinkAja) atau m-Banking (BCA, Mandiri, BRI, BNI, BSI) untuk melakukan scan QRIS secara langsung.
+                                </p>
+                            </div>
+
+                            <div className="bg-white p-4 rounded-2xl shadow-2xl flex flex-col items-center justify-center shrink-0">
+                                {paymentSettings?.qris_image_url ? (
+                                    <img src={paymentSettings.qris_image_url} alt="QRIS Code Merchant SaaS" className="w-44 h-44 object-contain" />
+                                ) : (
+                                    <img 
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paymentSettings.qris_payload)}`} 
+                                        alt="QRIS Barcode" 
+                                        className="w-44 h-44 object-contain" 
+                                    />
+                                )}
+                                <span className="text-[10px] font-bold text-slate-950 font-mono mt-2 uppercase tracking-widest">QRIS STANDAR NMP</span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* ITEMS TABLE */}
                     <div className="border border-slate-800 rounded-2xl overflow-hidden">
