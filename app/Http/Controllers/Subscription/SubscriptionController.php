@@ -53,14 +53,24 @@ class SubscriptionController extends Controller
         $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
         DB::transaction(function () use ($tenant, $plan, $validated, $price, $invoiceNumber) {
-            $subscription = Subscription::updateOrCreate(
-                ['tenant_id' => $tenant->id],
-                [
+            $subscription = Subscription::where('tenant_id', $tenant->id)->first();
+
+            if (!$subscription) {
+                $subscription = Subscription::create([
+                    'tenant_id' => $tenant->id,
                     'plan_id' => $plan->id,
-                    'status' => 'pending',
+                    'status' => 'trial',
                     'billing_cycle' => $validated['billing_cycle'],
-                ]
-            );
+                    'starts_at' => now(),
+                    'trial_ends_at' => now()->addDays(7),
+                ]);
+            } else {
+                // Retain current trial/active status while invoice is pending payment approval
+                $subscription->update([
+                    'plan_id' => $plan->id,
+                    'billing_cycle' => $validated['billing_cycle'],
+                ]);
+            }
 
             $invoice = Invoice::create([
                 'invoice_number' => $invoiceNumber,
