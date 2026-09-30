@@ -150,17 +150,68 @@ class TenantController extends Controller
         $tenantName = $tenant->name;
 
         DB::transaction(function () use ($tenant) {
-            Subscription::where('tenant_id', $tenant->id)->delete();
-            Invoice::where('tenant_id', $tenant->id)->delete();
-            if ($tenant->owner_id) {
-                User::where('id', $tenant->owner_id)->delete();
+            $tenantId = $tenant->id;
+            $ownerId = $tenant->owner_id;
+
+            // 1. Break cyclic reference from tenant to owner user
+            $tenant->update(['owner_id' => null]);
+
+            // 2. Delete sales & transactions
+            DB::table('sale_items')->whereIn('sale_id', function ($q) use ($tenantId) {
+                $q->select('id')->from('sales')->where('tenant_id', $tenantId);
+            })->delete();
+            DB::table('sales')->where('tenant_id', $tenantId)->delete();
+
+            // 3. Delete purchases
+            DB::table('purchase_items')->whereIn('purchase_id', function ($q) use ($tenantId) {
+                $q->select('id')->from('purchases')->where('tenant_id', $tenantId);
+            })->delete();
+            DB::table('purchases')->where('tenant_id', $tenantId)->delete();
+
+            // 4. Delete expenses & shifts
+            DB::table('expenses')->where('tenant_id', $tenantId)->delete();
+            DB::table('shifts')->where('tenant_id', $tenantId)->delete();
+
+            // 5. Delete stock movements, opnames & transfers
+            DB::table('stock_movements')->where('tenant_id', $tenantId)->delete();
+
+            DB::table('stock_opname_details')->whereIn('stock_opname_id', function ($q) use ($tenantId) {
+                $q->select('id')->from('stock_opnames')->where('tenant_id', $tenantId);
+            })->delete();
+            DB::table('stock_opnames')->where('tenant_id', $tenantId)->delete();
+
+            DB::table('stock_transfer_items')->whereIn('stock_transfer_id', function ($q) use ($tenantId) {
+                $q->select('id')->from('stock_transfers')->where('tenant_id', $tenantId);
+            })->delete();
+            DB::table('stock_transfers')->where('tenant_id', $tenantId)->delete();
+
+            // 6. Delete master data
+            DB::table('stocks')->where('tenant_id', $tenantId)->delete();
+            DB::table('products')->where('tenant_id', $tenantId)->delete();
+            DB::table('categories')->where('tenant_id', $tenantId)->delete();
+            DB::table('units')->where('tenant_id', $tenantId)->delete();
+            DB::table('suppliers')->where('tenant_id', $tenantId)->delete();
+            DB::table('customers')->where('tenant_id', $tenantId)->delete();
+
+            // 7. Delete billing & subscriptions
+            DB::table('invoice_items')->whereIn('invoice_id', function ($q) use ($tenantId) {
+                $q->select('id')->from('invoices')->where('tenant_id', $tenantId);
+            })->delete();
+            DB::table('invoices')->where('tenant_id', $tenantId)->delete();
+            DB::table('subscriptions')->where('tenant_id', $tenantId)->delete();
+
+            // 8. Delete audit logs & outlets
+            DB::table('audit_logs')->where('tenant_id', $tenantId)->delete();
+            DB::table('outlets')->where('tenant_id', $tenantId)->delete();
+
+            // 9. Delete users & companies
+            if ($ownerId) {
+                DB::table('users')->where('id', $ownerId)->delete();
             }
-            User::where('tenant_id', $tenant->id)->delete();
-            Company::where('tenant_id', $tenant->id)->delete();
-            Outlet::where('tenant_id', $tenant->id)->delete();
-            Product::where('tenant_id', $tenant->id)->delete();
-            Stock::where('tenant_id', $tenant->id)->delete();
-            Customer::where('tenant_id', $tenant->id)->delete();
+            DB::table('users')->where('tenant_id', $tenantId)->delete();
+            DB::table('companies')->where('tenant_id', $tenantId)->delete();
+
+            // 10. Finally delete the tenant record
             $tenant->delete();
         });
 
