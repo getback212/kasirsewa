@@ -68,6 +68,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [activeTopCategory, setActiveTopCategory] = useState<string | null>(null);
     const [outletDropdownOpen, setOutletDropdownOpen] = useState(false);
+    const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -450,49 +451,96 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 </div>
                             )}
 
-                            {/* THEME TOGGLE BUTTON */}
-                            <button
-                                type="button"
-                                onClick={toggleTheme}
-                                className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center border border-slate-800/80"
-                                title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
-                            >
-                                {theme === 'dark' ? (
-                                    <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
-                                ) : (
-                                    <Moon className="w-4 h-4 text-indigo-400" />
-                                )}
-                            </button>
-
-                            {/* FULLSCREEN TOGGLE */}
-                            <button
-                                type="button"
-                                onClick={toggleFullscreen}
-                                className="hidden sm:flex p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-xl transition cursor-pointer active:scale-95 items-center justify-center border border-slate-800/80"
-                                title={isFullscreen ? "Keluar Fullscreen" : "Layar Penuh"}
-                            >
-                                {isFullscreen ? (
-                                    <Minimize className="w-4 h-4 text-emerald-400" />
-                                ) : (
-                                    <Maximize className="w-4 h-4 text-slate-300 hover:text-emerald-400" />
-                                )}
-                            </button>
-
-                            {/* USER PROFILE & LOGOUT */}
-                            <div className="flex items-center gap-2">
-                                <div className="hidden sm:flex flex-col text-right">
-                                    <span className="text-xs font-black store-name-text leading-tight">{user?.name}</span>
-                                    <span className="text-[10px] font-bold text-emerald-400 font-mono uppercase tracking-wider">{userRole}</span>
-                                </div>
-
+                            {/* USER PROFILE DROPDOWN MENU */}
+                            <div className="relative">
                                 <button
-                                    onClick={handleLogout}
-                                    className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition cursor-pointer active:scale-95"
-                                    title="Logout Keluar Sistem"
+                                    type="button"
+                                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 rounded-xl text-xs transition cursor-pointer active:scale-95 shadow-inner"
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-[11px] uppercase shrink-0">
+                                        {user?.name ? user.name.charAt(0) : 'U'}
+                                    </div>
+                                    <div className="hidden sm:flex flex-col text-left">
+                                        <span className="text-xs font-bold text-white max-w-[110px] truncate leading-none">{user?.name}</span>
+                                        <span className="text-[9px] font-bold text-emerald-400 font-mono uppercase tracking-wider mt-0.5">{userRole}</span>
+                                    </div>
+                                    <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
                                 </button>
+
+                                {userDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="px-3 py-2 border-b border-slate-800/80 space-y-0.5">
+                                            <div className="font-bold text-xs text-white truncate">{user?.name}</div>
+                                            <div className="text-[10px] text-slate-400 truncate">{user?.email}</div>
+                                            <div className="text-[9px] font-mono font-bold text-emerald-400 uppercase tracking-wider">{userRole}</div>
+                                        </div>
+
+                                        <div className="py-1 border-b border-slate-800/80">
+                                            {roles.includes('OWNER') && (
+                                                <>
+                                                    <Link
+                                                        href="/outlets"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <Globe className="w-3.5 h-3.5 text-blue-400" />
+                                                        <span>Pengaturan Subdomain Toko</span>
+                                                    </Link>
+                                                    <Link
+                                                        href="/subscription"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                                                        <span>Masa Langganan & Billing</span>
+                                                    </Link>
+                                                </>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => { toggleTheme(); setUserDropdownOpen(false); }}
+                                                className="w-full flex items-center justify-between px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-400" />}
+                                                    <span>Tampilan Mode</span>
+                                                </div>
+                                                <span className="text-[10px] text-slate-500 font-mono">{theme === 'dark' ? 'Gelap' : 'Terang'}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { toggleFullscreen(); setUserDropdownOpen(false); }}
+                                                className="w-full flex items-center justify-between px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    {isFullscreen ? <Minimize className="w-3.5 h-3.5 text-emerald-400" /> : <Maximize className="w-3.5 h-3.5 text-slate-400" />}
+                                                    <span>Layar Penuh (Fullscreen)</span>
+                                                </div>
+                                            </button>
+                                        </div>
+
+                                        <div className="pt-1">
+                                            <button
+                                                onClick={() => { setUserDropdownOpen(false); handleLogout(); }}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition cursor-pointer"
+                                            >
+                                                <LogOut className="w-4 h-4 shrink-0" />
+                                                <span>🚪 Keluar Sistem (Logout)</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* DIRECT QUICK LOGOUT BUTTON ALWAYS VISIBLE */}
+                            <button
+                                onClick={handleLogout}
+                                className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl transition cursor-pointer active:scale-95 shrink-0"
+                                title="Logout Keluar Sistem"
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </button>
 
                             {/* MOBILE MENU TOGGLE */}
                             <button
