@@ -364,18 +364,6 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
                                 />
                             </div>
 
-                            <label className="flex items-center gap-2 p-3 bg-slate-950 border border-slate-800 rounded-2xl cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={createForm.data.send_invite}
-                                    onChange={(e) => createForm.setData('send_invite', e.target.checked)}
-                                    className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
-                                />
-                                <span className="text-xs text-slate-300 font-semibold">
-                                    ✉️ Kirim Undangan Bergabung Otomatis via Gmail & WhatsApp
-                                </span>
-                            </label>
-
                             <div>
                                 <label className="block text-slate-400 font-semibold mb-1">Password Awal Login Staff</label>
                                 <input
