@@ -467,30 +467,32 @@ export default function POSPage({
                                 />
                             </div>
 
-                            {/* NETWORK STATUS / OFFLINE AUTO-SYNC BADGE */}
-                            {!isOnline ? (
-                                <div
-                                    className="px-3 py-3 bg-amber-500/20 border border-amber-500/40 text-amber-300 rounded-2xl text-xs font-bold flex items-center gap-1.5 shrink-0 animate-pulse"
-                                    title="Koneksi Terputus: Kasir berjalan di Mode Offline & menyimpan transaksi di memori lokal peramban"
-                                >
-                                    <span>⚠️</span>
-                                    <span>OFFLINE MODE</span>
-                                    {pendingOfflineCount > 0 && (
-                                        <span className="px-1.5 py-0.5 bg-amber-500 text-slate-950 font-black rounded-full text-[10px]">
-                                            {pendingOfflineCount}
-                                        </span>
-                                    )}
-                                </div>
-                            ) : pendingOfflineCount > 0 ? (
-                                <button
-                                    onClick={syncOfflineQueue}
-                                    className="px-3 py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-lg shadow-blue-600/30"
-                                    title="Klik untuk mengirim ulang transaksi offline ke server"
-                                >
-                                    <span>🔄</span>
-                                    <span>Sync {pendingOfflineCount} Offline</span>
-                                </button>
-                            ) : null}
+                            {/* NETWORK STATUS / OFFLINE AUTO-SYNC BADGE (ALWAYS VISIBLE) */}
+                            <div
+                                className={`px-3 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 border shrink-0 transition cursor-default ${
+                                    !isOnline
+                                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-400 animate-pulse'
+                                        : pendingOfflineCount > 0
+                                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 cursor-pointer'
+                                            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                }`}
+                                onClick={() => {
+                                    if (isOnline && pendingOfflineCount > 0) syncOfflineQueue();
+                                }}
+                                title={!isOnline ? "Koneksi Terputus: Kasir berjalan di Mode Offline & menyimpan transaksi di memori lokal" : "Koneksi Terhubung ke Cloud Server"}
+                            >
+                                <span className="relative flex h-2.5 w-2.5">
+                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${!isOnline ? 'bg-rose-400' : pendingOfflineCount > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`}></span>
+                                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${!isOnline ? 'bg-rose-500' : pendingOfflineCount > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                </span>
+                                <span className="font-mono text-[11px] uppercase tracking-wider">
+                                    {!isOnline
+                                        ? `Offline (${pendingOfflineCount} Pending)`
+                                        : pendingOfflineCount > 0
+                                            ? `Sync ${pendingOfflineCount} Pending`
+                                            : 'Online Cloud'}
+                                </span>
+                            </div>
 
                             {/* SALES HISTORY BUTTON */}
                             <button
