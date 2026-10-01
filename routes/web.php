@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\AdminNotificationSettingController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\UnitController;
+use App\Http\Controllers\Master\DiscountController;
 use App\Http\Controllers\Invoice\InvoiceController;
 
 // PUBLIC LANDING PAGE & GUEST ROUTES
@@ -156,6 +157,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/units', [UnitController::class, 'store'])->name('units.store');
     Route::put('/units/{id}', [UnitController::class, 'update'])->name('units.update');
     Route::delete('/units/{id}', [UnitController::class, 'destroy'])->name('units.destroy');
+
+    Route::get('/discounts', [DiscountController::class, 'index'])->name('discounts.index');
+    Route::post('/discounts', [DiscountController::class, 'store'])->name('discounts.store');
+    Route::put('/discounts/{id}', [DiscountController::class, 'update'])->name('discounts.update');
+    Route::delete('/discounts/{id}', [DiscountController::class, 'destroy'])->name('discounts.destroy');
 
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');

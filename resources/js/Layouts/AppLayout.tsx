@@ -202,6 +202,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             icon: Clock,
             items: [
                 { name: 'Shift & Kas Laci', path: '/shifts', icon: Clock, permission: 'open-shift' },
+                { name: 'Voucher Promo & Diskon', path: '/discounts', icon: Sparkles, permission: 'view-products' },
                 { name: 'Pelanggan Member', path: '/customers', icon: UsersIcon, permission: 'view-customers' },
                 { name: 'Biaya Operasional', path: '/expenses', icon: Receipt, permission: 'view-expenses' },
                 { name: 'Retur Penjualan', path: '/sales-returns', icon: PackageCheck, permission: 'process-return' },
