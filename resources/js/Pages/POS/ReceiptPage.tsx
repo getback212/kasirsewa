@@ -19,11 +19,9 @@ interface ReceiptPageProps extends PageProps {
     };
     textReceipt58: string;
     textReceipt80: string;
-    rawBtUrl58: string;
-    rawBtUrl80: string;
 }
 
-export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtUrl58, rawBtUrl80 }: ReceiptPageProps) {
+export default function ReceiptPage({ sale, textReceipt58, textReceipt80 }: ReceiptPageProps) {
     const [paperWidth, setPaperWidth] = useState<58 | 80>(58);
 
     const handlePrint = () => {
@@ -108,23 +106,16 @@ export default function ReceiptPage({ sale, textReceipt58, textReceipt80, rawBtU
 
                         <button
                             onClick={handlePrint}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
                         >
-                            <Printer className="w-4 h-4" /> Cetak Browser
+                            <Printer className="w-4 h-4" /> Cetak Struk Thermal
                         </button>
-
-                        <a
-                            href={paperWidth === 58 ? rawBtUrl58 : rawBtUrl80}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
-                        >
-                            <Printer className="w-4 h-4 text-blue-300" /> Cetak Bluetooth (RawBT)
-                        </a>
                     </div>
                 </div>
 
                 <div className="text-center text-[11px] text-slate-400 font-mono flex items-center justify-center gap-1.5 bg-slate-900/50 p-2.5 rounded-2xl border border-slate-800">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Presisi Matriks Thermal ESC/POS ({paperWidth}mm - Anti Patah Angka)</span>
+                    <span>Presisi Matriks Thermal ESC/POS ({paperWidth}mm - Standar Mlijo Online)</span>
                 </div>
 
             </div>

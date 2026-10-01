@@ -85,12 +85,6 @@ class ReceiptGeneratorService
         return implode("\n", $lines);
     }
 
-    public function generateRawBtUrl(Sale $sale, int $paperWidth = 58): string
-    {
-        $text = $this->formatTextReceipt($sale, $paperWidth);
-        return "intent:#Intent;scheme=rawbt;package=ru.a404.rawbt;S.txt=" . urlencode($text) . ";end;";
-    }
-
     private function center(string $text, int $width): string
     {
         if (mb_strlen($text) > $width) {

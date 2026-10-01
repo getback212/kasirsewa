@@ -33,15 +33,11 @@ class ReceiptController extends Controller
 
         $textReceipt58 = $receiptService->formatTextReceipt($sale, 58);
         $textReceipt80 = $receiptService->formatTextReceipt($sale, 80);
-        $rawBtUrl58 = $receiptService->generateRawBtUrl($sale, 58);
-        $rawBtUrl80 = $receiptService->generateRawBtUrl($sale, 80);
 
         return Inertia::render('POS/ReceiptPage', [
             'sale' => $sale,
             'textReceipt58' => $textReceipt58,
             'textReceipt80' => $textReceipt80,
-            'rawBtUrl58' => $rawBtUrl58,
-            'rawBtUrl80' => $rawBtUrl80,
         ]);
     }
 }
