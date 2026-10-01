@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Boxes, Plus, Search, Edit, Trash2, Barcode, Tag, FolderPlus } from 'lucide-react';
-import type { PageProps } from '@/Types';
+import { formatThousand, parseThousand } from '@/Utils/format';
 
 interface CategoryItem {
     id: number;
@@ -358,11 +358,11 @@ export default function ProductsIndex({ products, categories, units, filters }: 
                                 <div>
                                     <label className="block text-slate-400 font-semibold mb-1">Harga Beli Kulakan HPP (Rp)</label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         required
-                                        min="0"
-                                        value={data.purchase_price}
-                                        onChange={(e) => setData('purchase_price', e.target.value)}
+                                        value={formatThousand(data.purchase_price)}
+                                        onChange={(e) => setData('purchase_price', parseThousand(e.target.value))}
+                                        placeholder="0"
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 font-mono font-bold"
                                     />
                                 </div>
@@ -370,11 +370,11 @@ export default function ProductsIndex({ products, categories, units, filters }: 
                                 <div>
                                     <label className="block text-slate-400 font-semibold mb-1">Harga Jual POS (Rp)</label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         required
-                                        min="0"
-                                        value={data.selling_price}
-                                        onChange={(e) => setData('selling_price', e.target.value)}
+                                        value={formatThousand(data.selling_price)}
+                                        onChange={(e) => setData('selling_price', parseThousand(e.target.value))}
+                                        placeholder="0"
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-emerald-400 font-mono font-bold text-sm"
                                     />
                                 </div>

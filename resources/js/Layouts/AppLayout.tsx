@@ -189,6 +189,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             icon: Boxes,
             items: [
                 { name: 'Katalog Produk', path: '/products', icon: Boxes, permission: 'view-products' },
+                { name: 'Satuan Unit Barang', path: '/units', icon: Boxes, permission: 'view-products' },
                 { name: 'Stok Gudang', path: '/inventory', icon: Warehouse, permission: 'view-stock' },
                 { name: 'Stock Opname Audit', path: '/stock-opname', icon: ClipboardCheck, permission: 'view-stock' },
                 { name: 'Transfer Stok Cabang', path: '/stock-transfers', icon: Repeat, permission: 'transfer-stock' },

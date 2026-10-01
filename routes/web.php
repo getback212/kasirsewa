@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\AdminPaymentSettingController;
 use App\Http\Controllers\Admin\AdminNotificationSettingController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Master\CustomerController;
+use App\Http\Controllers\Master\UnitController;
 use App\Http\Controllers\Invoice\InvoiceController;
 
 // PUBLIC LANDING PAGE & GUEST ROUTES
@@ -150,6 +151,11 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
+
+    Route::get('/units', [UnitController::class, 'index'])->name('units.index');
+    Route::post('/units', [UnitController::class, 'store'])->name('units.store');
+    Route::put('/units/{id}', [UnitController::class, 'update'])->name('units.update');
+    Route::delete('/units/{id}', [UnitController::class, 'destroy'])->name('units.destroy');
 
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
