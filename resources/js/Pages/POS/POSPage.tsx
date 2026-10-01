@@ -200,6 +200,82 @@ export default function POSPage({
         };
     }, []);
 
+    const handlePrintOfflineReceipt = (sale: any) => {
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        if (!printWindow) {
+            alert('⚠️ Harap izinkan Pop-up browser untuk mencetak struk offline!');
+            return;
+        }
+
+        const outletName = activeOutlet?.name || 'KASIRSEWA POS';
+        const outletAddress = activeOutlet?.address || '';
+        const outletPhone = activeOutlet?.phone || '';
+        const dateStr = sale?.sale_date ? new Date(sale.sale_date).toLocaleString('id-ID') : new Date().toLocaleString('id-ID');
+
+        const itemsHtml = (sale?.items || []).map((i: any) => {
+            const name = i?.name || i?.product?.name || i?.product_name || 'Barang';
+            const qty = i?.quantity || 1;
+            const price = Number(i?.price ?? i?.unit_price ?? 0);
+            const subtotal = (price * qty);
+            return `
+                <tr>
+                    <td style="padding: 3px 0;" colspan="2"><strong>${name}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom: 5px;">${qty} x Rp ${price.toLocaleString('id-ID')}</td>
+                    <td style="text-align: right; padding-bottom: 5px;">Rp ${subtotal.toLocaleString('id-ID')}</td>
+                </tr>
+            `;
+        }).join('');
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Struk Thermal Nota Offline - ${sale?.invoice_number || 'OFFLINE'}</title>
+                <style>
+                    body { font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding: 10px; width: 280px; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .border-b { border-bottom: 1px dashed #000; margin: 6px 0; }
+                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                </style>
+            </head>
+            <body>
+                <div class="text-center">
+                    <h3 style="margin: 0; font-size: 14px;">${outletName}</h3>
+                    <div style="font-size: 10px;">${outletAddress}</div>
+                    <div style="font-size: 10px;">${outletPhone}</div>
+                </div>
+                <div class="border-b"></div>
+                <div style="font-size: 10px;">
+                    <div>No: <strong>${sale?.invoice_number || 'OFFLINE'}</strong> (OFFLINE)</div>
+                    <div>Tgl: ${dateStr}</div>
+                </div>
+                <div class="border-b"></div>
+                <table>
+                    ${itemsHtml}
+                </table>
+                <div class="border-b"></div>
+                <table>
+                    <tr><td>Total:</td><td class="text-right"><strong>Rp ${Number(sale?.grand_total || 0).toLocaleString('id-ID')}</strong></td></tr>
+                    <tr><td>Bayar:</td><td class="text-right">Rp ${Number(sale?.paid_amount || 0).toLocaleString('id-ID')}</td></tr>
+                    <tr><td>Kembali:</td><td class="text-right"><strong>Rp ${Number(sale?.change_amount || 0).toLocaleString('id-ID')}</strong></td></tr>
+                </table>
+                <div class="border-b"></div>
+                <div class="text-center" style="font-size: 10px; margin-top: 8px;">
+                    *** STRUK NOTA OFFLINE ***<br/>
+                    Terima Kasih Atas Kunjungan Anda!
+                </div>
+                <script>
+                    window.onload = function() { window.print(); window.close(); };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
     // Hardware Barcode Scanner Listener
     useBarcodeScanner({
         onScan: (barcode) => {
@@ -913,13 +989,23 @@ export default function POSPage({
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                            <Link
-                                href={`/pos/receipt/${completedSale.id}`}
-                                className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition active:scale-95 cursor-pointer"
-                            >
-                                <Printer className="w-4 h-4" />
-                                <span>Cetak Struk Thermal</span>
-                            </Link>
+                            {completedSale?.is_offline || !isOnline ? (
+                                <button
+                                    onClick={() => handlePrintOfflineReceipt(completedSale)}
+                                    className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition active:scale-95 cursor-pointer"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                    <span>Cetak Struk Thermal (Offline)</span>
+                                </button>
+                            ) : (
+                                <Link
+                                    href={`/pos/receipt/${completedSale.id}`}
+                                    className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition active:scale-95 cursor-pointer"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                    <span>Cetak Struk Thermal</span>
+                                </Link>
+                            )}
 
                             <button
                                 onClick={() => setCompletedSale(null)}
