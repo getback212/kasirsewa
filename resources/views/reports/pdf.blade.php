@@ -93,10 +93,16 @@
         </thead>
         <tbody>
             @foreach($analytics['paymentBreakdown'] as $pay)
+                @php
+                    $payArr = (array) $pay;
+                    $methodName = $payArr['label'] ?? $payArr['payment_method'] ?? 'TUNAI';
+                    $count = $payArr['count'] ?? 0;
+                    $total = (float) ($payArr['total_amount'] ?? 0);
+                @endphp
                 <tr>
-                    <td><strong>{{ strtoupper($pay->payment_method) }}</strong></td>
-                    <td class="text-right">{{ $pay->count }} Transaksi</td>
-                    <td class="text-right"><strong>Rp {{ number_format((float) $pay->total_amount, 0, ',', '.') }}</strong></td>
+                    <td><strong>{{ strtoupper($methodName) }}</strong></td>
+                    <td class="text-right">{{ $count }} Transaksi</td>
+                    <td class="text-right"><strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></td>
                 </tr>
             @endforeach
         </tbody>
@@ -113,10 +119,16 @@
         </thead>
         <tbody>
             @foreach($analytics['topProducts'] as $prod)
+                @php
+                    $prodArr = (array) $prod;
+                    $name = $prodArr['product_name_snapshot'] ?? $prod->product_name_snapshot ?? 'Produk';
+                    $qty = $prodArr['total_qty'] ?? $prod->total_qty ?? 0;
+                    $sales = (float) ($prodArr['total_sales'] ?? $prod->total_sales ?? 0);
+                @endphp
                 <tr>
-                    <td>{{ $prod->product_name_snapshot }}</td>
-                    <td class="text-right">{{ $prod->total_qty }} Item</td>
-                    <td class="text-right"><strong>Rp {{ number_format((float) $prod->total_sales, 0, ',', '.') }}</strong></td>
+                    <td>{{ $name }}</td>
+                    <td class="text-right">{{ $qty }} Item</td>
+                    <td class="text-right"><strong>Rp {{ number_format($sales, 0, ',', '.') }}</strong></td>
                 </tr>
             @endforeach
         </tbody>
