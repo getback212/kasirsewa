@@ -95,6 +95,45 @@ class ReportService
             ->orderBy(DB::raw('DATE(sale_date)'))
             ->get();
 
+        // 6. Detailed Transaction History Report
+        $transactions = Sale::with(['cashier:id,name', 'customer:id,name,phone', 'payments:id,sale_id,payment_method,amount'])
+            ->where('outlet_id', $outletId)
+            ->whereBetween('sale_date', [$start, $end])
+            ->latest('sale_date')
+            ->limit(100)
+            ->get();
+
+        // 7. Product Sales & Profitability Breakdown
+        $productSales = SaleItem::whereHas('sale', function ($q) use ($outletId, $start, $end) {
+            $q->where('outlet_id', $outletId)
+              ->where('transaction_status', 'completed')
+              ->whereBetween('sale_date', [$start, $end]);
+        })
+        ->select(
+            'product_name_snapshot',
+            DB::raw('SUM(quantity) as qty_sold'),
+            DB::raw('SUM(subtotal) as total_sales'),
+            DB::raw('SUM(quantity * COALESCE(cost_price_snapshot, 0)) as total_cogs'),
+            DB::raw('SUM(subtotal - (quantity * COALESCE(cost_price_snapshot, 0))) as item_profit')
+        )
+        ->groupBy('product_name_snapshot')
+        ->orderByDesc('total_sales')
+        ->get();
+
+        // 8. Shift Cashier Audit Records
+        $shifts = \App\Models\Shift::with(['cashier:id,name'])
+            ->where('outlet_id', $outletId)
+            ->whereBetween('opened_at', [$start, $end])
+            ->latest('opened_at')
+            ->get();
+
+        // 9. Expenses Category Breakdown for Income Statement
+        $expensesCategory = \App\Models\Expense::where('outlet_id', $outletId)
+            ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
+            ->select('category', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as count'))
+            ->groupBy('category')
+            ->get();
+
         return [
             'totalRevenue' => $totalRevenue,
             'cogs' => $cogs,
@@ -108,6 +147,10 @@ class ReportService
             'paymentBreakdown' => $paymentBreakdown,
             'topProducts' => $topProducts,
             'dailyTrend' => $dailyTrend,
+            'transactions' => $transactions,
+            'productSales' => $productSales,
+            'shifts' => $shifts,
+            'expensesCategory' => $expensesCategory,
             'startDate' => $start->toDateString(),
             'endDate' => $end->toDateString(),
         ];
