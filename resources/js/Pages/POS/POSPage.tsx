@@ -859,6 +859,8 @@ export default function POSPage({
                     taxAmount={taxAmount}
                     discountAmount={transactionDiscount}
                     customerId={selectedCustomer?.id || null}
+                    discounts={discounts}
+                    customers={customers}
                     items={cart.map((i) => ({
                         product_id: i.product.id,
                         quantity: i.quantity,

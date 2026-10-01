@@ -110,4 +110,28 @@ class CustomerController extends Controller
 
         return redirect()->back()->with('success', "Data pelanggan member {$customerName} berhasil dihapus!");
     }
+
+    public function payCredit(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'note' => ['nullable', 'string'],
+        ]);
+
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $customer = Customer::where('tenant_id', $tenantId)->findOrFail($id);
+
+        $payAmount = (float) $validated['amount'];
+        $customer->decrement('credit_balance', min((float) $customer->credit_balance, $payAmount));
+
+        AuditLogService::log('CUSTOMER_CREDIT_PAYMENT', 'Customer', $customer->id, [
+            'name' => $customer->name,
+            'amount_paid' => $payAmount,
+            'remaining_credit' => $customer->credit_balance,
+        ]);
+
+        return redirect()->back()->with('success', "Pelunasan piutang/kasbon member {$customer->name} sebesar Rp " . number_format($payAmount, 0, ',', '.') . " berhasil dicatat!");
+    }
 }

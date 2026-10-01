@@ -135,6 +135,7 @@ Route::middleware('auth')->group(function () {
     // Master Customers / Member Database Routes
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::post('/customers/{id}/pay-credit', [CustomerController::class, 'payCredit'])->name('customers.pay_credit');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
     // Multi-Outlet Configuration Routes

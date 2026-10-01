@@ -29,7 +29,10 @@ class CreateSaleAction
         float $taxAmount,
         float $grandTotal,
         float $paidAmount,
-        ?string $note = null
+        ?string $note = null,
+        ?string $discountCode = null,
+        int $pointsUsed = 0,
+        float $pointsDiscountAmount = 0.00
     ): Sale {
         return DB::transaction(function () use (
             $outletId,
@@ -42,14 +45,51 @@ class CreateSaleAction
             $taxAmount,
             $grandTotal,
             $paidAmount,
-            $note
+            $note,
+            $discountCode,
+            $pointsUsed,
+            $pointsDiscountAmount
         ) {
             $outlet = \App\Models\Outlet::find($outletId);
             $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
 
+            $hasKasbonPayment = false;
+            foreach ($payments as $p) {
+                if (in_array(strtolower($p['method'] ?? ''), ['kasbon', 'credit_member', 'piutang'])) {
+                    $hasKasbonPayment = true;
+                }
+            }
+
             $totalPaymentsAmount = array_sum(array_column($payments, 'amount'));
-            if ($totalPaymentsAmount < $grandTotal) {
+
+            if (!$hasKasbonPayment && $totalPaymentsAmount < $grandTotal) {
                 throw new InvalidArgumentException("Jumlah nominal pembayaran (Rp ".number_format($totalPaymentsAmount, 0, ',', '.').") kurang dari Grand Total (Rp ".number_format($grandTotal, 0, ',', '.').")!");
+            }
+
+            if ($hasKasbonPayment) {
+                if (!$customerId) {
+                    throw new InvalidArgumentException("Metode pembayaran Kasbon/Piutang wajib memilih Pelanggan Member!");
+                }
+                $customer = \App\Models\Customer::findOrFail($customerId);
+                $unpaidAmount = max(0, $grandTotal - $paidAmount);
+                if (($customer->credit_balance + $unpaidAmount) > $customer->credit_limit) {
+                    throw new InvalidArgumentException("Batas limit piutang/kasbon pelanggan {$customer->name} (Max Rp ".number_format((float) $customer->credit_limit, 0, ',', '.').") terlampaui!");
+                }
+                $customer->increment('credit_balance', $unpaidAmount);
+            }
+
+            // Reward / Redeem Loyalty Points
+            if ($customerId) {
+                $customer = \App\Models\Customer::find($customerId);
+                if ($customer) {
+                    $pointsEarned = (int) floor($grandTotal / 10000);
+                    if ($pointsEarned > 0) {
+                        $customer->increment('points', $pointsEarned);
+                    }
+                    if ($pointsUsed > 0) {
+                        $customer->decrement('points', min($customer->points, $pointsUsed));
+                    }
+                }
             }
 
             $changeAmount = max(0, $totalPaymentsAmount - $grandTotal);
@@ -63,11 +103,14 @@ class CreateSaleAction
                 'invoice_number' => $invoiceNumber,
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
+                'discount_code' => $discountCode,
+                'points_used' => $pointsUsed,
+                'points_discount_amount' => $pointsDiscountAmount,
                 'tax_amount' => $taxAmount,
                 'grand_total' => $grandTotal,
                 'paid_amount' => $paidAmount,
                 'change_amount' => $changeAmount,
-                'payment_status' => 'paid',
+                'payment_status' => $hasKasbonPayment ? 'partial' : 'paid',
                 'transaction_status' => SaleStatus::COMPLETED->value,
                 'sale_date' => now(),
                 'note' => $note,

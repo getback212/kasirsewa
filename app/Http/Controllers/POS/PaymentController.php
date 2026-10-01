@@ -63,6 +63,9 @@ class PaymentController extends Controller
             'payments.*.reference_number' => ['nullable', 'string'],
             'subtotal' => ['required', 'numeric', 'min:0'],
             'discount_amount' => ['required', 'numeric', 'min:0'],
+            'discount_code' => ['nullable', 'string', 'max:50'],
+            'points_used' => ['nullable', 'integer', 'min:0'],
+            'points_discount_amount' => ['nullable', 'numeric', 'min:0'],
             'tax_amount' => ['required', 'numeric', 'min:0'],
             'grand_total' => ['required', 'numeric', 'min:0'],
             'paid_amount' => ['required', 'numeric', 'min:0'],
@@ -81,7 +84,10 @@ class PaymentController extends Controller
                 taxAmount: (float) $validated['tax_amount'],
                 grandTotal: (float) $validated['grand_total'],
                 paidAmount: (float) $validated['paid_amount'],
-                note: $validated['note'] ?? null
+                note: $validated['note'] ?? null,
+                discountCode: $validated['discount_code'] ?? null,
+                pointsUsed: (int) ($validated['points_used'] ?? 0),
+                pointsDiscountAmount: (float) ($validated['points_discount_amount'] ?? 0.00)
             );
 
             return response()->json([
