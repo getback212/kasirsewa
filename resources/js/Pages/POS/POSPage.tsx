@@ -81,6 +81,7 @@ interface POSPageProps extends PageProps {
     products?: ProductItem[];
     categories?: CategoryItem[];
     customers?: CustomerItem[];
+    discounts?: any[];
     heldCarts?: HeldCartRecord[];
     heldTransactions?: HeldCartRecord[];
     recentSales?: any[];
@@ -91,6 +92,7 @@ export default function POSPage({
     products = [], 
     categories = [], 
     customers = [], 
+    discounts = [],
     heldCarts = [],
     heldTransactions = [],
     recentSales = [],
@@ -861,11 +863,11 @@ export default function POSPage({
                     customerId={selectedCustomer?.id || null}
                     discounts={discounts}
                     customers={customers}
-                    items={cart.map((i) => ({
-                        product_id: i.product.id,
-                        quantity: i.quantity,
-                        unit_price: i.price,
-                        discount_amount: i.discount_amount,
+                    items={(cart || []).map((i) => ({
+                        product_id: i.product_id || i.product?.id,
+                        quantity: i.quantity || 1,
+                        unit_price: i.price ?? i.unit_price ?? 0,
+                        discount_amount: i.discount_amount || 0,
                     }))}
                     onClose={() => setShowPaymentModal(false)}
                     onSuccess={(saleData) => {

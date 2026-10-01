@@ -36,7 +36,11 @@ export default function PaymentModal({
 }: PaymentModalProps) {
     const { currentOutlet } = usePage<any>().props;
 
-    const selectedCustomer = customers.find(c => c.id === customerId);
+    const safeCustomers = Array.isArray(customers) ? customers : [];
+    const safeDiscounts = Array.isArray(discounts) ? discounts : [];
+    const safeItems = Array.isArray(items) ? items : [];
+
+    const selectedCustomer = safeCustomers.find(c => c && c.id === customerId);
 
     // Multi-Payment Rows
     const [payments, setPayments] = useState<PaymentRow[]>([
@@ -56,8 +60,8 @@ export default function PaymentModal({
     const totalDiscountAmount = initialDiscountAmount + extraDiscount + pointsDiscount;
     const finalGrandTotal = Math.max(0, initialSubtotal - totalDiscountAmount + initialTaxAmount);
 
-    const totalPaidAmount = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const hasKasbon = payments.some(p => ['kasbon', 'credit_member', 'piutang'].includes(p.method));
+    const totalPaidAmount = (payments || []).reduce((sum, p) => sum + (Number(p?.amount) || 0), 0);
+    const hasKasbon = (payments || []).some(p => p && ['kasbon', 'credit_member', 'piutang'].includes(p.method));
     const changeAmount = hasKasbon ? 0 : Math.max(0, totalPaidAmount - finalGrandTotal);
 
     const qrisImgSrc = currentOutlet?.qris_image_url
@@ -68,7 +72,7 @@ export default function PaymentModal({
 
     // Handle Promo Code Apply
     const handleApplyPromo = () => {
-        const found = discounts.find(d => d.code && d.code.toUpperCase() === promoCode.trim().toUpperCase() && d.is_active);
+        const found = safeDiscounts.find(d => d && d.code && d.code.toUpperCase() === promoCode.trim().toUpperCase() && d.is_active);
         if (!found) {
             alert('⚠️ Kode promo/voucher tidak ditemukan atau sudah tidak aktif!');
             return;
@@ -122,13 +126,13 @@ export default function PaymentModal({
     // Broadcast Payment State to Customer Display Dual Screen
     React.useEffect(() => {
         const channel = new BroadcastChannel('pos_customer_display');
-        const formattedItems = items.map((i) => ({
-            product_id: i.product_id || i.product?.id,
-            name: i.name || i.product?.name || 'Produk',
-            sku: i.sku || i.product?.sku || '-',
-            price: Number(i.price ?? i.unit_price ?? 0),
-            quantity: Number(i.quantity),
-            subtotal: Number(i.subtotal ?? ((i.price ?? 0) * i.quantity)),
+        const formattedItems = safeItems.map((i) => ({
+            product_id: i?.product_id || i?.product?.id,
+            name: i?.name || i?.product?.name || 'Produk',
+            sku: i?.sku || i?.product?.sku || '-',
+            price: Number(i?.price ?? i?.unit_price ?? 0),
+            quantity: Number(i?.quantity || 1),
+            subtotal: Number(i?.subtotal ?? ((i?.price ?? 0) * (i?.quantity || 1))),
         }));
 
         const stateData = {
@@ -168,16 +172,16 @@ export default function PaymentModal({
 
         const payload = {
             customer_id: customerId || null,
-            items: items.map((i) => ({
-                product_id: i.product_id || i.product?.id,
-                quantity: Number(i.quantity),
-                price: Number(i.price ?? i.unit_price ?? 0),
-                discount_amount: Number(i.discount_amount || 0),
+            items: safeItems.map((i) => ({
+                product_id: i?.product_id || i?.product?.id,
+                quantity: Number(i?.quantity || 1),
+                price: Number(i?.price ?? i?.unit_price ?? 0),
+                discount_amount: Number(i?.discount_amount || 0),
             })),
-            payments: payments.map(p => ({
-                method: p.method,
-                amount: Number(p.amount),
-                reference_number: p.reference_number || null,
+            payments: (payments || []).map(p => ({
+                method: p?.method || 'cash',
+                amount: Number(p?.amount || 0),
+                reference_number: p?.reference_number || null,
             })),
             subtotal: initialSubtotal,
             discount_amount: totalDiscountAmount,
