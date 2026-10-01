@@ -10,7 +10,7 @@
             margin: 0;
         }
         body {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Consolas', 'Courier New', Courier, 'Lucida Console', ui-monospace, monospace;
             font-size: {{ ($paperWidth ?? 58) == 80 ? '14px' : '12px' }};
             color: #000;
             background: #fff;
@@ -19,6 +19,8 @@
             width: {{ $paperWidth ?? 58 }}mm;
             box-sizing: border-box;
             line-height: 1.25;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -72,7 +74,7 @@
     </div>
 
     <div class="text-center bold">
-        <div style="font-size: 15px; text-transform: uppercase;">{{ $sale->outlet->name ?? 'KASIRSEWA POS' }}</div>
+        <div style="font-size: 16px; text-transform: uppercase;">{{ $sale->outlet->name ?? 'KASIRSEWA POS' }}</div>
         @if($sale->outlet->address)<div style="font-size: 11px; font-weight: normal;">{{ $sale->outlet->address }}</div>@endif
         @if($sale->outlet->phone)<div style="font-size: 11px; font-weight: normal;">Telp: {{ $sale->outlet->phone }}</div>@endif
     </div>
@@ -90,7 +92,7 @@
     @foreach($sale->items as $item)
         <div style="margin-top: 4px;">
             <div class="bold">{{ $item->product_name_snapshot }}</div>
-            <div class="flex" style="color: #222; font-size: 12px;">
+            <div class="flex" style="color: #000; font-size: 12px;">
                 <span>{{ (float)$item->quantity }} x Rp {{ number_format($item->price_snapshot, 0, ',', '.') }}</span>
                 <span class="bold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
             </div>
@@ -105,7 +107,7 @@
     </div>
 
     @if($sale->discount_amount > 0)
-        <div class="flex" style="color: #b91c1c;">
+        <div class="flex" style="color: #000;">
             <span>Diskon</span>
             <span>-Rp {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
         </div>
@@ -120,7 +122,7 @@
 
     <div class="double-line"></div>
 
-    <div class="flex bold" style="font-size: 14px;">
+    <div class="flex bold" style="font-size: 15px;">
         <span>TOTAL BAYAR</span>
         <span>Rp {{ number_format($sale->grand_total, 0, ',', '.') }}</span>
     </div>
@@ -132,7 +134,7 @@
         </div>
     @endforeach
 
-    <div class="flex bold" style="font-size: 13px; margin-top: 2px;">
+    <div class="flex bold" style="font-size: 14px; margin-top: 2px;">
         <span>Kembali</span>
         <span>Rp {{ number_format($sale->change_amount, 0, ',', '.') }}</span>
     </div>
