@@ -193,6 +193,60 @@ export default function PaymentModal({
             paid_amount: totalPaidAmount,
         };
 
+        const saveOfflineTransaction = () => {
+            const offlineSale = {
+                id: 'OFFLINE-' + Date.now(),
+                invoice_number: 'INV/OFFLINE/' + Date.now(),
+                sale_date: new Date().toISOString(),
+                grand_total: finalGrandTotal,
+                paid_amount: totalPaidAmount,
+                change_amount: changeAmount,
+                items: safeItems,
+                payments: payments,
+                is_offline: true,
+                payload: payload,
+            };
+
+            const existingQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
+            existingQueue.push(offlineSale);
+            localStorage.setItem('pos_offline_sales_queue', JSON.stringify(existingQueue));
+
+            try {
+                const channel = new BroadcastChannel('pos_customer_display');
+                const formattedItems = safeItems.map((i) => ({
+                    product_id: i?.product_id || i?.product?.id,
+                    name: i?.name || i?.product?.name || 'Produk',
+                    sku: i?.sku || i?.product?.sku || '-',
+                    price: Number(i?.price ?? i?.unit_price ?? 0),
+                    quantity: Number(i?.quantity || 1),
+                    subtotal: Number(i?.subtotal ?? ((i?.price ?? 0) * (i?.quantity || 1))),
+                }));
+
+                const successState = {
+                    type: 'CHECKOUT_SUCCESS',
+                    items: formattedItems,
+                    subtotal: initialSubtotal,
+                    discountAmount: totalDiscountAmount,
+                    taxAmount: initialTaxAmount,
+                    grandTotal: finalGrandTotal,
+                    changeAmount,
+                    selectedMethod: payments[0]?.method || 'cash',
+                };
+                channel.postMessage(successState);
+                localStorage.setItem('pos_customer_display_state', JSON.stringify(successState));
+                channel.close();
+            } catch (e) {}
+
+            alert(`⚡ KASIR OFFLINE MODE:\n\nTransaksi berhasil disimpan di memori offline lokal!\n\nKetika jaringan internet terhubung kembali, ${existingQueue.length} transaksi offline akan otomatis diunggah ke cloud server.`);
+            onSuccess(offlineSale);
+        };
+
+        if (!navigator.onLine) {
+            saveOfflineTransaction();
+            setProcessing(false);
+            return;
+        }
+
         try {
             const res = await fetch('/pos/checkout', {
                 method: 'POST',
@@ -207,13 +261,13 @@ export default function PaymentModal({
             const data = await res.json();
             if (res.ok && data.status === 'success') {
                 const channel = new BroadcastChannel('pos_customer_display');
-                const formattedItems = items.map((i) => ({
-                    product_id: i.product_id || i.product?.id,
-                    name: i.name || i.product?.name || 'Produk',
-                    sku: i.sku || i.product?.sku || '-',
-                    price: Number(i.price ?? i.unit_price ?? 0),
-                    quantity: Number(i.quantity),
-                    subtotal: Number(i.subtotal ?? ((i.price ?? 0) * i.quantity)),
+                const formattedItems = safeItems.map((i) => ({
+                    product_id: i?.product_id || i?.product?.id,
+                    name: i?.name || i?.product?.name || 'Produk',
+                    sku: i?.sku || i?.product?.sku || '-',
+                    price: Number(i?.price ?? i?.unit_price ?? 0),
+                    quantity: Number(i?.quantity || 1),
+                    subtotal: Number(i?.subtotal ?? ((i?.price ?? 0) * (i?.quantity || 1))),
                 }));
 
                 const successState = {
@@ -236,30 +290,8 @@ export default function PaymentModal({
                 setErrorMessage(data.message || 'Gagal memproses transaksi checkout.');
             }
         } catch (err: any) {
-            if (!navigator.onLine || err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
-                const offlineSale = {
-                    id: 'OFFLINE-' + Date.now(),
-                    invoice_number: 'INV/OFFLINE/' + Date.now(),
-                    sale_date: new Date().toISOString(),
-                    grand_total: finalGrandTotal,
-                    paid_amount: totalPaidAmount,
-                    change_amount: changeAmount,
-                    items: items,
-                    payments: payments,
-                    is_offline: true,
-                    payload: payload,
-                };
-
-                const existingQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
-                existingQueue.push(offlineSale);
-                localStorage.setItem('pos_offline_sales_queue', JSON.stringify(existingQueue));
-
-                alert('⚠️ Transaksi disimpan di mode Offline!');
-                onSuccess(offlineSale);
-                return;
-            }
-
-            setErrorMessage('Terjadi kesalahan koneksi server: ' + (err?.message || 'Network error'));
+            saveOfflineTransaction();
+            return;
         } finally {
             setProcessing(false);
         }
