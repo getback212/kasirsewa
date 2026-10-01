@@ -70,8 +70,8 @@
                 @php
                     $product = $item->product;
                     $qty = (float) $item->quantity;
-                    $minStock = (float) ($product->min_stock ?? 5);
-                    $hpp = (float) ($product->buy_price ?? 0);
+                    $minStock = (float) ($product->minimum_stock ?? $product->min_stock ?? 5);
+                    $hpp = (float) ($product->purchase_price ?? $product->buy_price ?? 0);
                     $assetVal = $qty * $hpp;
                 @endphp
                 <tr>

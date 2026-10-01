@@ -116,9 +116,9 @@ class InventoryController extends Controller
                 if (!$product) continue;
 
                 $qty = (float) $item->quantity;
-                $minStock = (float) ($product->min_stock ?? 5);
-                $hpp = (float) ($product->buy_price ?? 0);
-                $sellPrice = (float) ($product->price ?? 0);
+                $minStock = (float) ($product->minimum_stock ?? $product->min_stock ?? 5);
+                $hpp = (float) ($product->purchase_price ?? $product->buy_price ?? 0);
+                $sellPrice = (float) ($product->selling_price ?? $product->price ?? 0);
                 $assetVal = $qty * $hpp;
 
                 $status = $qty <= 0 ? 'HABIS' : ($qty <= $minStock ? 'MENIPIS' : 'AMAN');
@@ -158,7 +158,7 @@ class InventoryController extends Controller
         foreach ($stocks as $item) {
             if (!$item->product) continue;
             $qty = (float) $item->quantity;
-            $hpp = (float) ($item->product->buy_price ?? 0);
+            $hpp = (float) ($item->product->purchase_price ?? $item->product->buy_price ?? 0);
             $totalQuantity += $qty;
             $totalAssetValue += ($qty * $hpp);
         }
