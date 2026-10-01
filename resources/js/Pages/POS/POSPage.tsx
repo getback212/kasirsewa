@@ -234,23 +234,23 @@ export default function POSPage({
             <head>
                 <title>Struk Thermal Nota Offline - ${sale?.invoice_number || 'OFFLINE'}</title>
                 <style>
-                    body { font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding: 10px; width: 280px; }
+                    body { font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding: 8px; width: 280px; line-height: 1.25; }
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
                     .border-b { border-bottom: 1px dashed #000; margin: 6px 0; }
-                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
                 </style>
             </head>
             <body>
                 <div class="text-center">
-                    <h3 style="margin: 0; font-size: 14px;">${outletName}</h3>
-                    <div style="font-size: 10px;">${outletAddress}</div>
-                    <div style="font-size: 10px;">${outletPhone}</div>
+                    <h3 style="margin: 0; font-size: 15px; text-transform: uppercase;">${outletName}</h3>
+                    <div style="font-size: 11px;">${outletAddress}</div>
+                    <div style="font-size: 11px;">${outletPhone}</div>
                 </div>
                 <div class="border-b"></div>
-                <div style="font-size: 10px;">
-                    <div>No: <strong>${sale?.invoice_number || 'OFFLINE'}</strong> (OFFLINE)</div>
-                    <div>Tgl: ${dateStr}</div>
+                <div style="font-size: 11px;">
+                    <div>No Nota : <strong>${sale?.invoice_number || 'OFFLINE'}</strong></div>
+                    <div>Tgl Trans: ${dateStr}</div>
                 </div>
                 <div class="border-b"></div>
                 <table>
@@ -258,14 +258,16 @@ export default function POSPage({
                 </table>
                 <div class="border-b"></div>
                 <table>
-                    <tr><td>Total:</td><td class="text-right"><strong>Rp ${Number(sale?.grand_total || 0).toLocaleString('id-ID')}</strong></td></tr>
-                    <tr><td>Bayar:</td><td class="text-right">Rp ${Number(sale?.paid_amount || 0).toLocaleString('id-ID')}</td></tr>
-                    <tr><td>Kembali:</td><td class="text-right"><strong>Rp ${Number(sale?.change_amount || 0).toLocaleString('id-ID')}</strong></td></tr>
+                    <tr style="font-size: 14px;"><td><strong>TOTAL BAYAR</strong></td><td class="text-right"><strong>Rp ${Number(sale?.grand_total || 0).toLocaleString('id-ID')}</strong></td></tr>
+                    <tr style="font-size: 12px;"><td>Bayar</td><td class="text-right">Rp ${Number(sale?.paid_amount || 0).toLocaleString('id-ID')}</td></tr>
+                    <tr style="font-size: 13px;"><td><strong>Kembali</strong></td><td class="text-right"><strong>Rp ${Number(sale?.change_amount || 0).toLocaleString('id-ID')}</strong></td></tr>
                 </table>
                 <div class="border-b"></div>
-                <div class="text-center" style="font-size: 10px; margin-top: 8px;">
-                    *** STRUK NOTA OFFLINE ***<br/>
-                    Terima Kasih Atas Kunjungan Anda!
+                <div class="text-center" style="font-size: 11px; margin-top: 8px;">
+                    Terima Kasih Telah Berbelanja!<br/>
+                    Simpan Struk Ini Sebagai Bukti<br/>
+                    Barang Yang Sudah Dibeli<br/>
+                    Tidak Dapat Ditukar/Dikembalikan
                 </div>
                 <script>
                     window.onload = function() { window.print(); window.close(); };

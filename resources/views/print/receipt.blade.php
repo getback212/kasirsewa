@@ -11,13 +11,14 @@
         }
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: {{ ($paperWidth ?? 58) == 80 ? '13px' : '11px' }};
+            font-size: {{ ($paperWidth ?? 58) == 80 ? '14px' : '12px' }};
             color: #000;
             background: #fff;
             margin: 0;
             padding: 8px;
             width: {{ $paperWidth ?? 58 }}mm;
             box-sizing: border-box;
+            line-height: 1.25;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -71,9 +72,9 @@
     </div>
 
     <div class="text-center bold">
-        <div style="font-size: 14px; text-transform: uppercase;">{{ $sale->outlet->name ?? 'KASIRSEWA POS' }}</div>
-        @if($sale->outlet->address)<div style="font-size: 10px; font-weight: normal;">{{ $sale->outlet->address }}</div>@endif
-        @if($sale->outlet->phone)<div style="font-size: 10px; font-weight: normal;">Telp: {{ $sale->outlet->phone }}</div>@endif
+        <div style="font-size: 15px; text-transform: uppercase;">{{ $sale->outlet->name ?? 'KASIRSEWA POS' }}</div>
+        @if($sale->outlet->address)<div style="font-size: 11px; font-weight: normal;">{{ $sale->outlet->address }}</div>@endif
+        @if($sale->outlet->phone)<div style="font-size: 11px; font-weight: normal;">Telp: {{ $sale->outlet->phone }}</div>@endif
     </div>
 
     <div class="double-line"></div>
@@ -89,7 +90,7 @@
     @foreach($sale->items as $item)
         <div style="margin-top: 4px;">
             <div class="bold">{{ $item->product_name_snapshot }}</div>
-            <div class="flex" style="color: #333; font-size: 11px;">
+            <div class="flex" style="color: #222; font-size: 12px;">
                 <span>{{ (float)$item->quantity }} x Rp {{ number_format($item->price_snapshot, 0, ',', '.') }}</span>
                 <span class="bold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
             </div>
@@ -119,26 +120,26 @@
 
     <div class="double-line"></div>
 
-    <div class="flex bold" style="font-size: 13px;">
+    <div class="flex bold" style="font-size: 14px;">
         <span>TOTAL BAYAR</span>
         <span>Rp {{ number_format($sale->grand_total, 0, ',', '.') }}</span>
     </div>
 
     @foreach($sale->payments as $payment)
-        <div class="flex" style="font-size: 11px;">
+        <div class="flex" style="font-size: 12px;">
             <span>Bayar ({{ strtoupper($payment->payment_method) }})</span>
             <span>Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
         </div>
     @endforeach
 
-    <div class="flex bold" style="font-size: 12px; margin-top: 2px;">
+    <div class="flex bold" style="font-size: 13px; margin-top: 2px;">
         <span>Kembali</span>
         <span>Rp {{ number_format($sale->change_amount, 0, ',', '.') }}</span>
     </div>
 
     <div class="double-line"></div>
 
-    <div class="text-center" style="font-size: 10px; margin-top: 8px;">
+    <div class="text-center" style="font-size: 11px; margin-top: 8px;">
         Terima Kasih Telah Berbelanja!<br>
         Simpan Struk Ini Sebagai Bukti<br>
         Barang Yang Sudah Dibeli<br>
