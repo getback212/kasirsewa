@@ -44,10 +44,10 @@ class ReportController extends Controller
 
         $analytics = $reportService->getAnalyticsSummary($activeOutletId, $startDate, $endDate);
 
-        $fileName = 'Laporan_Keuangan_' . ($startDate ?? date('Y-m-01')) . '_s.d_' . ($endDate ?? date('Y-m-d')) . '.csv';
+        $fileName = 'Laporan_Keuangan_' . ($startDate ?? date('Y-m-01')) . '_s.d_' . ($endDate ?? date('Y-m-d')) . '.xlsx';
 
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',

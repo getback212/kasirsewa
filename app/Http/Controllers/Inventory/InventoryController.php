@@ -89,10 +89,10 @@ class InventoryController extends Controller
             ->where('outlet_id', $activeOutletId)
             ->get();
 
-        $fileName = 'Laporan_Stok_Gudang_' . date('Ymd_His') . '.csv';
+        $fileName = 'Laporan_Stok_Gudang_' . date('Ymd_His') . '.xlsx';
 
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
