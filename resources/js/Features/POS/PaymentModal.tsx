@@ -421,6 +421,44 @@ export default function PaymentModal({
                         ))}
                     </div>
 
+                    {/* QUICK CASH NOMINAL BUTTONS (FOR CASH METHOD) */}
+                    {payments[0]?.method === 'cash' && (
+                        <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                            <span className="text-[11px] font-bold text-amber-400 block">⚡ Pilihan Nominal Uang Cash Cepat:</span>
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => updatePaymentRow(0, 'amount', finalGrandTotal)}
+                                    className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl font-mono text-xs font-black transition cursor-pointer active:scale-95"
+                                >
+                                    Uang Pas (Rp {finalGrandTotal.toLocaleString('id-ID')})
+                                </button>
+                                {[10000, 20000, 50000, 100000].map((nominal) => {
+                                    return (
+                                        <button
+                                            key={nominal}
+                                            type="button"
+                                            onClick={() => updatePaymentRow(0, 'amount', nominal)}
+                                            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl font-mono text-xs font-bold transition cursor-pointer active:scale-95"
+                                        >
+                                            Rp {nominal.toLocaleString('id-ID')}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* KEMBALIAN REAL-TIME */}
+                    {totalPaidAmount >= finalGrandTotal && !hasKasbon && (
+                        <div className="bg-emerald-950/40 border border-emerald-500/40 p-3.5 rounded-2xl flex justify-between items-center text-emerald-400 font-sans">
+                            <span className="text-xs font-black uppercase tracking-wider">💰 Uang Kembalian Pelanggan:</span>
+                            <span className="text-xl font-black font-mono">
+                                Rp {changeAmount.toLocaleString('id-ID')}
+                            </span>
+                        </div>
+                    )}
+
                     {/* ACTION BUTTONS */}
                     <div className="pt-2 flex justify-end gap-2 border-t border-slate-800">
                         <button
