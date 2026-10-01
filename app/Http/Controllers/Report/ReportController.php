@@ -74,7 +74,10 @@ class ReportController extends Controller
             fputcsv($file, ['Total Omzet Penjualan', 'Rp ' . number_format($analytics['totalRevenue'], 0, ',', '.')]);
             fputcsv($file, ['Modal HPP (COGS)', 'Rp ' . number_format($analytics['cogs'], 0, ',', '.')]);
             fputcsv($file, ['Laba Kotor (Gross Profit)', 'Rp ' . number_format($analytics['grossProfit'], 0, ',', '.')]);
-            fputcsv($file, ['Margin Laba (%)', $analytics['profitMargin'] . '%']);
+            fputcsv($file, ['Margin Laba Kotor (%)', $analytics['profitMargin'] . '%']);
+            fputcsv($file, ['Total Biaya Operasional Toko (Expenses)', 'Rp ' . number_format($analytics['totalExpenses'] ?? 0, 0, ',', '.')]);
+            fputcsv($file, ['Laba Bersih Toko (Net Profit)', 'Rp ' . number_format($analytics['netProfit'] ?? 0, 0, ',', '.')]);
+            fputcsv($file, ['Margin Laba Bersih (%)', ($analytics['netProfitMargin'] ?? 0) . '%']);
             fputcsv($file, ['Total Transaksi Selesai', $analytics['transactionCount'] . ' Transaksi']);
             fputcsv($file, ['Rata-rata Transaksi (AOV)', 'Rp ' . number_format($analytics['averageOrderValue'], 0, ',', '.')]);
             fputcsv($file, []);

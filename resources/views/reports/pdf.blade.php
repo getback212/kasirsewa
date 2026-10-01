@@ -49,12 +49,14 @@
             <div class="val" style="color: #2563eb;">Rp {{ number_format($analytics['grossProfit'], 0, ',', '.') }}</div>
         </div>
         <div class="card">
-            <div class="title">Profit Margin (%)</div>
-            <div class="val">{{ $analytics['profitMargin'] }}%</div>
+            <div class="title">Laba Bersih (Net Profit)</div>
+            <div class="val" style="color: {{ $analytics['netProfit'] >= 0 ? '#16a34a' : '#dc2626' }};">
+                Rp {{ number_format($analytics['netProfit'], 0, ',', '.') }}
+            </div>
         </div>
     </div>
 
-    <div class="section-title">1. Ringkasan Transaksi & Rata-Rata Order (AOV)</div>
+    <div class="section-title">1. Ringkasan Transaksi, Biaya Operasional & Laba Bersih</div>
     <table>
         <tr>
             <th>Metrik Keuangan</th>
@@ -67,6 +69,16 @@
         <tr>
             <td>Rata-rata Nominal Transaksi (AOV)</td>
             <td class="text-right"><strong>Rp {{ number_format($analytics['averageOrderValue'], 0, ',', '.') }}</strong></td>
+        </tr>
+        <tr>
+            <td>Total Biaya Operasional Toko (Expenses)</td>
+            <td class="text-right" style="color: #dc2626;"><strong>- Rp {{ number_format($analytics['totalExpenses'] ?? 0, 0, ',', '.') }}</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Laba Bersih Akhir (Net Profit)</strong></td>
+            <td class="text-right" style="color: {{ ($analytics['netProfit'] ?? 0) >= 0 ? '#16a34a' : '#dc2626' }}; font-size: 13px;">
+                <strong>Rp {{ number_format($analytics['netProfit'] ?? 0, 0, ',', '.') }} ({{ $analytics['netProfitMargin'] ?? 0 }}%)</strong>
+            </td>
         </tr>
     </table>
 

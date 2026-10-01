@@ -30,9 +30,9 @@ class ReportService
             $q->where('outlet_id', $outletId)
               ->where('transaction_status', 'completed')
               ->whereBetween('sale_date', [$start, $end]);
-        })->sum(DB::raw('quantity * cost_price_snapshot'));
+        })->sum(DB::raw('quantity * COALESCE(cost_price_snapshot, 0)'));
 
-        $grossProfit = max(0, $totalRevenue - $cogs);
+        $grossProfit = $totalRevenue - $cogs;
         $profitMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0.00;
 
         // 2b. Operational Expenses & Net Profit Calculation
