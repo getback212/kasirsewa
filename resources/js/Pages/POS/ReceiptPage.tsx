@@ -26,7 +26,7 @@ export default function ReceiptPage({ sale }: ReceiptPageProps) {
     const [paperWidth, setPaperWidth] = useState<58 | 80>(58);
 
     const handlePrint = () => {
-        window.print();
+        window.open(`/pos/receipt/${sale.id}/print?width=${paperWidth}`, '_blank');
     };
 
     const formattedDate = sale?.sale_date
