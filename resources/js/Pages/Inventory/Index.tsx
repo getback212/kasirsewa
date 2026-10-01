@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Warehouse, Plus, Search, AlertTriangle, History, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Warehouse, Plus, Search, AlertTriangle, History, ArrowUpRight, ArrowDownLeft, FileSpreadsheet, Receipt } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface StockItem {
@@ -86,7 +86,29 @@ export default function InventoryIndex({ stocks, movements, allProducts, filters
                         </p>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <a
+                            href="/inventory/export/excel"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 font-bold text-xs rounded-2xl flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                            title="Download laporan stok barang gudang format Excel"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            <span>Export Excel</span>
+                        </a>
+
+                        <a
+                            href="/inventory/export/pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 font-bold text-xs rounded-2xl flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                            title="Cetak/simpan laporan stok barang gudang ke PDF"
+                        >
+                            <Receipt className="w-4 h-4" />
+                            <span>Cetak PDF</span>
+                        </a>
+
                         <button
                             onClick={() => setShowAdjustModal(true)}
                             className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer"

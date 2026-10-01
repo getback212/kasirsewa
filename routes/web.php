@@ -165,6 +165,8 @@ Route::middleware('auth')->group(function () {
     // Inventory & Stock Management Routes
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::get('/inventory/export/excel', [InventoryController::class, 'exportExcel'])->name('inventory.export_excel');
+    Route::get('/inventory/export/pdf', [InventoryController::class, 'exportPdf'])->name('inventory.export_pdf');
 
     Route::get('/stock-opname', [StockOpnameController::class, 'index'])->name('stock_opname.index');
     Route::post('/stock-opname', [StockOpnameController::class, 'store'])->name('stock_opname.store');
