@@ -11,7 +11,7 @@ use Inertia\Response;
 
 class ReceiptController extends Controller
 {
-    public function show(Request $request, int $id, ReceiptGeneratorService $receiptService): Response
+    public function show(Request $request, int $id, ReceiptGeneratorService $receiptService)
     {
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
@@ -30,14 +30,11 @@ class ReceiptController extends Controller
         }
 
         $sale = $query->findOrFail($id);
+        $paperWidth = (int) $request->input('width', 58);
 
-        $textReceipt58 = $receiptService->formatTextReceipt($sale, 58);
-        $textReceipt80 = $receiptService->formatTextReceipt($sale, 80);
-
-        return Inertia::render('POS/ReceiptPage', [
+        return view('print.receipt', [
             'sale' => $sale,
-            'textReceipt58' => $textReceipt58,
-            'textReceipt80' => $textReceipt80,
+            'paperWidth' => $paperWidth === 80 ? 80 : 58,
         ]);
     }
 }
