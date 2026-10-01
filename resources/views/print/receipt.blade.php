@@ -11,22 +11,22 @@
         }
         body {
             font-family: 'Consolas', 'Courier New', Courier, 'Lucida Console', ui-monospace, monospace;
-            font-size: {{ ($paperWidth ?? 58) == 80 ? '14px' : '12px' }};
+            font-size: {{ ($paperWidth ?? 58) == 80 ? '16px' : '13.5px' }};
             color: #000;
             background: #fff;
             margin: 0;
             padding: 8px;
             width: {{ $paperWidth ?? 58 }}mm;
             box-sizing: border-box;
-            line-height: 1.25;
+            line-height: 1.3;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .bold { font-weight: bold; }
-        .line { border-bottom: 1px dashed #000; margin: 6px 0; }
-        .double-line { border-bottom: 2px solid #000; margin: 6px 0; }
+        .line { border-bottom: 1.5px dashed #000; margin: 7px 0; }
+        .double-line { border-bottom: 2.5px solid #000; margin: 7px 0; }
         .flex { display: flex; justify-content: space-between; gap: 4px; }
         .toolbar {
             display: flex;
@@ -74,25 +74,25 @@
     </div>
 
     <div class="text-center bold">
-        <div style="font-size: 16px; text-transform: uppercase;">{{ $sale->outlet->name ?? 'KASIRSEWA POS' }}</div>
-        @if($sale->outlet->address)<div style="font-size: 11px; font-weight: normal;">{{ $sale->outlet->address }}</div>@endif
-        @if($sale->outlet->phone)<div style="font-size: 11px; font-weight: normal;">Telp: {{ $sale->outlet->phone }}</div>@endif
+        <div style="font-size: 18px; text-transform: uppercase;">{{ $sale->outlet->name ?? 'KASIRSEWA POS' }}</div>
+        @if($sale->outlet->address)<div style="font-size: 12px; font-weight: normal;">{{ $sale->outlet->address }}</div>@endif
+        @if($sale->outlet->phone)<div style="font-size: 12px; font-weight: normal;">Telp: {{ $sale->outlet->phone }}</div>@endif
     </div>
 
     <div class="double-line"></div>
 
-    <div>No Nota : <strong>{{ $sale->invoice_number }}</strong></div>
-    <div>Tgl Trans: {{ $sale->sale_date ? \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y H:i') : date('d/m/Y H:i') }}</div>
-    <div>Kasir   : {{ $sale->cashier->name ?? 'Kasir Store' }}</div>
-    @if($sale->customer)<div>Pembeli : {{ $sale->customer->name }}</div>@endif
+    <div style="font-size: 13px;">No Nota : <strong>{{ $sale->invoice_number }}</strong></div>
+    <div style="font-size: 13px;">Tgl Trans: {{ $sale->sale_date ? \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y H:i') : date('d/m/Y H:i') }}</div>
+    <div style="font-size: 13px;">Kasir   : {{ $sale->cashier->name ?? 'Kasir Store' }}</div>
+    @if($sale->customer)<div style="font-size: 13px;">Pembeli : {{ $sale->customer->name }}</div>@endif
 
     <div class="line"></div>
 
-    <div class="bold">ITEM BELANJAAN:</div>
+    <div class="bold" style="font-size: 13.5px;">ITEM BELANJAAN:</div>
     @foreach($sale->items as $item)
-        <div style="margin-top: 4px;">
-            <div class="bold">{{ $item->product_name_snapshot }}</div>
-            <div class="flex" style="color: #000; font-size: 12px;">
+        <div style="margin-top: 5px;">
+            <div class="bold" style="font-size: 13.5px;">{{ $item->product_name_snapshot }}</div>
+            <div class="flex" style="color: #000; font-size: 13px;">
                 <span>{{ (float)$item->quantity }} x Rp {{ number_format($item->price_snapshot, 0, ',', '.') }}</span>
                 <span class="bold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
             </div>
@@ -101,20 +101,20 @@
 
     <div class="line"></div>
 
-    <div class="flex">
+    <div class="flex" style="font-size: 13px;">
         <span>Subtotal</span>
         <span>Rp {{ number_format($sale->subtotal, 0, ',', '.') }}</span>
     </div>
 
     @if($sale->discount_amount > 0)
-        <div class="flex" style="color: #000;">
+        <div class="flex" style="color: #000; font-size: 13px;">
             <span>Diskon</span>
             <span>-Rp {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
         </div>
     @endif
 
     @if($sale->tax_amount > 0)
-        <div class="flex">
+        <div class="flex" style="font-size: 13px;">
             <span>PPN ({{ $sale->outlet->tax_percentage ?? 11 }}%)</span>
             <span>Rp {{ number_format($sale->tax_amount, 0, ',', '.') }}</span>
         </div>
@@ -122,26 +122,26 @@
 
     <div class="double-line"></div>
 
-    <div class="flex bold" style="font-size: 15px;">
+    <div class="flex bold" style="font-size: 17px;">
         <span>TOTAL BAYAR</span>
         <span>Rp {{ number_format($sale->grand_total, 0, ',', '.') }}</span>
     </div>
 
     @foreach($sale->payments as $payment)
-        <div class="flex" style="font-size: 12px;">
+        <div class="flex" style="font-size: 13px;">
             <span>Bayar ({{ strtoupper($payment->payment_method) }})</span>
             <span>Rp {{ number_format($payment->amount, 0, ',', '.') }}</span>
         </div>
     @endforeach
 
-    <div class="flex bold" style="font-size: 14px; margin-top: 2px;">
+    <div class="flex bold" style="font-size: 15px; margin-top: 2px;">
         <span>Kembali</span>
         <span>Rp {{ number_format($sale->change_amount, 0, ',', '.') }}</span>
     </div>
 
     <div class="double-line"></div>
 
-    <div class="text-center" style="font-size: 11px; margin-top: 8px;">
+    <div class="text-center" style="font-size: 12px; margin-top: 8px;">
         Terima Kasih Telah Berbelanja!<br>
         Simpan Struk Ini Sebagai Bukti<br>
         Barang Yang Sudah Dibeli<br>
