@@ -86,22 +86,30 @@ class ReportController extends Controller
             fputcsv($file, ['--- 2. BREAKDOWN METODE PEMBAYARAN ---']);
             fputcsv($file, ['METODE PEMBAYARAN', 'JUMLAH TRANSAKSI', 'TOTAL NOMINAL']);
             foreach ($analytics['paymentBreakdown'] as $pay) {
+                $payArr = (array) $pay;
+                $label = $payArr['label'] ?? $payArr['payment_method'] ?? 'TUNAI';
+                $count = $payArr['count'] ?? 0;
+                $total = (float) ($payArr['total_amount'] ?? 0);
                 fputcsv($file, [
-                    strtoupper($pay->payment_method),
-                    $pay->count . ' Transaksi',
-                    'Rp ' . number_format((float) $pay->total_amount, 0, ',', '.')
+                    strtoupper($label),
+                    $count . ' Transaksi',
+                    'Rp ' . number_format($total, 0, ',', '.')
                 ]);
             }
             fputcsv($file, []);
 
             // Top Produk Terlaris
             fputcsv($file, ['--- 3. TOP PRODUK TERLARIS (BEST SELLERS) ---']);
-            fputcsv($file, ['NAMA PRODUK', 'TOTAL QTY TERJUAL', 'TOTAL OMZET']);
+            fputcsv($file, ['NAMA PRODUK', 'TOTAL QTY TERJUAL', 'TOTAL OMZET PENJUALAN']);
             foreach ($analytics['topProducts'] as $prod) {
+                $prodArr = (array) $prod;
+                $name = $prodArr['product_name_snapshot'] ?? $prod->product_name_snapshot ?? 'Produk';
+                $qty = $prodArr['total_qty'] ?? $prod->total_qty ?? 0;
+                $sales = (float) ($prodArr['total_sales'] ?? $prod->total_sales ?? 0);
                 fputcsv($file, [
-                    $prod->product_name_snapshot,
-                    $prod->total_qty . ' Item',
-                    'Rp ' . number_format((float) $prod->total_sales, 0, ',', '.')
+                    $name,
+                    $qty . ' Item',
+                    'Rp ' . number_format($sales, 0, ',', '.')
                 ]);
             }
             fputcsv($file, []);
@@ -110,10 +118,14 @@ class ReportController extends Controller
             fputcsv($file, ['--- 4. RINCIAN OMZET TREN HARIAN ---']);
             fputcsv($file, ['TANGGAL', 'JUMLAH TRANSAKSI', 'TOTAL OMZET HARIAN']);
             foreach ($analytics['dailyTrend'] as $trend) {
+                $trendArr = (array) $trend;
+                $date = $trendArr['date'] ?? $trend->date ?? date('Y-m-d');
+                $tx = $trendArr['transactions'] ?? $trend->transactions ?? 0;
+                $rev = (float) ($trendArr['revenue'] ?? $trend->revenue ?? 0);
                 fputcsv($file, [
-                    $trend->date,
-                    $trend->transactions . ' Transaksi',
-                    'Rp ' . number_format((float) $trend->revenue, 0, ',', '.')
+                    $date,
+                    $tx . ' Transaksi',
+                    'Rp ' . number_format($rev, 0, ',', '.')
                 ]);
             }
 
