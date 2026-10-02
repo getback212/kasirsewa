@@ -175,7 +175,7 @@ export default function PaymentModal({
             items: safeItems.map((i) => ({
                 product_id: i?.product_id || i?.product?.id,
                 quantity: Number(i?.quantity || 1),
-                price: Number(i?.price ?? i?.unit_price ?? 0),
+                price: Number(i?.price_snapshot ?? i?.price ?? i?.unit_price ?? 0),
                 discount_amount: Number(i?.discount_amount || 0),
             })),
             payments: (payments || []).map(p => ({
@@ -194,6 +194,17 @@ export default function PaymentModal({
         };
 
         const saveOfflineTransaction = () => {
+            const formattedItems = safeItems.map((i) => ({
+                product_id: i?.product_id || i?.product?.id,
+                product_name_snapshot: i?.product_name_snapshot || i?.name || i?.product?.name || 'Barang',
+                name: i?.product_name_snapshot || i?.name || i?.product?.name || 'Barang',
+                quantity: Number(i?.quantity || 1),
+                price_snapshot: Number(i?.price_snapshot ?? i?.price ?? i?.unit_price ?? 0),
+                price: Number(i?.price_snapshot ?? i?.price ?? i?.unit_price ?? 0),
+                subtotal: Number(i?.subtotal ?? (Number(i?.price_snapshot ?? i?.price ?? i?.unit_price ?? 0) * Number(i?.quantity || 1))),
+                discount_amount: Number(i?.discount_amount || 0),
+            }));
+
             const offlineSale = {
                 id: 'OFFLINE-' + Date.now(),
                 invoice_number: 'INV/OFFLINE/' + Date.now(),
@@ -201,7 +212,7 @@ export default function PaymentModal({
                 grand_total: finalGrandTotal,
                 paid_amount: totalPaidAmount,
                 change_amount: changeAmount,
-                items: safeItems,
+                items: formattedItems,
                 payments: payments,
                 is_offline: true,
                 payload: payload,

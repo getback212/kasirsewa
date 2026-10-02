@@ -213,17 +213,17 @@ export default function POSPage({
         const dateStr = sale?.sale_date ? new Date(sale.sale_date).toLocaleString('id-ID') : new Date().toLocaleString('id-ID');
 
         const itemsHtml = (sale?.items || []).map((i: any) => {
-            const name = i?.name || i?.product?.name || i?.product_name || 'Barang';
-            const qty = i?.quantity || 1;
-            const price = Number(i?.price ?? i?.unit_price ?? 0);
-            const subtotal = (price * qty);
+            const name = i?.product_name_snapshot || i?.product?.name || i?.name || i?.product_name || 'Barang';
+            const qty = Number(i?.quantity || 1);
+            const price = Number(i?.price_snapshot ?? i?.price ?? i?.unit_price ?? 0);
+            const subtotal = Number(i?.subtotal ?? (price * qty));
             return `
                 <tr>
                     <td style="padding: 3px 0;" colspan="2"><strong>${name}</strong></td>
                 </tr>
                 <tr>
                     <td style="padding-bottom: 5px;">${qty} x Rp ${price.toLocaleString('id-ID')}</td>
-                    <td style="text-align: right; padding-bottom: 5px;">Rp ${subtotal.toLocaleString('id-ID')}</td>
+                    <td style="text-align: right; padding-bottom: 5px; font-weight: bold;">Rp ${subtotal.toLocaleString('id-ID')}</td>
                 </tr>
             `;
         }).join('');
@@ -945,9 +945,14 @@ export default function POSPage({
                     customers={customers}
                     items={(cart || []).map((i) => ({
                         product_id: i.product_id || i.product?.id,
+                        product_name_snapshot: i.product?.name || i.name || i.product_name_snapshot || 'Barang',
+                        name: i.product?.name || i.name || i.product_name_snapshot || 'Barang',
                         quantity: i.quantity || 1,
                         unit_price: i.price ?? i.unit_price ?? 0,
+                        price_snapshot: i.price ?? i.unit_price ?? 0,
+                        price: i.price ?? i.unit_price ?? 0,
                         discount_amount: i.discount_amount || 0,
+                        subtotal: (Number(i.price ?? i.unit_price ?? 0) - Number(i.discount_amount || 0)) * (i.quantity || 1),
                     }))}
                     onClose={() => setShowPaymentModal(false)}
                     onSuccess={(saleData) => {
