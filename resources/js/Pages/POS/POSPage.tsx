@@ -1140,13 +1140,26 @@ export default function POSPage({
                                                 </span>
                                             </div>
 
-                                            <Link
-                                                href={`/pos/receipt/${sale.id}`}
-                                                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 shrink-0"
-                                            >
-                                                <Printer className="w-3.5 h-3.5 text-blue-400" />
-                                                <span>Cetak Struk</span>
-                                            </Link>
+                                            {sale.is_offline || !isOnline ? (
+                                                <button
+                                                    onClick={() => handlePrintOfflineReceipt(sale)}
+                                                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
+                                                    title="Cetak Struk Thermal Offline (Tanpa Internet)"
+                                                >
+                                                    <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                                                    <span>Cetak Struk</span>
+                                                </button>
+                                            ) : (
+                                                <a
+                                                    href={`/pos/receipt/${sale.id}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
+                                                >
+                                                    <Printer className="w-3.5 h-3.5 text-blue-400" />
+                                                    <span>Cetak Struk</span>
+                                                </a>
+                                            )}
                                         </div>
                                     </div>
                                 ))
