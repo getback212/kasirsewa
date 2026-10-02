@@ -121,7 +121,7 @@ class ReportService
         ->get();
 
         // 8. Shift Cashier Audit Records
-        $shifts = \App\Models\Shift::with(['cashier:id,name'])
+        $shifts = \App\Models\Shift::with(['user:id,name', 'cashier:id,name'])
             ->where('outlet_id', $outletId)
             ->whereBetween('opened_at', [$start, $end])
             ->latest('opened_at')

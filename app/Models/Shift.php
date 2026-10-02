@@ -41,6 +41,11 @@ class Shift extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function cashier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function outlet(): BelongsTo
     {
         return $this->belongsTo(Outlet::class);
