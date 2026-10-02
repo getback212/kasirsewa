@@ -221,6 +221,7 @@ export default function PaymentModal({
             const existingQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
             existingQueue.push(offlineSale);
             localStorage.setItem('pos_offline_sales_queue', JSON.stringify(existingQueue));
+            window.dispatchEvent(new CustomEvent('pos_offline_queue_updated'));
 
             try {
                 const channel = new BroadcastChannel('pos_customer_display');

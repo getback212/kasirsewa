@@ -177,26 +177,39 @@ export default function POSPage({
     };
 
     useEffect(() => {
+        const updatePendingCount = () => {
+            const queue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
+            setPendingOfflineCount(queue.length);
+        };
+
         const handleOnline = () => {
             setIsOnline(true);
             syncOfflineQueue();
         };
         const handleOffline = () => {
             setIsOnline(false);
+            updatePendingCount();
         };
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+        window.addEventListener('pos_offline_queue_updated', updatePendingCount);
+        window.addEventListener('storage', updatePendingCount);
 
-        const initialQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
-        setPendingOfflineCount(initialQueue.length);
-        if (navigator.onLine && initialQueue.length > 0) {
-            syncOfflineQueue();
+        updatePendingCount();
+
+        if (navigator.onLine) {
+            const initialQueue = JSON.parse(localStorage.getItem('pos_offline_sales_queue') || '[]');
+            if (initialQueue.length > 0) {
+                syncOfflineQueue();
+            }
         }
 
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            window.removeEventListener('pos_offline_queue_updated', updatePendingCount);
+            window.removeEventListener('storage', updatePendingCount);
         };
     }, []);
 
