@@ -56,7 +56,9 @@ class StockOpnameController extends Controller
 
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where(function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            })],
             'items.*.physical_quantity' => ['required', 'numeric', 'min:0'],
             'items.*.note' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],

@@ -59,10 +59,10 @@ class StockTransferController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'from_outlet_id' => ['required', 'exists:outlets,id'],
-            'to_outlet_id' => ['required', 'exists:outlets,id', 'different:from_outlet_id'],
+            'from_outlet_id' => ['required', \Illuminate\Validation\Rule::exists('outlets', 'id')->where('company_id', $user->company_id)],
+            'to_outlet_id' => ['required', \Illuminate\Validation\Rule::exists('outlets', 'id')->where('company_id', $user->company_id), 'different:from_outlet_id'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where('company_id', $user->company_id)],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'note' => ['nullable', 'string'],
         ]);
@@ -94,8 +94,11 @@ class StockTransferController extends Controller
 
     public function send(Request $request, int $id, SendStockTransferAction $sendStockTransferAction): RedirectResponse
     {
+        $user = $request->user();
+        StockTransfer::where('company_id', $user->company_id)->findOrFail($id);
+
         try {
-            $sendStockTransferAction->execute($id, $request->user()->id);
+            $sendStockTransferAction->execute($id, $user->id);
             return redirect()->back()->with('success', 'Transfer stok berhasil dikirim & stok outlet pengirim berkurang!');
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -104,8 +107,11 @@ class StockTransferController extends Controller
 
     public function receive(Request $request, int $id, ReceiveStockTransferAction $receiveStockTransferAction): RedirectResponse
     {
+        $user = $request->user();
+        StockTransfer::where('company_id', $user->company_id)->findOrFail($id);
+
         try {
-            $receiveStockTransferAction->execute($id, $request->user()->id);
+            $receiveStockTransferAction->execute($id, $user->id);
             return redirect()->back()->with('success', 'Transfer stok berhasil diterima & stok outlet tujuan bertambah!');
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());

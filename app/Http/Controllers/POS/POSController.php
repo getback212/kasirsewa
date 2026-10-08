@@ -13,6 +13,7 @@ use App\Models\Shift;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\DB;
@@ -240,10 +241,10 @@ class POSController extends Controller
         }
 
         $validated = $request->validate([
-            'customer_id' => ['nullable', 'exists:customers,id'],
+            'customer_id' => ['nullable', \Illuminate\Validation\Rule::exists('customers', 'id')->where('company_id', $request->user()->company_id)],
             'reference_note' => ['required', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where('company_id', $request->user()->company_id)],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],

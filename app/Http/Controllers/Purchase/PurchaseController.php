@@ -10,6 +10,7 @@ use App\Actions\Purchase\CreatePurchaseAction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -64,9 +65,13 @@ class PurchaseController extends Controller
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
 
         $validated = $request->validate([
-            'supplier_id' => ['required', 'exists:suppliers,id'],
+            'supplier_id' => ['required', Rule::exists('suppliers', 'id')->where(function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            })],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where(function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            })],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'subtotal' => ['required', 'numeric', 'min:0'],

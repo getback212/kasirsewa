@@ -124,7 +124,9 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', 'min:6'],
             'role' => ['required', 'string', Rule::in([UserRole::OWNER->value, UserRole::MANAGER->value, UserRole::CASHIER->value, UserRole::WAREHOUSE->value])],
-            'outlet_id' => ['required', 'exists:outlets,id'],
+            'outlet_id' => ['required', Rule::exists('outlets', 'id')->where(function ($query) use ($currentUser) {
+                $query->where('company_id', $currentUser->company_id);
+            })],
             'send_invite' => ['nullable', 'boolean'],
         ]);
 
@@ -222,7 +224,9 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'role' => ['required', 'string', Rule::in([UserRole::OWNER->value, UserRole::MANAGER->value, UserRole::CASHIER->value, UserRole::WAREHOUSE->value])],
-            'outlet_id' => ['required', 'exists:outlets,id'],
+            'outlet_id' => ['required', Rule::exists('outlets', 'id')->where(function ($query) use ($currentUser) {
+                $query->where('company_id', $currentUser->company_id);
+            })],
             'is_active' => ['required', 'boolean'],
         ];
 

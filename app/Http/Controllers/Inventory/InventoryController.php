@@ -57,7 +57,7 @@ class InventoryController extends Controller
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
 
         $validated = $request->validate([
-            'product_id' => ['required', 'exists:products,id'],
+            'product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where('company_id', $user->company_id)],
             'type' => ['required', 'string'],
             'quantity' => ['required', 'numeric'],
             'note' => ['nullable', 'string'],

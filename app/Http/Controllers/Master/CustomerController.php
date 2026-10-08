@@ -25,7 +25,7 @@ class CustomerController extends Controller
         $tenantId = session('active_tenant_id', $user->tenant_id);
         if (!$tenantId && $user->hasRole('SUPER_ADMIN')) {
             $firstTenant = Tenant::first();
-            $tenantId = $firstTenant?->id ?? 1;
+            $tenantId = $firstTenant?->id;
         }
 
         $query = Customer::query();

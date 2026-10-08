@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 use App\Services\Audit\AuditLogService;
 
@@ -77,8 +78,8 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:100', \Illuminate\Validation\Rule::unique('products', 'sku')->where('tenant_id', $tenantId)],
             'barcode' => ['nullable', 'string', 'max:100', \Illuminate\Validation\Rule::unique('products', 'barcode')->where('tenant_id', $tenantId)],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('company_id', $user->company_id)],
+            'unit_id' => ['nullable', Rule::exists('units', 'id')->where('company_id', $user->company_id)],
             'purchase_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0'],
             'minimum_stock' => ['required', 'numeric', 'min:0'],
@@ -86,7 +87,7 @@ class ProductController extends Controller
         ]);
 
         $product = Product::create([
-            'company_id' => $user->company_id ?? 1,
+            'company_id' => $user->company_id,
             'tenant_id' => $tenantId,
             'category_id' => $validated['category_id'] ?? null,
             'unit_id' => $validated['unit_id'] ?? null,
@@ -123,8 +124,8 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:100', 'unique:products,sku,'.$product->id],
             'barcode' => ['nullable', 'string', 'max:100', 'unique:products,barcode,'.$product->id],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('company_id', $user->company_id)],
+            'unit_id' => ['nullable', Rule::exists('units', 'id')->where('company_id', $user->company_id)],
             'purchase_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0'],
             'minimum_stock' => ['required', 'numeric', 'min:0'],

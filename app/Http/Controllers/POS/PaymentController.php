@@ -8,6 +8,7 @@ use App\Models\Shift;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
@@ -51,9 +52,13 @@ class PaymentController extends Controller
         }
 
         $validated = $request->validate([
-            'customer_id' => ['nullable', 'exists:customers,id'],
+            'customer_id' => ['nullable', Rule::exists('customers', 'id')->where(function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            })],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where(function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            })],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],

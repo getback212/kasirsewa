@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Exception;
+use Illuminate\Validation\Rule;
 
 class SalesReturnController extends Controller
 {
@@ -63,9 +64,14 @@ class SalesReturnController extends Controller
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
 
         $validated = $request->validate([
-            'sale_id' => ['required', 'exists:sales,id'],
+            'sale_id' => ['required', Rule::exists('sales', 'id')->where(function ($query) use ($activeOutletId) {
+                $query->where('outlet_id', $activeOutletId);
+            })],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.sale_item_id' => ['required', 'exists:sale_items,id'],
+            'items.*.sale_item_id' => ['required', Rule::exists('sale_items', 'id')->where(function ($query) use ($request, $activeOutletId) {
+                $query->where('sale_id', $request->input('sale_id'))
+                    ->whereIn('sale_id', \App\Models\Sale::where('outlet_id', $activeOutletId)->select('id'));
+            })],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'reason' => ['required', 'string', 'max:255'],
         ]);
