@@ -12,7 +12,7 @@ class DatabaseRestoreCommand extends Command
 
     public function handle(): int
     {
-        $filename = $this->argument('filename');
+        $filename = basename($this->argument('filename'));
         $baseDir = storage_path('app/private');
         $gzFilePath = "{$baseDir}/{$filename}";
 
@@ -28,11 +28,11 @@ class DatabaseRestoreCommand extends Command
 
         $this->info("Memulai proses pemulihan (restore) database dari file: {$filename}...");
 
-        $database = config('database.connections.pgsql.database');
-        $username = config('database.connections.pgsql.username');
+        $database = escapeshellarg(config('database.connections.pgsql.database'));
+        $username = escapeshellarg(config('database.connections.pgsql.username'));
         $password = config('database.connections.pgsql.password');
-        $host = config('database.connections.pgsql.host');
-        $port = config('database.connections.pgsql.port');
+        $host = escapeshellarg(config('database.connections.pgsql.host'));
+        $port = escapeshellarg((string) config('database.connections.pgsql.port'));
 
         putenv("PGPASSWORD={$password}");
 
@@ -41,7 +41,7 @@ class DatabaseRestoreCommand extends Command
         exec($dropCmd, $dropOutput, $dropReturnCode);
 
         // Command to decompress and pipe directly into psql
-        $cmd = "gunzip -c {$gzFilePath} | psql -h {$host} -p {$port} -U {$username} -d {$database}";
+        $cmd = "gunzip -c " . escapeshellarg($gzFilePath) . " | psql -h {$host} -p {$port} -U {$username} -d {$database}";
         exec($cmd, $output, $returnCode);
 
         putenv('PGPASSWORD');

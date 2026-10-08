@@ -9,5 +9,7 @@ use App\Http\Controllers\API\QRISNotificationController;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/qris/callback', [QRISNotificationController::class, 'handleWebhook']);
-Route::post('/qris/push-notification', [QRISNotificationController::class, 'handleAndroidPush']);
+Route::post('/qris/callback', [QRISNotificationController::class, 'handleWebhook'])
+    ->middleware('throttle:30,1');
+Route::post('/qris/push-notification', [QRISNotificationController::class, 'handleAndroidPush'])
+    ->middleware('throttle:30,1');

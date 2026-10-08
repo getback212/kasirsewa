@@ -55,17 +55,22 @@ interface CustomerItem {
 }
 
 interface CartItem {
+    product_id?: number;
     product: ProductItem;
     quantity: number;
     price: number;
+    unit_price?: number;
+    name?: string;
     discount_amount: number;
     subtotal: number;
+    product_name_snapshot?: string;
+    unit_price_snapshot?: number;
 }
 
 interface HeldCartRecord {
     id: number;
     reference_note: string;
-    customer?: { name: string };
+    customer?: { id?: number; code?: string; name: string; phone?: string };
     created_at: string;
     items: any[];
 }
@@ -475,7 +480,12 @@ export default function POSPage({
         setCart(restoredItems);
 
         if (held.customer) {
-            setSelectedCustomer(held.customer);
+            setSelectedCustomer({
+                id: held.customer.id ?? 0,
+                code: held.customer.code ?? '',
+                name: held.customer.name ?? '',
+                phone: held.customer.phone,
+            });
         }
 
         router.delete(`/pos/hold-cart/${held.id}`, {

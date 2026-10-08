@@ -29,7 +29,7 @@ interface ProductItem {
     unit?: UnitItem;
 }
 
-interface ProductsPageProps extends PageProps {
+interface ProductsPageProps extends Record<string, any> {
     products: {
         data: ProductItem[];
         links: any[];
@@ -41,10 +41,14 @@ interface ProductsPageProps extends PageProps {
         search?: string;
         category_id?: string;
     };
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
 export default function ProductsIndex({ products, categories, units, filters }: ProductsPageProps) {
-    const { flash } = usePage<ProductsPageProps>().props;
+    const { flash = {} } = usePage<ProductsPageProps>().props;
     const [showModal, setShowModal] = useState(false);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);

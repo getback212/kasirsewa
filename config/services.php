@@ -41,4 +41,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', 'https://superbackend.my.id/auth/google/callback'),
     ],
 
+    'qris' => [
+        'webhook_secret' => env('QRIS_WEBHOOK_SECRET'),
+    ],
+
 ];

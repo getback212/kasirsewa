@@ -135,12 +135,11 @@ class POSController extends Controller
             }
         }
 
-        if (!$outlet && $outletId) {
-            $outlet = \App\Models\Outlet::find($outletId);
-        }
-
-        if (!$outlet) {
-            $outlet = \App\Models\Outlet::first();
+        // Fallback hanya untuk user yang sudah login; guest wajib memakai pair code.
+        if (!$outlet && $outletId && $user) {
+            $outlet = \App\Models\Outlet::where('id', $outletId)
+                ->where('company_id', $user->company_id)
+                ->first();
         }
 
         return Inertia::render('POS/CustomerDisplayPage', [
@@ -153,14 +152,26 @@ class POSController extends Controller
     {
         $user = $request->user();
         $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id ?? 1);
-        $outlet = \App\Models\Outlet::find($outletId);
 
-        $payload = $request->all();
-        $payload['outlet_id'] = $outletId;
-        $payload['outlet_name'] = $outlet?->name ?? 'KasirSewa Store';
+        // Pastikan outlet milik perusahaan user yang login (cegah broadcast ke outlet tenant lain)
+        $outlet = \App\Models\Outlet::where('id', $outletId)
+            ->where('company_id', $user->company_id)
+            ->first();
+
+        if (!$outlet) {
+            return response()->json(['status' => false, 'message' => 'Outlet tidak ditemukan atau tidak memiliki akses.'], 403);
+        }
+
+        // Hanya ambil field yang diperlukan dari payload, jangan teruskan semua request mentah
+        $payload = $request->only([
+            'type', 'items', 'subtotal', 'discountAmount', 'taxAmount',
+            'grandTotal', 'customerName', 'cashierName', 'note',
+        ]);
+        $payload['outlet_id']   = $outlet->id;
+        $payload['outlet_name'] = $outlet->name;
 
         // Store isolated realtime state by globally unique outlet ID
-        \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outletId}", $payload, 3600);
+        \Illuminate\Support\Facades\Cache::put("customer_display_state_{$outlet->id}", $payload, 3600);
 
         return response()->json(['status' => true]);
     }
@@ -170,22 +181,28 @@ class POSController extends Controller
         $user = $request->user();
         $pairCode = trim($request->input('pair_code') ?? $request->input('code') ?? '');
         $outletId = $request->input('outlet_id') ?? session('active_outlet_id', $user?->outlet_id);
+        $outlet = null;
 
         if (!empty($pairCode)) {
-            // Strip any prefix e.g. "DISP-15" or "15"
             $numericId = preg_replace('/[^0-9]/', '', $pairCode);
             if (!empty($numericId)) {
                 $outlet = \App\Models\Outlet::find((int)$numericId);
-                if ($outlet) {
-                    $outletId = $outlet->id;
-                }
             }
-
-            if (!$outletId) {
+            if (!$outlet) {
                 $outlet = \App\Models\Outlet::where('code', 'ILIKE', $pairCode)->first();
-                if ($outlet) {
-                    $outletId = $outlet->id;
-                }
+            }
+            if ($outlet) {
+                $outletId = $outlet->id;
+            }
+        }
+
+        // Jika user login, batasi outlet ke company miliknya.
+        if ($user && $outletId) {
+            $outlet = \App\Models\Outlet::where('id', $outletId)
+                ->where('company_id', $user->company_id)
+                ->first();
+            if (!$outlet) {
+                $outletId = null;
             }
         }
 

@@ -14,6 +14,17 @@ use Inertia\Response;
 
 class BackupController extends Controller
 {
+    protected function safeFilename(string $filename): string
+    {
+        $filename = basename($filename);
+
+        if ($filename === '' || str_contains($filename, '..') || !preg_match('/^[a-zA-Z0-9_\-.]+$/', $filename)) {
+            abort(400, 'Nama file backup tidak valid.');
+        }
+
+        return $filename;
+    }
+
     protected function getBackupDir(Request $request): string
     {
         $user = $request->user();
@@ -100,6 +111,7 @@ class BackupController extends Controller
             abort(403, 'Hanya Pemilik Toko (Owner) atau Super Admin yang berwenang memulihkan database.');
         }
 
+        $filename = $this->safeFilename($filename);
         $backupDir = $this->getBackupDir($request);
         $filePath = "{$backupDir}/{$filename}";
 
@@ -122,6 +134,7 @@ class BackupController extends Controller
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
+        $filename = $this->safeFilename($filename);
         $backupDir = $this->getBackupDir($request);
         $filePath = "{$backupDir}/{$filename}";
 
@@ -139,6 +152,7 @@ class BackupController extends Controller
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
+        $filename = $this->safeFilename($filename);
         $backupDir = $this->getBackupDir($request);
         $filePath = "{$backupDir}/{$filename}";
 

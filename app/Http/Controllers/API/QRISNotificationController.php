@@ -11,17 +11,39 @@ use Illuminate\Support\Facades\Log;
 
 class QRISNotificationController extends Controller
 {
+    private function hasValidSignature(Request $request): bool
+    {
+        $secret = config('services.qris.webhook_secret');
+        $signature = $request->header('X-QRIS-Signature', $request->header('X-Signature', ''));
+
+        if (!is_string($secret) || $secret === '' || !is_string($signature) || $signature === '') {
+            return false;
+        }
+
+        $signature = preg_replace('/^sha256=/i', '', trim($signature));
+        $expected = hash_hmac('sha256', $request->getContent(), $secret);
+
+        return is_string($signature) && hash_equals($expected, $signature);
+    }
+
     /**
      * Webhook Callback dari Payment Gateway / Bank QRIS Service
      */
     public function handleWebhook(Request $request): JsonResponse
     {
-        $payload = $request->all();
-        Log::info('QRIS Webhook Received:', $payload);
+        if (!$this->hasValidSignature($request)) {
+            Log::warning('QRIS webhook rejected: invalid signature.');
 
+            return response()->json(['status' => 'error', 'message' => 'Invalid webhook signature.'], 401);
+        }
+
+        $payload = $request->all();
+        
         $invoiceNumber = $payload['invoice_number'] ?? $payload['order_id'] ?? null;
         $transactionStatus = strtolower($payload['transaction_status'] ?? $payload['status'] ?? '');
         $amount = (float) ($payload['gross_amount'] ?? $payload['amount'] ?? 0);
+
+        Log::info("QRIS Webhook Received for Invoice: {$invoiceNumber}, Status: {$transactionStatus}, Amount: {$amount}");
 
         if (!$invoiceNumber) {
             return response()->json([
@@ -36,10 +58,19 @@ class QRISNotificationController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => "Transaksi invoice {$invoiceNumber} tidak ditemukan.",
-            ], 444);
+            ], 404);
         }
 
         if (in_array($transactionStatus, ['settlement', 'success', 'paid', 'completed'])) {
+            // Validasi nominal agar sesuai dengan grand total transaksi
+            if ($amount > 0 && abs((float)$sale->grand_total - $amount) > 0.01) {
+                Log::warning("QRIS Payment amount mismatch for Invoice #{$invoiceNumber}. Expected {$sale->grand_total}, got {$amount}");
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Nominal pembayaran tidak sesuai dengan total tagihan.',
+                ], 400);
+            }
+
             $sale->update([
                 'payment_status' => 'paid',
                 'transaction_status' => 'completed',
@@ -79,7 +110,10 @@ class QRISNotificationController extends Controller
             'token_key' => ['nullable', 'string'],
         ]);
 
-        Log::info('Android QRIS Listener Push:', $validated);
+        Log::info('Android QRIS Listener Push received', [
+            'title' => $validated['notification_title'],
+            'amount' => $validated['amount'] ?? 0,
+        ]);
 
         return response()->json([
             'status' => 'success',

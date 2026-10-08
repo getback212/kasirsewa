@@ -62,7 +62,7 @@ class StoreController extends Controller
         ]);
 
         $store = Outlet::create([
-            'company_id' => $user->company_id ?? 1,
+            'company_id' => $user->company_id,
             'tenant_id' => $tenantId,
             'code' => strtoupper($validated['code']),
             'name' => $validated['name'],

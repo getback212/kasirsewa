@@ -9,6 +9,8 @@ RUN apk add --no-cache \
     tzdata \
     curl
 
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 RUN docker-php-ext-install pdo pdo_pgsql zip bcmath opcache
 
 RUN apk add --no-cache $PHPIZE_DEPS \

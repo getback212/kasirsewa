@@ -89,7 +89,9 @@ Route::middleware('guest')->group(function () {
 // Public Customer Display (Layar Pembeli Tanpa Login di Perangkat Kedua - Accessible to Guest & Auth)
 Route::get('/pos/customer-display', [POSController::class, 'customerDisplay'])->name('pos.customer_display');
 Route::get('/pos/customer-display/state', [POSController::class, 'getState'])->name('pos.customer_display.state');
-Route::post('/pos/customer-display/state', [POSController::class, 'broadcastState'])->name('pos.customer_display.broadcast');
+Route::post('/pos/customer-display/state', [POSController::class, 'broadcastState'])
+    ->middleware('auth')
+    ->name('pos.customer_display.broadcast');
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
