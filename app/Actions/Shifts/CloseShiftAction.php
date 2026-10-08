@@ -6,15 +6,24 @@ use App\Models\Shift;
 use App\Models\Sale;
 use App\Models\Payment;
 use App\Models\CashMovement;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class CloseShiftAction
 {
-    public function execute(int $shiftId, float $actualCash): Shift
+    public function execute(int $shiftId, float $actualCash, ?int $userId = null): Shift
     {
-        return DB::transaction(function () use ($shiftId, $actualCash) {
-            $shift = Shift::findOrFail($shiftId);
+        return DB::transaction(function () use ($shiftId, $actualCash, $userId) {
+            $query = Shift::where('id', $shiftId);
+            if ($userId !== null) {
+                $companyId = User::findOrFail($userId)->company_id;
+                if (! $companyId) {
+                    throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
+                }
+                $query->whereHas('outlet', fn ($q) => $q->where('company_id', $companyId));
+            }
+            $shift = $query->firstOrFail();
 
             if ($shift->status === 'closed') {
                 throw new InvalidArgumentException('Shift kasir ini sudah ditutup sebelumnya!');

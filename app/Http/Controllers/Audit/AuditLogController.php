@@ -19,23 +19,13 @@ class AuditLogController extends Controller
 
         $query = AuditLog::with('user:id,name,email');
 
-        // Scoping: Tenant Owner only sees their own store logs and staff user logs
+        // Scoping: non-SUPER_ADMIN hanya melihat log milik company sendiri
         if (!$user->hasRole('SUPER_ADMIN')) {
             $companyId = $user->company_id;
-            $tenantId = session('active_tenant_id', $user->tenant_id);
-            $staffUserIds = \App\Models\User::where('tenant_id', $tenantId)->pluck('id')->toArray();
-
-            $query->where(function ($q) use ($companyId, $tenantId, $staffUserIds) {
-                if ($companyId) {
-                    $q->where('company_id', $companyId);
-                }
-                if ($tenantId) {
-                    $q->orWhere('tenant_id', $tenantId);
-                }
-                if (!empty($staffUserIds)) {
-                    $q->orWhereIn('user_id', $staffUserIds);
-                }
-            });
+            if (!$companyId) {
+                abort(403, 'Akun Anda belum terhubung ke company manapun.');
+            }
+            $query->where('company_id', $companyId);
         }
 
         if ($request->filled('search')) {
@@ -77,7 +67,7 @@ class AuditLogController extends Controller
             abort(403, 'Hanya Super Admin yang berwenang membersihkan audit log.');
         }
 
-        AuditLog::truncate();
+        AuditLog::query()->delete();
 
         return redirect()->back()->with('success', 'Seluruh riwayat audit log sistem berhasil dibersihkan.');
     }

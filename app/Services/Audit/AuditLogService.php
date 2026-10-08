@@ -3,6 +3,7 @@
 namespace App\Services\Audit;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
@@ -13,10 +14,12 @@ class AuditLogService
         ?string $modelType = null,
         ?int $modelId = null,
         ?array $oldValues = null,
-        ?array $newValues = null
+        ?array $newValues = null,
+        ?int $userId = null
     ): AuditLog {
-        $user = Auth::user();
-        $tenantId = session('active_tenant_id', $user?->tenant_id);
+        $user = $userId !== null
+            ? User::findOrFail($userId)
+            : Auth::user();
 
         // Strip passwords, tokens, and secrets from audit entries
         $sanitizedOld = self::sanitize($oldValues);
@@ -24,7 +27,6 @@ class AuditLogService
 
         return AuditLog::create([
             'company_id' => $user?->company_id,
-            'tenant_id' => $tenantId,
             'user_id' => $user?->id,
             'action' => strtoupper($action),
             'model_type' => $modelType,

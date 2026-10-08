@@ -107,7 +107,8 @@ class ShiftController extends Controller
 
             $closeShiftAction->execute(
                 shiftId: $shift->id,
-                actualCash: (float) $validated['actual_cash']
+                actualCash: (float) $validated['actual_cash'],
+                userId: $user->id
             );
 
             return redirect()->back()->with('success', 'Shift kasir berhasil ditutup!');
@@ -136,7 +137,8 @@ class ShiftController extends Controller
         try {
             $closeShiftAction->execute(
                 shiftId: $shift->id,
-                actualCash: $actualCash
+                actualCash: $actualCash,
+                userId: $user->id
             );
 
             return redirect()->back()->with('success', "Shift kasir {$shift->user?->name} berhasil ditutup paksa (Force Close)!");
