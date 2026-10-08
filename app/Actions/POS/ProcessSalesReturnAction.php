@@ -31,7 +31,18 @@ class ProcessSalesReturnAction
             $returnItems,
             $reason
         ) {
-            $sale = Sale::with('items')->where('outlet_id', $outletId)->findOrFail($saleId);
+            $companyId = \App\Models\User::findOrFail($cashierId)->company_id;
+            if (!$companyId) {
+                throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
+            }
+
+            $outlet = \App\Models\Outlet::whereKey($outletId)
+                ->where('company_id', $companyId)
+                ->firstOrFail();
+
+            $sale = Sale::with('items')
+                ->where('outlet_id', $outletId)
+                ->findOrFail($saleId);
 
             if ($sale->transaction_status === 'void') {
                 throw new InvalidArgumentException('Transaksi yang sudah dibatalkan (void) tidak dapat diretur!');

@@ -94,14 +94,19 @@ class ShiftController extends Controller
 
     public function closeShift(Request $request, CloseShiftAction $closeShiftAction): RedirectResponse
     {
+        $user = $request->user();
+        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+
         $validated = $request->validate([
-            'shift_id' => ['required', 'exists:shifts,id'],
+            'shift_id' => ['required', \Illuminate\Validation\Rule::exists('shifts', 'id')->where('outlet_id', $activeOutletId)],
             'actual_cash' => ['required', 'numeric', 'min:0'],
         ]);
 
         try {
+            $shift = Shift::where('outlet_id', $activeOutletId)->findOrFail((int) $validated['shift_id']);
+
             $closeShiftAction->execute(
-                shiftId: (int) $validated['shift_id'],
+                shiftId: $shift->id,
                 actualCash: (float) $validated['actual_cash']
             );
 
@@ -147,16 +152,18 @@ class ShiftController extends Controller
         $activeOutletId = session('active_outlet_id', $user->outlet_id);
 
         $validated = $request->validate([
-            'shift_id' => ['required', 'exists:shifts,id'],
+            'shift_id' => ['required', \Illuminate\Validation\Rule::exists('shifts', 'id')->where('outlet_id', $activeOutletId)],
             'type' => ['required', 'in:cash_in,cash_out'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'reason' => ['required', 'string', 'max:255'],
             'note' => ['nullable', 'string'],
         ]);
 
+        $shift = Shift::where('outlet_id', $activeOutletId)->findOrFail((int) $validated['shift_id']);
+
         CashMovement::create([
             'tenant_id' => $tenantId,
-            'shift_id' => $validated['shift_id'],
+            'shift_id' => $shift->id,
             'user_id' => $user->id,
             'type' => $validated['type'],
             'amount' => $validated['amount'],

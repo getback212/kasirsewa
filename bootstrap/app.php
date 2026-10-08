@@ -17,13 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        $middleware->trustProxies(at: ['172.18.0.0/16']);
 
         $middleware->validateCsrfTokens(except: [
-            'login',
-            'pos/checkout',
-            'pos/customer-display/state',
-            'api/*',
+            'api/qris/callback',
+            'api/qris/push-notification',
         ]);
 
         $middleware->web(append: [

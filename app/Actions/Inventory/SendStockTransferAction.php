@@ -17,7 +17,14 @@ class SendStockTransferAction
     public function execute(int $transferId, int $userId): StockTransfer
     {
         return DB::transaction(function () use ($transferId, $userId) {
-            $transfer = StockTransfer::with(['items'])->findOrFail($transferId);
+            $companyId = \App\Models\User::findOrFail($userId)->company_id;
+            if (!$companyId) {
+                throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
+            }
+
+            $transfer = StockTransfer::where('company_id', $companyId)
+                ->with(['items'])
+                ->findOrFail($transferId);
 
             if ($transfer->status !== 'draft') {
                 throw new InvalidArgumentException('Hanya transfer stok berstatus DRAFT yang dapat dikirim!');

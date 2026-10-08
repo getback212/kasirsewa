@@ -50,8 +50,15 @@ class CreateSaleAction
             $pointsUsed,
             $pointsDiscountAmount
         ) {
-            $outlet = \App\Models\Outlet::find($outletId);
-            $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
+            $companyId = \App\Models\User::findOrFail($cashierId)->company_id;
+            if (!$companyId) {
+                throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
+            }
+
+            $outlet = \App\Models\Outlet::whereKey($outletId)
+                ->where('company_id', $companyId)
+                ->firstOrFail();
+            $tenantId = $outlet->tenant_id ?? session('active_tenant_id');
 
             $hasKasbonPayment = false;
             foreach ($payments as $p) {
@@ -70,7 +77,9 @@ class CreateSaleAction
                 if (!$customerId) {
                     throw new InvalidArgumentException("Metode pembayaran Kasbon/Piutang wajib memilih Pelanggan Member!");
                 }
-                $customer = \App\Models\Customer::findOrFail($customerId);
+                $customer = \App\Models\Customer::whereKey($customerId)
+                    ->where('company_id', $companyId)
+                    ->firstOrFail();
                 $unpaidAmount = max(0, $grandTotal - $paidAmount);
                 if (($customer->credit_balance + $unpaidAmount) > $customer->credit_limit) {
                     throw new InvalidArgumentException("Batas limit piutang/kasbon pelanggan {$customer->name} (Max Rp ".number_format((float) $customer->credit_limit, 0, ',', '.').") terlampaui!");
@@ -80,7 +89,9 @@ class CreateSaleAction
 
             // Reward / Redeem Loyalty Points
             if ($customerId) {
-                $customer = \App\Models\Customer::find($customerId);
+                $customer = \App\Models\Customer::whereKey($customerId)
+                    ->where('company_id', $companyId)
+                    ->first();
                 if ($customer) {
                     $pointsEarned = (int) floor($grandTotal / 10000);
                     if ($pointsEarned > 0) {
@@ -117,7 +128,11 @@ class CreateSaleAction
             ]);
 
             foreach ($items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
+                $productQuery = Product::whereKey($itemData['product_id']);
+                if ($companyId) {
+                    $productQuery->where('company_id', $companyId);
+                }
+                $product = $productQuery->firstOrFail();
                 $qty = (float) $itemData['quantity'];
                 $price = (float) $itemData['price'];
                 $itemDiscount = (float) ($itemData['discount_amount'] ?? 0.00);

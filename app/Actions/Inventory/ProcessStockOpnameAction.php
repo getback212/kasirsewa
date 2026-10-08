@@ -22,6 +22,15 @@ class ProcessStockOpnameAction
         ?string $note = null
     ): StockOpname {
         return DB::transaction(function () use ($outletId, $userId, $items, $note) {
+            $companyId = \App\Models\User::findOrFail($userId)->company_id;
+            if (!$companyId) {
+                throw new \InvalidArgumentException('Pengguna tidak memiliki company aktif.');
+            }
+
+            $outlet = \App\Models\Outlet::whereKey($outletId)
+                ->where('company_id', $companyId)
+                ->firstOrFail();
+
             $opnameNumber = 'SO/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
             $opname = StockOpname::create([
@@ -34,10 +43,16 @@ class ProcessStockOpnameAction
             ]);
 
             foreach ($items as $itemData) {
+                $productQuery = \App\Models\Product::whereKey($itemData['product_id']);
+                if ($companyId) {
+                    $productQuery->where('company_id', $companyId);
+                }
+                $productQuery->firstOrFail();
+
                 $productId = (int) $itemData['product_id'];
                 $physicalQty = (float) $itemData['physical_quantity'];
 
-                $systemQty = (float) (Stock::where('outlet_id', $outletId)
+                $systemQty = (float) (\App\Models\Stock::where('outlet_id', $outletId)
                     ->where('product_id', $productId)
                     ->value('quantity') ?? 0.00);
 

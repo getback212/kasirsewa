@@ -37,8 +37,19 @@ class CreatePurchaseAction
             $grandTotal,
             $note
         ) {
-            $outlet = \App\Models\Outlet::find($outletId);
-            $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
+            $companyId = \App\Models\User::findOrFail($userId)->company_id;
+            if (!$companyId) {
+                throw new \InvalidArgumentException('Pengguna tidak memiliki company aktif.');
+            }
+
+            $outlet = \App\Models\Outlet::whereKey($outletId)
+                ->where('company_id', $companyId)
+                ->firstOrFail();
+            $tenantId = $outlet->tenant_id ?? session('active_tenant_id');
+
+            \App\Models\Supplier::whereKey($supplierId)
+                ->where('company_id', $companyId)
+                ->firstOrFail();
 
             $invoiceNumber = 'PO/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
@@ -60,7 +71,11 @@ class CreatePurchaseAction
             ]);
 
             foreach ($items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
+                $productQuery = Product::whereKey($itemData['product_id']);
+                if ($companyId) {
+                    $productQuery->where('company_id', $companyId);
+                }
+                $product = $productQuery->firstOrFail();
                 $qty = (float) $itemData['quantity'];
                 $cost = (float) $itemData['unit_cost'];
                 $itemSubtotal = $qty * $cost;
