@@ -1,0 +1,97 @@
+name: kasirsewa
+
+services:
+  kasirsewa_app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: kasirsewa_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      - CONTAINER_ROLE=app
+    networks:
+      - kasirsewa_network
+    depends_on:
+      - kasirsewa_pgsql
+      - kasirsewa_redis
+
+  kasirsewa_webserver:
+    image: nginx:alpine
+    container_name: kasirsewa_webserver
+    restart: unless-stopped
+    ports:
+      - "8087:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - kasirsewa_network
+    depends_on:
+      - kasirsewa_app
+
+  kasirsewa_pgsql:
+    image: postgres:16-alpine
+    container_name: kasirsewa_pgsql
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-kasirsewa_db}
+      POSTGRES_USER: ${DB_USERNAME:-kasirsewa_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    volumes:
+      - kasirsewa_pgsql_data:/var/lib/postgresql/data
+    networks:
+      - kasirsewa_network
+
+  kasirsewa_redis:
+    image: redis:7-alpine
+    container_name: kasirsewa_redis
+    restart: unless-stopped
+    volumes:
+      - kasirsewa_redis_data:/data
+    networks:
+      - kasirsewa_network
+
+  kasirsewa_queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: kasirsewa_queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work --tries=3 --timeout=90
+    volumes:
+      - .:/var/www/html
+    networks:
+      - kasirsewa_network
+    depends_on:
+      - kasirsewa_app
+      - kasirsewa_pgsql
+      - kasirsewa_redis
+
+  kasirsewa_scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: kasirsewa_scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www/html
+    networks:
+      - kasirsewa_network
+    depends_on:
+      - kasirsewa_app
+      - kasirsewa_pgsql
+      - kasirsewa_redis
+
+networks:
+  kasirsewa_network:
+    driver: bridge
+
+volumes:
+  kasirsewa_pgsql_data:
+  kasirsewa_redis_data:
