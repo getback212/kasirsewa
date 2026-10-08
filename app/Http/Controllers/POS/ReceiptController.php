@@ -14,19 +14,14 @@ class ReceiptController extends Controller
     public function show(Request $request, int $id, ReceiptGeneratorService $receiptService): Response
     {
         $user = $request->user();
-        $tenantId = session('active_tenant_id', $user->tenant_id);
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
-
         $query = Sale::with(['outlet.company', 'cashier', 'customer', 'items', 'payments']);
 
         if (!$user->hasRole('SUPER_ADMIN')) {
-            $query->where(function ($q) use ($tenantId, $activeOutletId) {
-                if ($tenantId) {
-                    $q->where('tenant_id', $tenantId)->orWhere('outlet_id', $activeOutletId);
-                } else {
-                    $q->where('outlet_id', $activeOutletId);
-                }
-            });
+            if (!$user->company_id) {
+                abort(403, 'Akun Anda belum terhubung ke company manapun.');
+            }
+
+            $query->whereHas('outlet', fn ($q) => $q->where('company_id', $user->company_id));
         }
 
         $sale = $query->findOrFail($id);
@@ -43,19 +38,14 @@ class ReceiptController extends Controller
     public function printHtml(Request $request, int $id)
     {
         $user = $request->user();
-        $tenantId = session('active_tenant_id', $user->tenant_id);
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
-
         $query = Sale::with(['outlet.company', 'cashier', 'customer', 'items', 'payments']);
 
         if (!$user->hasRole('SUPER_ADMIN')) {
-            $query->where(function ($q) use ($tenantId, $activeOutletId) {
-                if ($tenantId) {
-                    $q->where('tenant_id', $tenantId)->orWhere('outlet_id', $activeOutletId);
-                } else {
-                    $q->where('outlet_id', $activeOutletId);
-                }
-            });
+            if (!$user->company_id) {
+                abort(403, 'Akun Anda belum terhubung ke company manapun.');
+            }
+
+            $query->whereHas('outlet', fn ($q) => $q->where('company_id', $user->company_id));
         }
 
         $sale = $query->findOrFail($id);
