@@ -10,6 +10,8 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
+      - ./docker/php/php-fpm.d/zz-kasirsewa.conf:/usr/local/etc/php-fpm.d/zz-kasirsewa.conf:ro
     environment:
       - CONTAINER_ROLE=app
       # WhatsApp gateway credentials. The gateway and every sender container
@@ -70,6 +72,7 @@ services:
     command: php artisan queue:work --tries=3 --timeout=90
     volumes:
       - .:/var/www/html
+      - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
     environment:
       - WA_API_KEY=${WA_API_KEY:-baileys_free_gateway}
       - WA_GATEWAY_URL=${WA_GATEWAY_URL:-http://kasirsewa_whatsapp:3001/send}
