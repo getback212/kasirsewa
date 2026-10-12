@@ -1,0 +1,20 @@
+[Unit]
+Description=Cloudflare Tunnel (kasirsewa-saas) — apex + wildcard tenants for KasirSewa
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/lenori/.local/bin/cloudflared tunnel --config /home/lenori/.cloudflared/config.yml run kasirsewa-saas
+Restart=always
+RestartSec=5
+# Keep the tunnel small so it never competes with the app for RAM.
+MemoryMax=512M
+StandardOutput=journal
+StandardError=journal
+
+# NOTE: do not add User=/Group= here. This is a *user* service; systemd cannot
+# switch groups in user mode (Group=docker exits 216/GROUP).
+
+[Install]
+WantedBy=default.target

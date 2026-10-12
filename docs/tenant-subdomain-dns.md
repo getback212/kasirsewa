@@ -1,5 +1,12 @@
 # Tenant subdomain DNS — wildcard for `*.superbackend.my.id`
 
+> **This deployment routes public traffic through a Cloudflare Tunnel.**
+> The apex and the `*` wildcard are CNAMEs to the tunnel (`kasirsewa-saas`),
+> not A records to an origin IP. See `docs/cloudflare-tunnel.md` for the
+> tunnel itself, and use `cloudflared tunnel route dns kasirsewa-saas
+> '*.superbackend.my.id'` to (re)create the wildcard in one step. The
+> dashboard/API A-record options below remain valid for a non-tunnelled setup.
+
 The application already routes by host (see `App\Support\TenantDomain` and
 `App\Http\Middleware\TenantDomainResolver`). Creating a tenant in the dashboard
 only writes a `domain` value to the `tenants` table — it does **not** create a
