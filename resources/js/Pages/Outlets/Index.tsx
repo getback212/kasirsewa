@@ -25,6 +25,10 @@ interface OutletsPageProps extends PageProps {
         name: string;
         slug: string;
         domain: string | null;
+        domain_type?: 'saas_subdomain' | 'custom' | null;
+        domain_status?: 'active' | 'pending_dns' | 'failed' | 'none' | null;
+        domain_dns_target?: string | null;
+        domain_checked_at?: string | null;
     };
 }
 
@@ -63,6 +67,27 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
     const domainForm = useForm({
         domain: tenant?.domain || (tenant?.slug ? `${tenant.slug}.superbackend.my.id` : ''),
     });
+
+    const domainStatus = tenant?.domain_status || 'active';
+    const isCustomDomain = tenant?.domain_type === 'custom';
+
+    const domainStatusLabel: Record<string, string> = {
+        active: '● Aktif',
+        pending_dns: '● Menunggu DNS',
+        failed: '● Gagal',
+        none: '● Belum diatur',
+    };
+
+    const domainStatusClass: Record<string, string> = {
+        active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        pending_dns: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        failed: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+        none: 'bg-slate-800 text-slate-400 border-slate-700',
+    };
+
+    const handleRefreshDomain = () => {
+        router.post('/outlets/domain/refresh', {}, { preserveScroll: true });
+    };
 
     const handleUpdateDomain = (e: React.FormEvent) => {
         e.preventDefault();
@@ -177,9 +202,14 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                 </p>
                             </div>
 
-                            <span className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-mono font-bold">
-                                {tenant?.domain || (tenant?.slug ? `${tenant.slug}.superbackend.my.id` : 'Domain Aktif')}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-mono font-bold">
+                                    {tenant?.domain || (tenant?.slug ? `${tenant.slug}.superbackend.my.id` : 'Domain Aktif')}
+                                </span>
+                                <span className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border ${domainStatusClass[domainStatus] ?? domainStatusClass.none}`}>
+                                    {domainStatusLabel[domainStatus] ?? domainStatus}
+                                </span>
+                            </div>
                         </div>
 
                         <form onSubmit={handleUpdateDomain} className="space-y-4 pt-2">
@@ -205,9 +235,33 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                 {domainForm.errors.domain && <p className="text-xs text-rose-400 mt-1">{domainForm.errors.domain}</p>}
                             </div>
 
-                            <div className="p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl text-[11px] text-slate-400 leading-relaxed">
-                                💡 <strong>Panduan Custom Domain Pribadi:</strong> Jika menggunakan domain pribadi milik Anda sendiri (misal: <code>tokoberkah.com</code>), silakan arahkan DNS record <strong>CNAME</strong> atau <strong>A Record</strong> domain Anda ke IP VPS Server <code>superbackend.my.id</code>.
-                            </div>
+                            {isCustomDomain ? (
+                                <div className="p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl text-[11px] text-slate-400 leading-relaxed space-y-2">
+                                    <p>
+                                        💡 <strong>Domain pribadi:</strong> buat record DNS berikut di penyedia domain Anda (
+                                        <code>{tenant?.domain}</code>), jangan arahkan ke IP server.
+                                    </p>
+                                    <p className="font-mono text-slate-200 break-all">
+                                        CNAME&nbsp;&nbsp;{tenant?.domain} → {tenant?.domain_dns_target || '(minta target CNAME ke admin)'}
+                                    </p>
+                                    <p>
+                                        Setelah DNS tersebar, tekan <strong>Cek Status</strong>. Sertifikat SSL diterbitkan otomatis; alamat baru
+                                        dianggap aktif setelah terverifikasi.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleRefreshDomain}
+                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl text-[11px] font-bold transition cursor-pointer active:scale-95"
+                                    >
+                                        🔄 Cek Status Domain
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl text-[11px] text-slate-400 leading-relaxed">
+                                    💡 <strong>Subdomain SaaS:</strong> alamat <code>{tenant?.domain || '*.superbackend.my.id'}</code> memakai
+                                    wildcard <code>*.superbackend.my.id</code>, sehingga langsung aktif tanpa pengaturan DNS tambahan.
+                                </div>
+                            )}
                         </form>
                     </div>
                 )}

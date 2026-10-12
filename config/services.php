@@ -45,6 +45,20 @@ return [
         'webhook_secret' => env('QRIS_WEBHOOK_SECRET'),
     ],
 
+    /*
+    | Cloudflare for SaaS — lets a tenant's own domain get a certificate and
+    | route into the tunnel. Without api_token + zone_id the app still saves
+    | the domain, but marks it `pending_dns` instead of faking success.
+    */
+    'cloudflare' => [
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'api_base' => env('CLOUDFLARE_API_BASE', 'https://api.cloudflare.com/client/v4'),
+        // CNAME target tenants point their custom domain at, e.g.
+        // `customers.superbackend.my.id` (the SaaS fallback origin).
+        'custom_domain_target' => env('CLOUDFLARE_CUSTOM_DOMAIN_TARGET'),
+    ],
+
     'wa' => [
         'api_key' => env('WA_API_KEY'),
         'gateway_url' => env('WA_GATEWAY_URL', 'http://kasirsewa_whatsapp:3001/send'),

@@ -52,4 +52,15 @@ final class TenantDomain
     {
         return in_array(strtolower($host), [self::BASE_DOMAIN, 'www.' . self::BASE_DOMAIN, 'saas.' . self::BASE_DOMAIN, 'localhost', '127.0.0.1'], true);
     }
+
+    /**
+     * True when the host is our own base domain or a subdomain of it — i.e. the
+     * SaaS-provided addresses, which need no certificate of their own.
+     */
+    public static function isBaseHost(string $host): bool
+    {
+        $host = strtolower($host);
+
+        return $host === self::BASE_DOMAIN || str_ends_with($host, '.' . self::BASE_DOMAIN);
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\Outlet;
 use App\Models\Tenant;
 use App\Services\Audit\AuditLogService;
+use App\Services\Domain\TenantDomainProvisioner;
 use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ use Inertia\Response;
 
 class OutletController extends Controller
 {
+    public function __construct(private readonly TenantDomainProvisioner $domainProvisioner)
+    {
+    }
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -170,15 +175,61 @@ class OutletController extends Controller
         ]);
 
         $cleanDomain = TenantDomain::normalize($validated['domain']);
+
         if (Tenant::whereRaw('LOWER(domain) = ?', [$cleanDomain])->whereKeyNot($tenant->id)->exists()) {
             return redirect()->back()->withErrors(['domain' => 'Subdomain / domain tersebut sudah digunakan oleh toko lain.']);
         }
 
-        $tenant->update(['domain' => $cleanDomain]);
+        $previousDomain = $tenant->domain;
+        $tenant = $this->domainProvisioner->provision($tenant, $cleanDomain);
 
-        AuditLogService::log('TENANT_DOMAIN_UPDATE', 'Tenant', $tenant->id, ['domain' => $cleanDomain]);
+        AuditLogService::log(
+            'TENANT_DOMAIN_UPDATE',
+            'Tenant',
+            $tenant->id,
+            ['domain' => $previousDomain],
+            ['domain' => $cleanDomain, 'domain_status' => $tenant->domain_status],
+        );
 
-        return redirect()->back()->with('success', "Subdomain / Custom domain toko berhasil diperbarui ke '{$cleanDomain}'!");
+        return redirect()->back()->with('success', $this->domainStatusMessage($tenant));
+    }
+
+    /**
+     * Re-check a custom domain against Cloudflare so the tenant can see when
+     * their CNAME/certificate has gone live.
+     */
+    public function refreshDomain(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
+            abort(403, 'Hanya Pemilik Toko (Owner) atau Super Admin yang berwenang memverifikasi domain toko.');
+        }
+
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $tenant = Tenant::findOrFail($tenantId);
+
+        $tenant = $this->domainProvisioner->refresh($tenant);
+
+        AuditLogService::log(
+            'TENANT_DOMAIN_REFRESH',
+            'Tenant',
+            $tenant->id,
+            null,
+            ['domain_status' => $tenant->domain_status],
+        );
+
+        return redirect()->back()->with('success', $this->domainStatusMessage($tenant));
+    }
+
+    private function domainStatusMessage(Tenant $tenant): string
+    {
+        return match ($tenant->domain_status) {
+            TenantDomainProvisioner::STATUS_ACTIVE => "Alamat '{$tenant->domain}' aktif dan siap dipakai.",
+            TenantDomainProvisioner::STATUS_PENDING_DNS => "Alamat '{$tenant->domain}' disimpan, tetapi belum aktif. Arahkan CNAME domain Anda lalu tekan \"Cek Status\".",
+            TenantDomainProvisioner::STATUS_FAILED => "Alamat '{$tenant->domain}' tersimpan, namun Cloudflare menolak/menghentikan penerbitan sertifikat. Periksa kembali pengaturan DNS Anda.",
+            default => "Alamat '{$tenant->domain}' tersimpan.",
+        };
     }
 
     public function switchOutlet(Request $request, int $id): RedirectResponse

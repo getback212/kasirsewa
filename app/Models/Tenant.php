@@ -19,8 +19,17 @@ class Tenant extends Model
         'name',
         'slug',
         'domain',
+        'domain_type',
+        'domain_status',
+        'domain_dns_target',
+        'custom_hostname_id',
+        'domain_checked_at',
         'status',
         'owner_id',
+    ];
+
+    protected $casts = [
+        'domain_checked_at' => 'datetime',
     ];
 
     protected static function boot()
