@@ -21,6 +21,7 @@ export interface Outlet {
     id: number;
     company_id: number;
     code: string;
+    display_pair_token?: string;
     name: string;
     phone?: string;
     address?: string;

@@ -4,10 +4,12 @@ import { Lock, Mail, AlertCircle, ArrowRight, ShieldCheck, KeyRound, Building2 }
 
 export default function SuperAdminLogin() {
     const { data, setData, post, processing, errors } = useForm({
-        email: 'admin@example.com',
-        password: 'password',
-        remember: true,
+        email: '',
+        password: '',
+        remember: false,
     });
+
+    const [showPassword, setShowPassword] = React.useState(false);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();

@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\Stock;
 use App\Enums\UserRole;
 use App\Services\Audit\AuditLogService;
+use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -61,17 +62,22 @@ class TenantController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'domain' => ['nullable', 'string', 'max:255', 'unique:tenants,domain'],
+            'domain' => ['nullable', 'string', 'max:255'],
             'plan_id' => ['required', 'exists:plans,id'],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'owner_password' => ['required', 'string', 'min:6'],
         ]);
 
+        $domain = TenantDomain::normalize($validated['domain'] ?? null);
+        if ($domain && Tenant::whereRaw('LOWER(domain) = ?', [$domain])->exists()) {
+            return redirect()->back()->withErrors(['domain' => 'Subdomain / domain tersebut sudah digunakan oleh toko lain.']);
+        }
+
         $tenant = Tenant::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
-            'domain' => $validated['domain'] ?? null,
+            'domain' => $domain,
             'status' => 'active',
         ]);
 
@@ -120,12 +126,21 @@ class TenantController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'domain' => ['nullable', 'string', 'max:255', 'unique:tenants,domain,' . $tenant->id],
+            'domain' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:active,past_due,grace_period,suspended,expired,cancelled'],
         ]);
 
+        $domain = TenantDomain::normalize($validated['domain'] ?? null);
+        if ($domain && Tenant::whereRaw('LOWER(domain) = ?', [$domain])->whereKeyNot($tenant->id)->exists()) {
+            return redirect()->back()->withErrors(['domain' => 'Subdomain / domain tersebut sudah digunakan oleh toko lain.']);
+        }
+
         $oldData = $tenant->only(['name', 'domain', 'status']);
-        $tenant->update($validated);
+        $tenant->update([
+            'name' => $validated['name'],
+            'domain' => $domain,
+            'status' => $validated['status'],
+        ]);
 
         AuditLogService::log(
             action: 'TENANT_UPDATE',
@@ -228,27 +243,54 @@ class TenantController extends Controller
     public function impersonate(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (!$user || !$user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Aksi ini hanya untuk Super Admin.');
         }
 
-        $tenant = Tenant::findOrFail($id);
-        session(['active_tenant_id' => $tenant->id]);
+        if (session()->has('impersonator_id')) {
+            return redirect()->route('dashboard')->with('error', 'Selesaikan sesi impersonate saat ini sebelum beralih tenant.');
+        }
+
+        $tenant = Tenant::with('owner')->findOrFail($id);
+        $owner = $tenant->owner;
+
+        if (!$owner || !$owner->is_active || !$owner->hasRole(UserRole::OWNER->value)) {
+            return redirect()->route('admin.tenants.index')->with('error', 'Tenant ini belum memiliki akun Owner aktif untuk di-impersonate.');
+        }
+
+        // Preserve original identity in the server-side session before switching auth.
+        session([
+            'impersonator_id' => $user->id,
+            'active_tenant_id' => $tenant->id,
+        ]);
+        auth()->guard('web')->login($owner);
+        $request->session()->regenerate();
 
         AuditLogService::log('SAAS_TENANT_IMPERSONATE', 'Tenant', $tenant->id, ['name' => $tenant->name]);
 
-        return redirect()->route('dashboard')->with('success', "Berhasil beralih konteks (Impersonate) ke Tenant '{$tenant->name}'!");
+        return redirect()->route('dashboard')->with('success', "Anda sekarang melihat sebagai Owner tenant '{$tenant->name}'.");
     }
 
     public function stopImpersonate(Request $request): RedirectResponse
     {
-        $user = $request->user();
-        if (!$user->hasRole('SUPER_ADMIN')) {
-            abort(403);
+        $impersonatorId = $request->session()->get('impersonator_id');
+        if (!$impersonatorId) {
+            abort(403, 'Tidak ada sesi impersonate yang aktif.');
         }
 
-        session()->forget('active_tenant_id');
+        $superAdmin = User::find($impersonatorId);
+        if (!$superAdmin || !$superAdmin->is_active || !$superAdmin->hasRole('SUPER_ADMIN')) {
+            auth()->guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-        return redirect()->route('admin.dashboard')->with('success', 'Kembali ke Konteks Super Admin SaaS.');
+            return redirect()->route('login')->with('error', 'Sesi Super Admin asal sudah tidak valid. Silakan login kembali.');
+        }
+
+        auth()->guard('web')->login($superAdmin);
+        $request->session()->forget(['impersonator_id', 'active_tenant_id']);
+        $request->session()->regenerate();
+
+        return redirect()->route('admin.dashboard')->with('success', 'Kembali ke akun Super Admin SaaS.');
     }
 }

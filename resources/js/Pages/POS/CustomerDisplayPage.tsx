@@ -6,6 +6,7 @@ interface CustomerDisplayProps {
     outlet?: {
         name: string;
         code: string;
+        display_pair_token?: string;
         qris_payload?: string;
         qris_image_url?: string;
     };
@@ -39,9 +40,9 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
     const [pairingCode, setPairingCode] = useState(() => {
         if (typeof window !== 'undefined') {
             const queryCode = new URLSearchParams(window.location.search).get('pair_code') || new URLSearchParams(window.location.search).get('code');
-            return queryCode || localStorage.getItem('pos_paired_code') || outlet?.code || '';
+            return queryCode || localStorage.getItem('pos_paired_code') || outlet?.display_pair_token || '';
         }
-        return outlet?.code || '';
+        return outlet?.display_pair_token || '';
     });
     const [showPairModal, setShowPairModal] = useState(false);
     const [showQrisManual, setShowQrisManual] = useState(false);

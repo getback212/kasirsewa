@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Outlet;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\Outlet;
 use App\Models\Tenant;
 use App\Services\Audit\AuditLogService;
+use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,21 +20,15 @@ class OutletController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('view-outlets')) {
+        if (! $user->hasPermissionTo('view-outlets')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data outlet toko.');
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
         $tenant = Tenant::find($tenantId);
 
-        $outlets = Outlet::where(function ($q) use ($tenantId, $user) {
-                if ($user->company_id) {
-                    $q->where('company_id', $user->company_id);
-                }
-                if ($tenantId) {
-                    $q->orWhere('tenant_id', $tenantId);
-                }
-            })
+        $outlets = Outlet::when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
+            ->when($tenantId && ! $user->company_id, fn ($q) => $q->where('tenant_id', $tenantId))
             ->latest()
             ->get();
 
@@ -46,7 +42,7 @@ class OutletController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('create-outlets')) {
+        if (! $user->hasPermissionTo('create-outlets')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menambah outlet toko.');
         }
 
@@ -57,9 +53,7 @@ class OutletController extends Controller
             $tenant = Tenant::with('subscription.plan')->find($tenantId);
             if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
                 $maxStores = $tenant->subscription->plan->max_stores;
-                $currentStores = Outlet::where(function ($q) use ($tenantId, $user) {
-                    $q->where('tenant_id', $tenantId)->orWhere('company_id', $user->company_id);
-                })->count();
+                $currentStores = Outlet::where('company_id', $user->company_id)->count();
 
                 if ($currentStores >= $maxStores) {
                     return back()->with('error', "Batas kuota outlet cabang toko Anda telah mencapai batas maksimal paket {$tenant->subscription->plan->name} ({$maxStores} Outlet Store). Silakan upgrade paket berlangganan SaaS Anda.");
@@ -106,7 +100,7 @@ class OutletController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('edit-outlets')) {
+        if (! $user->hasPermissionTo('edit-outlets')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengubah konfigurasi outlet toko.');
         }
 
@@ -143,13 +137,13 @@ class OutletController extends Controller
         ]);
 
         // Sync main outlet name update with Tenant & Company models for Super Admin UI
-        if ($outlet->is_main || \App\Models\Outlet::where('tenant_id', $tenantId)->count() === 1) {
-            $tenant = \App\Models\Tenant::find($tenantId);
+        if ($outlet->is_main || Outlet::where('tenant_id', $tenantId)->count() === 1) {
+            $tenant = Tenant::find($tenantId);
             if ($tenant) {
                 $tenant->update(['name' => $validated['name']]);
             }
             if ($user->company_id) {
-                \App\Models\Company::where('id', $user->company_id)->update(['name' => $validated['name']]);
+                Company::where('id', $user->company_id)->update(['name' => $validated['name']]);
             }
         }
 
@@ -162,7 +156,7 @@ class OutletController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
             abort(403, 'Hanya Pemilik Toko (Owner) atau Super Admin yang berwenang mengubah subdomain toko.');
         }
 
@@ -170,20 +164,17 @@ class OutletController extends Controller
         $tenant = Tenant::findOrFail($tenantId);
 
         $validated = $request->validate([
-            'domain' => ['required', 'string', 'max:255', Rule::unique('tenants', 'domain')->ignore($tenant->id)],
+            'domain' => ['required', 'string', 'max:255'],
         ], [
             'domain.required' => 'Subdomain / Domain khusus wajib diisi.',
-            'domain.unique' => 'Subdomain / Domain tersebut sudah digunakan oleh toko lain.',
         ]);
 
-        $cleanDomain = strtolower(trim($validated['domain']));
-        if (!str_contains($cleanDomain, '.')) {
-            $cleanDomain .= '.superbackend.my.id';
+        $cleanDomain = TenantDomain::normalize($validated['domain']);
+        if (Tenant::whereRaw('LOWER(domain) = ?', [$cleanDomain])->whereKeyNot($tenant->id)->exists()) {
+            return redirect()->back()->withErrors(['domain' => 'Subdomain / domain tersebut sudah digunakan oleh toko lain.']);
         }
 
-        $tenant->update([
-            'domain' => $cleanDomain,
-        ]);
+        $tenant->update(['domain' => $cleanDomain]);
 
         AuditLogService::log('TENANT_DOMAIN_UPDATE', 'Tenant', $tenant->id, ['domain' => $cleanDomain]);
 

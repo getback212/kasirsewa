@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Unit;
+use App\Support\TenantDomain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,8 @@ class GoogleAuthController extends Controller
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            // Keep the OAuth state check enabled for this browser session.
+            $googleUser = Socialite::driver('google')->user();
 
             $user = User::where('google_id', $googleUser->getId())
                 ->orWhere('email', $googleUser->getEmail())
@@ -101,18 +103,10 @@ class GoogleAuthController extends Controller
                         $plan = Plan::where('slug', 'starter-basic')->first() ?? Plan::first();
                     }
 
-                    $slugLower = strtolower($plan->slug ?? '');
-                    $isTrialPlan = str_contains($slugLower, 'starter') || str_contains($slugLower, 'pro');
-
-                    if ($isTrialPlan) {
-                        $trialEndsAt = now()->addDays(7);
-                        $status = 'trial';
-                        $expiresAt = $trialEndsAt;
-                    } else {
-                        $trialEndsAt = null;
-                        $status = 'pending_payment';
-                        $expiresAt = $billingCycle === 'yearly' ? now()->addYear() : now()->addMonth();
-                    }
+                    // Semua paket mendapat trial gratis 7 hari
+                    $trialEndsAt = now()->addDays(7);
+                    $status = 'trial';
+                    $expiresAt = $trialEndsAt;
 
                     $subscription = Subscription::create([
                         'tenant_id' => $tenant->id,
@@ -126,7 +120,7 @@ class GoogleAuthController extends Controller
                     ]);
 
                     // Initial registration invoice (Rp 0 / Lunas during 7-Day Free Trial)
-                    $price = $isTrialPlan ? 0.00 : ($billingCycle === 'yearly' ? (float) $plan->yearly_price : (float) $plan->monthly_price);
+                    $price = 0.00;
                     $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
                     $invoice = Invoice::create([
@@ -137,13 +131,11 @@ class GoogleAuthController extends Controller
                         'discount' => 0,
                         'tax' => 0,
                         'total' => $price,
-                        'status' => $isTrialPlan ? 'paid' : 'pending',
-                        'due_at' => $trialEndsAt ?? now()->addDays(1),
+                        'status' => 'paid',
+                        'due_at' => $trialEndsAt,
                     ]);
 
-                    $desc = $isTrialPlan 
-                        ? "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})"
-                        : "Biaya Berlangganan SaaS {$plan->name} ({$billingCycle})";
+                    $desc = "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})";
 
                     InvoiceItem::create([
                         'invoice_id' => $invoice->id,
@@ -208,8 +200,12 @@ class GoogleAuthController extends Controller
 
             return redirect($targetRoute)->with('success', "✅ Selamat datang kembali, {$user->name}!");
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Google Auth Failed: ' . $e->getMessage());
-            return redirect('/login')->with('error', 'Gagal masuk menggunakan Google: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Google Auth Failed', [
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect('/login')->with('error', 'Gagal masuk menggunakan Google. Silakan coba lagi.');
         }
     }
 }

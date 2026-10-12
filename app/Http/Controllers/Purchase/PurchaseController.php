@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Purchase;
 
+use App\Actions\Purchase\CreatePurchaseAction;
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
-use App\Models\Product;
-use App\Actions\Purchase\CreatePurchaseAction;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Exception;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,11 +20,12 @@ class PurchaseController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('view-purchases')) {
+        if (! $user->hasPermissionTo('view-purchases')) {
             abort(403, 'Anda tidak memiliki hak akses untuk membuka menu restok supplier.');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $purchases = Purchase::with(['supplier', 'items.product.unit', 'user'])
             ->where('outlet_id', $activeOutletId)
@@ -32,7 +33,7 @@ class PurchaseController extends Controller
             ->paginate(15);
 
         $suppliers = Supplier::where('company_id', $user->company_id)->get(['id', 'code', 'name', 'phone', 'email', 'address']);
-        
+
         $products = Product::with(['unit'])
             ->where('company_id', $user->company_id)
             ->where('is_active', true)
@@ -58,11 +59,12 @@ class PurchaseController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('create-purchases')) {
+        if (! $user->hasPermissionTo('create-purchases')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menambah transaksi restok.');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $validated = $request->validate([
             'supplier_id' => ['required', Rule::exists('suppliers', 'id')->where(function ($query) use ($user) {

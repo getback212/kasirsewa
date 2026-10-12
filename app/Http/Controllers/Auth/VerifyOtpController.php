@@ -51,9 +51,13 @@ class VerifyOtpController extends Controller
             'phone_otp_expires_at' => now()->addMinutes(10),
         ]);
 
-        // Send via Custom Baileys WA Gateway / SaaS WA Setting
-        $waGatewayUrl = SaaSSetting::get('wa_gateway_url', 'http://172.17.0.1:3001/send');
-        $waApiKey = SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
+        // Send via the configured WhatsApp gateway. Prefer the app config
+        // (shared with the dispatcher and the gateway itself) and fall back to
+        // the DB setting for operators who configure it from the admin panel.
+        // Default to the compose service name so app/queue/scheduler all reach
+        // the same gateway; never a hardcoded host IP.
+        $waGatewayUrl = config('services.wa.gateway_url') ?: SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
+        $waApiKey = config('services.wa.api_key') ?: SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
 
         $defaultTemplate = "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda.";
         $template = SaaSSetting::get('wa_otp_template', $defaultTemplate);
@@ -71,11 +75,22 @@ class VerifyOtpController extends Controller
             if ($res->successful()) {
                 return redirect()->back()->with('success', "✅ Kode OTP 6-Digit berhasil dikirim ke nomor WhatsApp Anda! Silakan periksa pesan WA yang masuk.");
             }
+
+            // The gateway answered but rejected the message (wrong key, session
+            // down, bad number). Do not report success: the user must know the
+            // OTP was not delivered.
+            Log::error('WA OTP gateway rejected the message', [
+                'status' => $res->status(),
+                'target' => $phone,
+            ]);
         } catch (\Throwable $e) {
-            Log::error('Failed to send WA OTP: ' . $e->getMessage());
+            Log::error('Failed to send WA OTP', [
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
 
-        return redirect()->back()->with('success', "✅ Kode OTP 6-Digit berhasil dikirim ke nomor WhatsApp Anda! Silakan periksa pesan WA yang masuk.");
+        return redirect()->back()->with('error', '❌ Gagal mengirim kode OTP ke WhatsApp. Periksa nomor Anda atau coba lagi sebentar lagi.');
     }
 
     public function verifyOtp(Request $request): RedirectResponse

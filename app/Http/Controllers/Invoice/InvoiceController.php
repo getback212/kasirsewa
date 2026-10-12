@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Invoice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
-use App\Models\SaaSPayment;
-use App\Services\Payment\PaymentService;
-use App\Services\Payment\ManualPaymentGateway;
+use App\Models\SaaSSetting;
 use App\Services\Audit\AuditLogService;
+use App\Services\Payment\ManualPaymentGateway;
+use App\Services\Payment\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +23,7 @@ class InvoiceController extends Controller
 
         $query = Invoice::with(['tenant', 'subscription.plan', 'plan', 'items', 'payments']);
 
-        if (!$isSuperAdmin) {
+        if (! $isSuperAdmin) {
             $tenantId = session('active_tenant_id', $user->tenant_id);
             $query->where('tenant_id', $tenantId);
         }
@@ -43,7 +43,7 @@ class InvoiceController extends Controller
 
         $query = Invoice::with(['tenant.owner', 'subscription.plan', 'items', 'payments']);
 
-        if (!$isSuperAdmin) {
+        if (! $isSuperAdmin) {
             $tenantId = session('active_tenant_id', $user->tenant_id);
             $query->where('tenant_id', $tenantId);
         }
@@ -54,31 +54,31 @@ class InvoiceController extends Controller
             [
                 'id' => 1,
                 'bank_name' => 'Bank BCA',
-                'account_number' => \App\Models\SaaSSetting::get('bank_bca_number', '123-456-7890'),
-                'account_name' => \App\Models\SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
+                'account_number' => SaaSSetting::get('bank_bca_number', '123-456-7890'),
+                'account_name' => SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
                 'is_active' => true,
             ],
             [
                 'id' => 2,
                 'bank_name' => 'Bank Mandiri',
-                'account_number' => \App\Models\SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
-                'account_name' => \App\Models\SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
+                'account_number' => SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
+                'account_name' => SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
                 'is_active' => true,
-            ]
+            ],
         ];
 
-        $bankAccountsRaw = \App\Models\SaaSSetting::get('bank_accounts', null);
+        $bankAccountsRaw = SaaSSetting::get('bank_accounts', null);
         $bankAccounts = $bankAccountsRaw ? json_decode($bankAccountsRaw, true) : $defaultBankAccounts;
 
         $paymentSettings = [
             'bank_accounts' => $bankAccounts,
-            'bank_bca_number' => \App\Models\SaaSSetting::get('bank_bca_number', '123-456-7890'),
-            'bank_bca_name' => \App\Models\SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
-            'bank_mandiri_number' => \App\Models\SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
-            'bank_mandiri_name' => \App\Models\SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
-            'qris_payload' => \App\Models\SaaSSetting::get('qris_payload', ''),
-            'qris_image_url' => \App\Models\SaaSSetting::get('qris_image_url', ''),
-            'payment_instructions' => \App\Models\SaaSSetting::get('payment_instructions', 'Silakan melakukan transfer sesuai nominal invoice.'),
+            'bank_bca_number' => SaaSSetting::get('bank_bca_number', '123-456-7890'),
+            'bank_bca_name' => SaaSSetting::get('bank_bca_name', 'PT KasirSewa Indonesia'),
+            'bank_mandiri_number' => SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
+            'bank_mandiri_name' => SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
+            'qris_payload' => SaaSSetting::get('qris_payload', ''),
+            'qris_image_url' => SaaSSetting::get('qris_image_url', ''),
+            'payment_instructions' => SaaSSetting::get('payment_instructions', 'Silakan melakukan transfer sesuai nominal invoice.'),
         ];
 
         return Inertia::render('Invoices/Show', [
@@ -110,7 +110,7 @@ class InvoiceController extends Controller
 
         $payment = $invoice->payments()->latest()->first();
 
-        if (!$payment) {
+        if (! $payment) {
             $payment = $manualGateway->createPayment($invoice, $request->payment_method, [
                 'sender_bank' => $request->sender_bank,
                 'sender_name' => $request->sender_name,
@@ -142,14 +142,14 @@ class InvoiceController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang dapat mengonfirmasi verifikasi pembayaran invoice.');
         }
 
         $invoice = Invoice::with('payments')->findOrFail($id);
         $pendingPayment = $invoice->payments()->where('status', 'pending')->latest()->first();
 
-        if (!$pendingPayment) {
+        if (! $pendingPayment) {
             $pendingPayment = $manualGateway->createPayment($invoice, 'manual_transfer');
         }
 
@@ -162,7 +162,7 @@ class InvoiceController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang memiliki wewenang untuk menghapus riwayat tagihan invoice.');
         }
 

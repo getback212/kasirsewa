@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\Dashboard\DashboardService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardController extends Controller
 {
@@ -24,7 +23,8 @@ class DashboardController extends Controller
             return redirect()->route('inventory.index');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $dashboardData = $dashboardService->getDashboardData($user, $activeOutletId);
 

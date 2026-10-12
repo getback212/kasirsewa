@@ -629,7 +629,7 @@ export default function POSPage({
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            const codeToken = `DISP-${activeOutlet.id}`;
+                                            const codeToken = activeOutlet.display_pair_token;
                                             const url = `https://superbackend.my.id/pos/customer-display?code=${codeToken}`;
                                             if (navigator.clipboard && window.isSecureContext) {
                                                 navigator.clipboard.writeText(url);

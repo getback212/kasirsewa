@@ -16,6 +16,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Enums\UserRole;
 use App\Services\Audit\AuditLogService;
+use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -46,12 +47,18 @@ class RegisterController extends Controller
 
         return DB::transaction(function () use ($request) {
             $slug = Str::slug($request->store_name).'-'.mt_rand(100, 999);
+            $domain = TenantDomain::normalize("$slug.superbackend.my.id");
+            if (Tenant::whereRaw('LOWER(domain) = ?', [$domain])->exists()) {
+                // extremely unlikely due to random suffix, but fallback with another attempt
+                $slug = Str::slug($request->store_name).'-'.mt_rand(1000, 9999);
+                $domain = TenantDomain::normalize("$slug.superbackend.my.id");
+            }
 
             // 1. Create Tenant
             $tenant = Tenant::create([
                 'name' => $request->store_name,
                 'slug' => $slug,
-                'domain' => $slug.'.superbackend.my.id',
+                'domain' => $domain,
                 'status' => 'active',
             ]);
 
@@ -90,20 +97,12 @@ class RegisterController extends Controller
             $owner->assignRole(UserRole::OWNER->value);
             $tenant->update(['owner_id' => $owner->id]);
 
-            // 4. Create Initial Subscription (7-Day Free Trial for Starter & Pro plans)
+            // 4. Create Initial Subscription (7-Day Free Trial for All plans)
             $plan = Plan::findOrFail($request->plan_id);
-            $slugLower = strtolower($plan->slug);
-            $isTrialPlan = str_contains($slugLower, 'starter') || str_contains($slugLower, 'pro');
-
-            if ($isTrialPlan) {
-                $trialEndsAt = now()->addDays(7);
-                $status = 'trial';
-                $expiresAt = $trialEndsAt;
-            } else {
-                $trialEndsAt = null;
-                $status = 'pending_payment';
-                $expiresAt = $request->billing_cycle === 'yearly' ? now()->addYear() : now()->addMonth();
-            }
+            // Semua paket mendapat trial gratis 7 hari
+            $trialEndsAt = now()->addDays(7);
+            $status = 'trial';
+            $expiresAt = $trialEndsAt;
 
             $subscription = Subscription::create([
                 'tenant_id' => $tenant->id,
@@ -117,7 +116,7 @@ class RegisterController extends Controller
             ]);
 
             // 5. Create Initial Registration Invoice (Rp 0 / Lunas during 7-Day Free Trial)
-            $price = $isTrialPlan ? 0.00 : ($request->billing_cycle === 'yearly' ? (float) $plan->yearly_price : (float) $plan->monthly_price);
+            $price = 0.00;
             $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
 
             $invoice = Invoice::create([
@@ -128,13 +127,11 @@ class RegisterController extends Controller
                 'discount' => 0,
                 'tax' => 0,
                 'total' => $price,
-                'status' => $isTrialPlan ? 'paid' : 'pending',
-                'due_at' => $trialEndsAt ?? now()->addDays(1),
+                'status' => 'paid',
+                'due_at' => $trialEndsAt,
             ]);
 
-            $desc = $isTrialPlan 
-                ? "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})"
-                : "Biaya Berlangganan SaaS {$plan->name} ({$request->billing_cycle})";
+            $desc = "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})";
 
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
@@ -181,9 +178,7 @@ class RegisterController extends Controller
                 'active_outlet_id' => $outlet->id,
             ]);
 
-            $welcomeMsg = $isTrialPlan 
-                ? "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar dengan Masa Trial Gratis 7 Hari."
-                : "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar.";
+            $welcomeMsg = "Selamat datang di KasirSewa! Toko '{$tenant->name}' berhasil mendaftar dengan Masa Trial Gratis 7 Hari — Paket {$plan->name}.";
 
             return redirect('/dashboard')->with('success', $welcomeMsg);
         });

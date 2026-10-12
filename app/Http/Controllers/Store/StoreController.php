@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\Outlet;
 use App\Models\Tenant;
 use App\Services\Audit\AuditLogService;
@@ -18,12 +19,15 @@ class StoreController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('view-outlets')) {
+        if (! $user->hasPermissionTo('view-outlets')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data toko/outlet.');
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        $stores = Outlet::where('tenant_id', $tenantId)->latest()->get();
+        $stores = Outlet::when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
+            ->when($tenantId && ! $user->company_id, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->latest()
+            ->get();
 
         return Inertia::render('Outlets/Index', [
             'outlets' => $stores,
@@ -34,7 +38,7 @@ class StoreController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('create-outlets')) {
+        if (! $user->hasPermissionTo('create-outlets')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menambah toko/outlet.');
         }
 
@@ -89,7 +93,7 @@ class StoreController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('edit-outlets')) {
+        if (! $user->hasPermissionTo('edit-outlets')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengedit data toko/outlet.');
         }
 
@@ -122,13 +126,13 @@ class StoreController extends Controller
         ]);
 
         // Sync main store name update with Tenant & Company models for Super Admin UI
-        if ($store->is_main || \App\Models\Outlet::where('tenant_id', $tenantId)->count() === 1) {
-            $tenant = \App\Models\Tenant::find($tenantId);
+        if ($store->is_main || Outlet::where('tenant_id', $tenantId)->count() === 1) {
+            $tenant = Tenant::find($tenantId);
             if ($tenant) {
                 $tenant->update(['name' => $validated['name']]);
             }
             if ($user->company_id) {
-                \App\Models\Company::where('id', $user->company_id)->update(['name' => $validated['name']]);
+                Company::where('id', $user->company_id)->update(['name' => $validated['name']]);
             }
         }
 

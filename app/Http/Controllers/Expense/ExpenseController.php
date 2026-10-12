@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Expense;
 
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
 
 class ExpenseController extends Controller
 {
@@ -16,11 +16,12 @@ class ExpenseController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('view-expenses') && !$user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
+        if (! $user->hasPermissionTo('view-expenses') && ! $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola pengeluaran operasional toko.');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->toDateString());
@@ -51,9 +52,10 @@ class ExpenseController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
-        if (!$user->hasPermissionTo('create-expenses') && !$user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
+        if (! $user->hasPermissionTo('create-expenses') && ! $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
             abort(403, 'Anda tidak memiliki hak akses untuk menambah pengeluaran toko.');
         }
 
@@ -81,9 +83,10 @@ class ExpenseController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
-        if (!$user->hasPermissionTo('edit-expenses') && !$user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
+        if (! $user->hasPermissionTo('edit-expenses') && ! $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengubah pengeluaran toko.');
         }
 
@@ -111,9 +114,10 @@ class ExpenseController extends Controller
     public function destroy(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
-        if (!$user->hasPermissionTo('delete-expenses') && !$user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
+        if (! $user->hasPermissionTo('delete-expenses') && ! $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus catatan pengeluaran.');
         }
 

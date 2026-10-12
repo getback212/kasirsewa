@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\Inventory\ProcessStockOpnameAction;
 use App\Http\Controllers\Controller;
-use App\Models\StockOpname;
 use App\Models\Product;
 use App\Models\Stock;
-use App\Actions\Inventory\ProcessStockOpnameAction;
+use App\Models\StockOpname;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Exception;
 
 class StockOpnameController extends Controller
 {
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $opnamesHistory = StockOpname::with(['user', 'items.product'])
             ->where('outlet_id', $activeOutletId)
@@ -52,11 +54,12 @@ class StockOpnameController extends Controller
     public function store(Request $request, ProcessStockOpnameAction $processStockOpnameAction): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where(function ($query) use ($user) {
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where(function ($query) use ($user) {
                 $query->where('company_id', $user->company_id);
             })],
             'items.*.physical_quantity' => ['required', 'numeric', 'min:0'],

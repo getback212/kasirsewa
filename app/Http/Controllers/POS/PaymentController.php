@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\POS;
 
-use App\Http\Controllers\Controller;
 use App\Actions\POS\CreateSaleAction;
+use App\Http\Controllers\Controller;
+use App\Models\Sale;
 use App\Models\Shift;
+use App\Models\Tenant;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Exception;
 use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
@@ -21,13 +23,14 @@ class PaymentController extends Controller
     {
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         if ($tenantId) {
-            $tenant = \App\Models\Tenant::with('subscription.plan')->find($tenantId);
+            $tenant = Tenant::with('subscription.plan')->find($tenantId);
             if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
                 $maxTransactions = $tenant->subscription->plan->max_transactions;
-                $currentTransactionsCount = \App\Models\Sale::where('tenant_id', $tenantId)->count();
+                $currentTransactionsCount = Sale::where('tenant_id', $tenantId)->count();
 
                 if ($currentTransactionsCount >= $maxTransactions) {
                     return response()->json([
@@ -44,7 +47,7 @@ class PaymentController extends Controller
             ->where('status', 'open')
             ->first();
 
-        if (!$activeShift && !$user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
+        if (! $activeShift && ! $user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Shift kasir belum dibuka! Silakan buka shift kasir terlebih dahulu di menu Shift sebelum melayani transaksi.',

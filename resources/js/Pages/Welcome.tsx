@@ -78,6 +78,10 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
 
             {/* 1. HERO SECTION */}
             <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs font-bold text-emerald-400 shadow-xl">
+                    🎁 Coba Gratis 7 Hari — Tanpa Kartu Kredit
+                </div>
+
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs font-bold text-blue-400 shadow-xl">
                     <Sparkles className="w-4 h-4 text-blue-400" /> Platform SaaS POS Kasir Multi-Tenant Terpercaya
                 </div>
@@ -304,7 +308,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register"
                             className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-2xl text-center transition block mt-6"
                         >
-                            Daftar Enterprise Unlimited
+                            Daftar Enterprise (Trial 7 Hari)
                         </Link>
                     </div>
                 </div>

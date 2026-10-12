@@ -3,6 +3,7 @@
 namespace App\Services\Audit;
 
 use App\Models\AuditLog;
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
@@ -21,12 +22,19 @@ class AuditLogService
             ? User::findOrFail($userId)
             : Auth::user();
 
+        // Validate company_id actually exists to prevent FK violations
+        // (e.g., orphaned company_id after company deletion, or super admin without company)
+        $companyId = null;
+        if ($user?->company_id !== null) {
+            $companyId = Company::whereKey($user->company_id)->value('id');
+        }
+
         // Strip passwords, tokens, and secrets from audit entries
         $sanitizedOld = self::sanitize($oldValues);
         $sanitizedNew = self::sanitize($newValues);
 
         return AuditLog::create([
-            'company_id' => $user?->company_id,
+            'company_id' => $companyId,
             'user_id' => $user?->id,
             'action' => strtoupper($action),
             'model_type' => $modelType,

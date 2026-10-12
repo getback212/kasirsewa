@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminPaymentSettingController;
 use App\Http\Controllers\Admin\AdminNotificationSettingController;
+use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\UnitController;
@@ -120,6 +121,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/notification-settings', [AdminNotificationSettingController::class, 'index'])->name('admin.notification_settings.index');
     Route::post('/admin/notification-settings', [AdminNotificationSettingController::class, 'update'])->name('admin.notification_settings.update');
     Route::post('/admin/notification-settings/test', [AdminNotificationSettingController::class, 'testSend'])->name('admin.notification_settings.test');
+
+    // Super Admin Profile Routes
+    Route::get('/admin/profile', [AdminProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/admin/profile', [AdminProfileController::class, 'update'])->name('admin.profile.update');
 
     // Tenant SaaS Subscription & Billing Routes
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');

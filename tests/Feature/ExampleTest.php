@@ -13,7 +13,7 @@ class ExampleTest extends TestCase
 
     public function test_guest_can_access_welcome_landing_page(): void
     {
-        $response = $this->get('/');
+        $response = $this->get('https://superbackend.my.id/');
         $response->assertStatus(200);
     }
 

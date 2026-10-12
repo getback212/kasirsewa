@@ -47,9 +47,16 @@ class CrossDeviceCustomerDisplayTest extends TestCase
         $broadcastResponse->assertStatus(200);
         $broadcastResponse->assertJson(['status' => true]);
 
-        // 3. Unauthenticated guest on device B reads state via GET API
-        $getStateResponse = $this->getJson('/pos/customer-display/state?outlet_id=' . $outlet->id);
+        // 3. Unauthenticated guest on device B reads state via GET API using pair code
+        $this->app['auth']->forgetGuards(); // flush actingAs so this request is a true guest
+        $getStateResponse = $this->getJson('/pos/customer-display/state?pair_code=' . $outlet->display_pair_token);
         $getStateResponse->assertStatus(200);
         $getStateResponse->assertJsonFragment(['name' => 'Kopi Susu Merdeka', 'grandTotal' => 30000]);
+
+        // 4. Guest without pair_code cannot enumerate outlet_id to read cart data
+        $this->app['auth']->forgetGuards(); // flush actingAs so this request is a true guest
+        $enumResponse = $this->getJson('/pos/customer-display/state?outlet_id=' . $outlet->id);
+        $enumResponse->assertStatus(200);
+        $enumResponse->assertJsonFragment(['items' => [], 'grandTotal' => 0]);
     }
 }

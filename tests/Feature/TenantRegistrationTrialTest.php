@@ -49,6 +49,8 @@ class TenantRegistrationTrialTest extends TestCase
         $this->assertNotNull($subscription);
         $this->assertEquals('trial', $subscription->status);
         $this->assertEquals($plan->id, $subscription->plan_id);
+        $this->assertNotNull($subscription->trial_ends_at);
+        $this->assertEquals(7, (int) round(now()->diffInDays($subscription->trial_ends_at)));
 
         // 4. Verify user is automatically logged in
         $this->assertAuthenticatedAs($owner);

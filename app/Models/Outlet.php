@@ -25,6 +25,33 @@ class Outlet extends Model
         'is_active',
     ];
 
+    /**
+     * Token acak untuk pairing layar display pelanggan.
+     * Dibuat lazily saat outlet belum punya token (mis. outlet lama / seed).
+     * Sengaja TIDAK bisa diubah lewat mass-assignment dari request.
+     */
+    public function ensureDisplayPairToken(): string
+    {
+        if (! $this->display_pair_token) {
+            do {
+                $token = 'DISP-'.mb_strtoupper(\Illuminate\Support\Str::random(12));
+            } while (\App\Models\Outlet::where('display_pair_token', $token)->exists());
+
+            $this->forceFill(['display_pair_token' => $token])->save();
+        }
+
+        return $this->display_pair_token;
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $outlet) {
+            if (! $outlet->display_pair_token) {
+                $outlet->display_pair_token = 'DISP-'.mb_strtoupper(\Illuminate\Support\Str::random(12));
+            }
+        });
+    }
+
     protected $casts = [
         'is_active' => 'boolean',
         'enable_ppn' => 'boolean',

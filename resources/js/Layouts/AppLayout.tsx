@@ -29,7 +29,8 @@ import {
     Maximize,
     Minimize,
     Sun,
-    Moon
+    Moon,
+    UserCircle
 } from 'lucide-react';
 
 interface NavItem {
@@ -72,6 +73,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [trialDismissed, setTrialDismissed] = useState(false);
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         if (typeof window !== 'undefined') {
             return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
@@ -230,11 +232,11 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-white">
             
             {/* IMPERSONATION NOTICE BANNER FOR SUPER ADMIN */}
-            {roles.includes('SUPER_ADMIN') && tenantSubscription && (
+            {auth?.impersonator_id && (
                 <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-slate-950 px-4 py-2 text-xs font-black flex items-center justify-between shadow-xl border-b border-amber-400">
                     <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-slate-950 text-amber-400 rounded text-[10px] uppercase font-mono font-bold">IMPERSONATION MODE</span>
-                        <span>⚠️ Anda sedang dalam mode penyamaran/melihat toko tenant: <strong>{tenantSubscription.tenantName || 'Tenant Klien'}</strong></span>
+                        <span>⚠️ Anda sedang dalam mode impersonate sebagai Owner tenant. Klik stop untuk kembali ke Super Admin.</span>
                     </div>
                     <button 
                         onClick={() => router.post('/admin/tenants/stop-impersonate')}
@@ -258,6 +260,54 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                     >
                         Verifikasi WhatsApp Sekarang →
                     </Link>
+                </div>
+            )}
+
+            {/* TRIAL EXPIRING SOON BANNER (OWNER/ADMIN ROLES) */}
+            {tenantSubscription && tenantSubscription.is_trial && tenantSubscription.trial_warning && !trialDismissed && (
+                <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 text-white px-4 py-2.5 text-xs font-bold flex flex-col sm:flex-row items-center justify-between shadow-xl border-b border-amber-400 gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-white text-amber-900 rounded text-[10px] uppercase font-mono font-black">🎁 TRIAL AKAN HABIS</span>
+                        <span>⚠️ Masa uji coba gratis 7 hari Anda tersisa <strong>{tenantSubscription.remaining_trial_hours} jam</strong> (<strong>{tenantSubscription.remaining_trial_days} hari</strong>). Segera berlangganan untuk menjaga operasional toko lancar.</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => setTrialDismissed(true)}
+                            className="px-2 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[10px] font-medium shadow cursor-pointer transition"
+                        >
+                            Tutup
+                        </button>
+                        <Link
+                            href="/subscription"
+                            className="px-3 py-1 bg-white text-amber-950 hover:bg-slate-100 rounded-lg text-[10px] font-black uppercase shadow cursor-pointer transition shrink-0"
+                        >
+                            Bayar Berlangganan Sekarang →
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* TRIAL EXPIRED BANNER */}
+            {tenantSubscription && tenantSubscription.is_trial && tenantSubscription.trial_expired && !trialDismissed && (
+                <div className="bg-gradient-to-r from-rose-600 via-red-600 to-rose-600 text-white px-4 py-2.5 text-xs font-bold flex flex-col sm:flex-row items-center justify-between shadow-xl border-b border-rose-400 gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-white text-rose-900 rounded text-[10px] uppercase font-mono font-black">❌ TRIAL HABIS</span>
+                        <span>⚠️ Masa uji coba gratis 7 hari Anda telah berakhir. Silakan berlangganan paket untuk mengaktifkan kembali akses kasir.</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => setTrialDismissed(true)}
+                            className="px-2 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[10px] font-medium shadow cursor-pointer transition"
+                        >
+                            Tutup
+                        </button>
+                        <Link
+                            href="/subscription"
+                            className="px-3 py-1 bg-white text-rose-950 hover:bg-slate-100 rounded-lg text-[10px] font-black uppercase shadow cursor-pointer transition shrink-0"
+                        >
+                            Aktifkan Berlangganan →
+                        </Link>
+                    </div>
                 </div>
             )}
 
@@ -482,6 +532,17 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                                         <div className="py-1 border-b border-slate-800/80">
                                             {roles.includes('SUPER_ADMIN') && (
+                                                <Link
+                                                    href="/admin/profile"
+                                                    onClick={() => setUserDropdownOpen(false)}
+                                                    className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-blue-300 hover:bg-blue-500/10 hover:text-blue-200 transition"
+                                                >
+                                                    <UserCircle className="w-3.5 h-3.5 text-blue-400" />
+                                                    <span>Edit Profil Super Admin</span>
+                                                </Link>
+                                            )}
+
+                                            {roles.includes('SUPER_ADMIN') && (
                                                 <>
                                                     <div className="px-3 py-1 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                                                         SaaS Admin Management
@@ -602,15 +663,17 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 )}
                             </div>
 
-                            {/* MOBILE MENU TOGGLE */}
-
-                            {/* MOBILE MENU TOGGLE */}
-                            <button
-                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 active:scale-95 transition cursor-pointer"
-                            >
-                                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                            </button>
+                            {/* MOBILE MENU TOGGLE — tenant/staff only.
+                                Super admin mobile intentionally keeps only the profile menu. */}
+                            {!roles.includes('SUPER_ADMIN') && (
+                                <button
+                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                    className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 active:scale-95 transition cursor-pointer"
+                                    aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
+                                >
+                                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                                </button>
+                            )}
 
                         </div>
 
@@ -619,8 +682,42 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             </header>
 
             {/* MOBILE DRAWER MENU */}
-            {mobileMenuOpen && (
+            {mobileMenuOpen && !roles.includes('SUPER_ADMIN') && (
                 <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
+                    {/* SUPER ADMIN: Direct Dashboard & POS buttons matching desktop top nav */}
+                    {roles.includes('SUPER_ADMIN') && !tenantSubscription && (
+                        <>
+                            {/* Direct Dashboard SaaS Button */}
+                            <Link
+                                href="/admin/dashboard"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition ${
+                                    isCurrentRoute('/admin/dashboard')
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                        : 'text-slate-300 hover:bg-slate-800'
+                                }`}
+                            >
+                                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                                <span>Dashboard SaaS</span>
+                            </Link>
+                            {/* Direct POS Kasir Button (only when impersonating) */}
+                            {hasPermission('access-pos') && (
+                                <Link
+                                    href="/pos"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-bold transition ${
+                                        isCurrentRoute('/pos')
+                                            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                                            : 'bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20 border border-emerald-500/30'
+                                    }`}
+                                >
+                                    <ShoppingCart className="w-4 h-4 shrink-0" />
+                                    <span>POS Kasir</span>
+                                </Link>
+                            )}
+                        </>
+                    )}
+
                     {navigationGroups.map((group, idx) => {
                         if (roles.includes('SUPER_ADMIN') && !tenantSubscription && (group.id === 'stok' || group.id === 'operasional' || group.id === 'laporan')) {
                             return null;
@@ -662,86 +759,135 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             )}
 
             {/* MAIN CONTENT AREA */}
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto pb-24 lg:pb-8">
+            <main className={`flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto lg:pb-8 ${roles.includes('SUPER_ADMIN') ? 'pb-8' : 'pb-24'}`}>
                 {title && <div className="sr-only">{title}</div>}
                 {children}
             </main>
 
-            {/* MOBILE BOTTOM DOCK */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5 flex justify-between items-center shadow-2xl">
-                <Link
-                    href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
-                    className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                        (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard')) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                >
-                    <LayoutDashboard className="w-5 h-5" />
-                    <span className="text-[10px]">Home</span>
-                </Link>
-
-                {hasPermission('view-products') && (
-                    <Link
-                        href="/products"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/products') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Boxes className="w-5 h-5" />
-                        <span className="text-[10px]">Produk</span>
-                    </Link>
-                )}
-
-                {hasPermission('access-pos') && (
-                    <div className="flex-1 flex justify-center -mt-6">
+            {/* MOBILE BOTTOM DOCK — hidden for SUPER_ADMIN; profile menu is the only mobile menu */}
+            {!roles.includes('SUPER_ADMIN') && (
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5 flex justify-between items-center shadow-2xl">
+                    {/* Tenant/staff mobile dock */}
+                {roles.includes('SUPER_ADMIN') && !tenantSubscription ? (
+                    <>
                         <Link
-                            href="/pos"
-                            className={`w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 text-white shadow-2xl transition transform active:scale-90 border-4 border-slate-950 ${
-                                isCurrentRoute('/pos')
-                                    ? 'bg-emerald-500 shadow-emerald-500/50 ring-4 ring-emerald-500/20'
-                                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/40'
+                            href="/admin/dashboard"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/admin/dashboard') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
                             }`}
-                            title="POS Kasir Touch"
                         >
-                            <ShoppingCart className="w-6 h-6" />
-                            <span className="text-[9px] font-extrabold tracking-tighter leading-none">KASIR</span>
+                            <LayoutDashboard className="w-5 h-5" />
+                            <span className="text-[10px]">SaaS</span>
                         </Link>
-                    </div>
-                )}
 
-                {hasPermission('view-purchases') ? (
-                    <Link
-                        href="/purchases"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/purchases') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Truck className="w-5 h-5" />
-                        <span className="text-[10px]">Restok</span>
-                    </Link>
-                ) : hasPermission('open-shift') ? (
-                    <Link
-                        href="/shifts"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/shifts') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Clock className="w-5 h-5" />
-                        <span className="text-[10px]">Shift</span>
-                    </Link>
-                ) : null}
+                        <Link
+                            href="/admin/tenants"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/admin/tenants') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Building2 className="w-5 h-5" />
+                            <span className="text-[10px]">Tenant</span>
+                        </Link>
 
-                {(hasPermission('view-reports-sales') || hasPermission('view-reports-financial')) && (
-                    <Link
-                        href="/reports"
-                        className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
-                            isCurrentRoute('/reports') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <BarChart3 className="w-5 h-5" />
-                        <span className="text-[10px]">Laporan</span>
-                    </Link>
-                )}
-            </div>
+                        <Link
+                            href="/admin/plans"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/admin/plans') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Sparkles className="w-5 h-5" />
+                            <span className="text-[10px]">Paket</span>
+                        </Link>
+
+                        <Link
+                            href="/invoices"
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                isCurrentRoute('/invoices') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <Receipt className="w-5 h-5" />
+                            <span className="text-[10px]">Invoice</span>
+                        </Link>
+                    </>
+                ) : (
+                    <>
+                        <Link
+                            href={roles.includes('SUPER_ADMIN') ? '/admin/dashboard' : '/dashboard'}
+                            className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                (isCurrentRoute('/dashboard') || isCurrentRoute('/admin/dashboard')) ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                        >
+                            <LayoutDashboard className="w-5 h-5" />
+                            <span className="text-[10px]">Home</span>
+                        </Link>
+
+                        {hasPermission('view-products') && (
+                            <Link
+                                href="/products"
+                                className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                    isCurrentRoute('/products') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                <Boxes className="w-5 h-5" />
+                                <span className="text-[10px]">Produk</span>
+                            </Link>
+                        )}
+
+                        {hasPermission('access-pos') && (
+                            <div className="flex-1 flex justify-center -mt-6">
+                                <Link
+                                    href="/pos"
+                                    className={`w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 text-white shadow-2xl transition transform active:scale-90 border-4 border-slate-950 ${
+                                        isCurrentRoute('/pos')
+                                            ? 'bg-emerald-500 shadow-emerald-500/50 ring-4 ring-emerald-500/20'
+                                            : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/40'
+                                    }`}
+                                    title="POS Kasir Touch"
+                                >
+                                    <ShoppingCart className="w-6 h-6" />
+                                    <span className="text-[9px] font-extrabold tracking-tighter leading-none">KASIR</span>
+                                </Link>
+                            </div>
+                        )}
+
+                        {hasPermission('view-purchases') ? (
+                            <Link
+                                href="/purchases"
+                                className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                    isCurrentRoute('/purchases') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                <Truck className="w-5 h-5" />
+                                <span className="text-[10px]">Restok</span>
+                            </Link>
+                        ) : hasPermission('open-shift') ? (
+                            <Link
+                                href="/shifts"
+                                className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                    isCurrentRoute('/shifts') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                <Clock className="w-5 h-5" />
+                                <span className="text-[10px]">Shift</span>
+                            </Link>
+                        ) : null}
+
+                        {(hasPermission('view-reports-sales') || hasPermission('view-reports-financial')) && (
+                            <Link
+                                href="/reports"
+                                className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition ${
+                                    isCurrentRoute('/reports') ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                <BarChart3 className="w-5 h-5" />
+                                <span className="text-[10px]">Laporan</span>
+                            </Link>
+                        )}
+                    </>
+                    )}
+                </div>
+            )}
 
         </div>
     );

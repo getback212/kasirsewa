@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
+use App\Models\Outlet;
 use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,7 +20,8 @@ class ReportController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk melihat Laporan Keuangan!');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
@@ -38,13 +40,14 @@ class ReportController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengekspor Laporan Keuangan!');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $analytics = $reportService->getAnalyticsSummary($activeOutletId, $startDate, $endDate);
 
-        $fileName = 'Laporan_Keuangan_' . ($startDate ?? date('Y-m-01')) . '_s.d_' . ($endDate ?? date('Y-m-d')) . '.xlsx';
+        $fileName = 'Laporan_Keuangan_'.($startDate ?? date('Y-m-01')).'_s.d_'.($endDate ?? date('Y-m-d')).'.xlsx';
 
         $headers = [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=UTF-8',
@@ -56,30 +59,30 @@ class ReportController extends Controller
 
         return response()->stream(function () use ($analytics) {
             $file = fopen('php://output', 'w');
-            
+
             // UTF-8 BOM for Excel Compatibility
-            fputs($file, "\xEF\xBB\xBF");
+            fwrite($file, "\xEF\xBB\xBF");
 
             // Header Judul
             fputcsv($file, ['=======================================================']);
             fputcsv($file, ['        LAPORAN ANALITIK KEUANGAN & MARGIN LABA TOKO   ']);
             fputcsv($file, ['=======================================================']);
-            fputcsv($file, ['Periode Tanggal:', $analytics['startDate'] . ' s/d ' . $analytics['endDate']]);
+            fputcsv($file, ['Periode Tanggal:', $analytics['startDate'].' s/d '.$analytics['endDate']]);
             fputcsv($file, ['Tanggal Dicetak:', date('d/m/Y H:i:s')]);
             fputcsv($file, []);
 
             // Ringkasan Utama Keuangan
             fputcsv($file, ['--- 1. RINGKASAN METRIK KEUANGAN & PROFIT MARGIN ---']);
             fputcsv($file, ['NAMA METRIK', 'NOMINAL / NILAI']);
-            fputcsv($file, ['Total Omzet Penjualan', 'Rp ' . number_format($analytics['totalRevenue'], 0, ',', '.')]);
-            fputcsv($file, ['Modal HPP (COGS)', 'Rp ' . number_format($analytics['cogs'], 0, ',', '.')]);
-            fputcsv($file, ['Laba Kotor (Gross Profit)', 'Rp ' . number_format($analytics['grossProfit'], 0, ',', '.')]);
-            fputcsv($file, ['Margin Laba Kotor (%)', $analytics['profitMargin'] . '%']);
-            fputcsv($file, ['Total Biaya Operasional Toko (Expenses)', 'Rp ' . number_format($analytics['totalExpenses'] ?? 0, 0, ',', '.')]);
-            fputcsv($file, ['Laba Bersih Toko (Net Profit)', 'Rp ' . number_format($analytics['netProfit'] ?? 0, 0, ',', '.')]);
-            fputcsv($file, ['Margin Laba Bersih (%)', ($analytics['netProfitMargin'] ?? 0) . '%']);
-            fputcsv($file, ['Total Transaksi Selesai', $analytics['transactionCount'] . ' Transaksi']);
-            fputcsv($file, ['Rata-rata Transaksi (AOV)', 'Rp ' . number_format($analytics['averageOrderValue'], 0, ',', '.')]);
+            fputcsv($file, ['Total Omzet Penjualan', 'Rp '.number_format($analytics['totalRevenue'], 0, ',', '.')]);
+            fputcsv($file, ['Modal HPP (COGS)', 'Rp '.number_format($analytics['cogs'], 0, ',', '.')]);
+            fputcsv($file, ['Laba Kotor (Gross Profit)', 'Rp '.number_format($analytics['grossProfit'], 0, ',', '.')]);
+            fputcsv($file, ['Margin Laba Kotor (%)', $analytics['profitMargin'].'%']);
+            fputcsv($file, ['Total Biaya Operasional Toko (Expenses)', 'Rp '.number_format($analytics['totalExpenses'] ?? 0, 0, ',', '.')]);
+            fputcsv($file, ['Laba Bersih Toko (Net Profit)', 'Rp '.number_format($analytics['netProfit'] ?? 0, 0, ',', '.')]);
+            fputcsv($file, ['Margin Laba Bersih (%)', ($analytics['netProfitMargin'] ?? 0).'%']);
+            fputcsv($file, ['Total Transaksi Selesai', $analytics['transactionCount'].' Transaksi']);
+            fputcsv($file, ['Rata-rata Transaksi (AOV)', 'Rp '.number_format($analytics['averageOrderValue'], 0, ',', '.')]);
             fputcsv($file, []);
 
             // Breakdown Metode Pembayaran
@@ -92,8 +95,8 @@ class ReportController extends Controller
                 $total = (float) ($payArr['total_amount'] ?? 0);
                 fputcsv($file, [
                     strtoupper($label),
-                    $count . ' Transaksi',
-                    'Rp ' . number_format($total, 0, ',', '.')
+                    $count.' Transaksi',
+                    'Rp '.number_format($total, 0, ',', '.'),
                 ]);
             }
             fputcsv($file, []);
@@ -108,8 +111,8 @@ class ReportController extends Controller
                 $sales = (float) ($prodArr['total_sales'] ?? $prod->total_sales ?? 0);
                 fputcsv($file, [
                     $name,
-                    $qty . ' Item',
-                    'Rp ' . number_format($sales, 0, ',', '.')
+                    $qty.' Item',
+                    'Rp '.number_format($sales, 0, ',', '.'),
                 ]);
             }
             fputcsv($file, []);
@@ -124,8 +127,8 @@ class ReportController extends Controller
                 $rev = (float) ($trendArr['revenue'] ?? $trend->revenue ?? 0);
                 fputcsv($file, [
                     $date,
-                    $tx . ' Transaksi',
-                    'Rp ' . number_format($rev, 0, ',', '.')
+                    $tx.' Transaksi',
+                    'Rp '.number_format($rev, 0, ',', '.'),
                 ]);
             }
 
@@ -141,8 +144,9 @@ class ReportController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mencetak Laporan Keuangan!');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
-        $outlet = \App\Models\Outlet::find($activeOutletId);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
+        $outlet = Outlet::find($activeOutletId);
         $outletName = $outlet?->name ?? 'KasirSewa Store';
 
         $startDate = $request->input('start_date');

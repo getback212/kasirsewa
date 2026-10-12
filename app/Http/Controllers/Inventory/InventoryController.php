@@ -2,25 +2,28 @@
 
 namespace App\Http\Controllers\Inventory;
 
-use App\Http\Controllers\Controller;
-use App\Models\Stock;
-use App\Models\StockMovement;
-use App\Models\Product;
-use App\Models\Outlet;
 use App\Actions\Inventory\AdjustStockAction;
 use App\Enums\StockMovementType;
+use App\Http\Controllers\Controller;
+use App\Models\Outlet;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockMovement;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Exception;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $query = Stock::with(['product.category', 'product.unit'])
             ->where('outlet_id', $activeOutletId);
@@ -29,7 +32,7 @@ class InventoryController extends Controller
             $search = $request->input('search');
             $query->whereHas('product', function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('sku', 'ilike', "%{$search}%");
+                    ->orWhere('sku', 'ilike', "%{$search}%");
             });
         }
 
@@ -54,10 +57,11 @@ class InventoryController extends Controller
     public function adjust(Request $request, AdjustStockAction $adjustStockAction): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $validated = $request->validate([
-            'product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where('company_id', $user->company_id)],
+            'product_id' => ['required', Rule::exists('products', 'id')->where('company_id', $user->company_id)],
             'type' => ['required', 'string'],
             'quantity' => ['required', 'numeric'],
             'note' => ['nullable', 'string'],
@@ -80,16 +84,17 @@ class InventoryController extends Controller
         }
     }
 
-    public function exportExcel(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportExcel(Request $request): StreamedResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $stocks = Stock::with(['product.category', 'product.unit'])
             ->where('outlet_id', $activeOutletId)
             ->get();
 
-        $fileName = 'Laporan_Stok_Gudang_' . date('Ymd_His') . '.xlsx';
+        $fileName = 'Laporan_Stok_Gudang_'.date('Ymd_His').'.xlsx';
 
         $headers = [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=UTF-8',
@@ -101,7 +106,7 @@ class InventoryController extends Controller
 
         return response()->stream(function () use ($stocks) {
             $file = fopen('php://output', 'w');
-            fputs($file, "\xEF\xBB\xBF");
+            fwrite($file, "\xEF\xBB\xBF");
 
             fputcsv($file, ['=======================================================']);
             fputcsv($file, ['      LAPORAN ASET INVENTARIS & AUDIT STOK BARANG GUDANG ']);
@@ -113,7 +118,9 @@ class InventoryController extends Controller
 
             foreach ($stocks as $item) {
                 $product = $item->product;
-                if (!$product) continue;
+                if (! $product) {
+                    continue;
+                }
 
                 $qty = (float) $item->quantity;
                 $minStock = (float) ($product->minimum_stock ?? $product->min_stock ?? 5);
@@ -130,9 +137,9 @@ class InventoryController extends Controller
                     $product->unit->short_name ?? 'pcs',
                     $qty,
                     $minStock,
-                    'Rp ' . number_format($hpp, 0, ',', '.'),
-                    'Rp ' . number_format($assetVal, 0, ',', '.'),
-                    'Rp ' . number_format($sellPrice, 0, ',', '.'),
+                    'Rp '.number_format($hpp, 0, ',', '.'),
+                    'Rp '.number_format($assetVal, 0, ',', '.'),
+                    'Rp '.number_format($sellPrice, 0, ',', '.'),
                     $status,
                 ]);
             }
@@ -144,7 +151,8 @@ class InventoryController extends Controller
     public function exportPdf(Request $request)
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
         $outlet = Outlet::find($activeOutletId);
         $outletName = $outlet?->name ?? 'KasirSewa Store';
 
@@ -156,7 +164,9 @@ class InventoryController extends Controller
         $totalAssetValue = 0;
 
         foreach ($stocks as $item) {
-            if (!$item->product) continue;
+            if (! $item->product) {
+                continue;
+            }
             $qty = (float) $item->quantity;
             $hpp = (float) ($item->product->purchase_price ?? $item->product->buy_price ?? 0);
             $totalQuantity += $qty;

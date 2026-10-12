@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers\Shift;
 
-use App\Http\Controllers\Controller;
-use App\Models\Shift;
-use App\Models\CashMovement;
-use App\Actions\Shifts\OpenShiftAction;
 use App\Actions\Shifts\CloseShiftAction;
+use App\Actions\Shifts\OpenShiftAction;
+use App\Http\Controllers\Controller;
+use App\Models\CashMovement;
+use App\Models\Shift;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Exception;
 
 class ShiftController extends Controller
 {
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
         $isManagement = $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']);
 
         $currentShift = Shift::with(['cashMovements'])
@@ -31,7 +33,7 @@ class ShiftController extends Controller
             ->where('outlet_id', $activeOutletId);
 
         // Kasir hanya boleh melihat histori shift miliknya sendiri
-        if (!$isManagement) {
+        if (! $isManagement) {
             $historyQuery->where('user_id', $user->id);
         }
 
@@ -68,7 +70,8 @@ class ShiftController extends Controller
     public function openShift(Request $request, OpenShiftAction $openShiftAction): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $validated = $request->validate([
             'opening_cash' => ['required', 'numeric', 'min:0'],
@@ -95,10 +98,11 @@ class ShiftController extends Controller
     public function closeShift(Request $request, CloseShiftAction $closeShiftAction): RedirectResponse
     {
         $user = $request->user();
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $validated = $request->validate([
-            'shift_id' => ['required', \Illuminate\Validation\Rule::exists('shifts', 'id')->where('outlet_id', $activeOutletId)],
+            'shift_id' => ['required', Rule::exists('shifts', 'id')->where('outlet_id', $activeOutletId)],
             'actual_cash' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -121,11 +125,12 @@ class ShiftController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
             abort(403, 'Hanya Manager & Owner yang berwenang melakukan Force Close shift.');
         }
 
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
         $shift = Shift::where('outlet_id', $activeOutletId)->findOrFail($id);
 
         if ($shift->status === 'closed') {
@@ -151,10 +156,11 @@ class ShiftController extends Controller
     {
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        $activeOutletId = session('active_outlet_id', $user->outlet_id);
+        $activeOutletId = $this->resolveScopedOutletId($request);
+        abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
         $validated = $request->validate([
-            'shift_id' => ['required', \Illuminate\Validation\Rule::exists('shifts', 'id')->where('outlet_id', $activeOutletId)],
+            'shift_id' => ['required', Rule::exists('shifts', 'id')->where('outlet_id', $activeOutletId)],
             'type' => ['required', 'in:cash_in,cash_out'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'reason' => ['required', 'string', 'max:255'],
