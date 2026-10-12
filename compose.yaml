@@ -12,6 +12,12 @@ services:
       - .:/var/www/html
     environment:
       - CONTAINER_ROLE=app
+      # WhatsApp gateway credentials. The gateway and every sender container
+      # read WA_API_KEY from the same .env, so the dispatcher's Authorization
+      # header always matches what the gateway expects. Without this the
+      # billing reminders silently skip the WhatsApp channel.
+      - WA_API_KEY=${WA_API_KEY:-baileys_free_gateway}
+      - WA_GATEWAY_URL=${WA_GATEWAY_URL:-http://kasirsewa_whatsapp:3001/send}
     networks:
       - kasirsewa_network
     depends_on:
@@ -64,12 +70,29 @@ services:
     command: php artisan queue:work --tries=3 --timeout=90
     volumes:
       - .:/var/www/html
+    environment:
+      - WA_API_KEY=${WA_API_KEY:-baileys_free_gateway}
+      - WA_GATEWAY_URL=${WA_GATEWAY_URL:-http://kasirsewa_whatsapp:3001/send}
     networks:
       - kasirsewa_network
     depends_on:
       - kasirsewa_app
       - kasirsewa_pgsql
       - kasirsewa_redis
+
+  kasirsewa_whatsapp:
+    build:
+      context: ./whatsapp-gateway
+    container_name: kasirsewa_whatsapp
+    restart: unless-stopped
+    environment:
+      - WA_API_KEY=${WA_API_KEY:-baileys_free_gateway}
+    ports:
+      - "3001:3001"
+    volumes:
+      - kasirsewa_whatsapp_auth:/app/.wwebjs_auth
+    networks:
+      - kasirsewa_network
 
   kasirsewa_scheduler:
     build:
@@ -81,6 +104,9 @@ services:
     command: php artisan schedule:work
     volumes:
       - .:/var/www/html
+    environment:
+      - WA_API_KEY=${WA_API_KEY:-baileys_free_gateway}
+      - WA_GATEWAY_URL=${WA_GATEWAY_URL:-http://kasirsewa_whatsapp:3001/send}
     networks:
       - kasirsewa_network
     depends_on:
@@ -95,3 +121,4 @@ networks:
 volumes:
   kasirsewa_pgsql_data:
   kasirsewa_redis_data:
+  kasirsewa_whatsapp_auth:

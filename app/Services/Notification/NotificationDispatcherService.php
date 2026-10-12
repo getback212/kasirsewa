@@ -12,6 +12,20 @@ use Illuminate\Support\Facades\Mail;
 
 class NotificationDispatcherService
 {
+    /**
+     * Guard anti-duplikat: cek apakah notifikasi dengan judul tertentu
+     * sudah dikirim ke tenant ini hari ini (mencegah pengiriman ganda
+     * saat command dijalankan berkali-kali dalam satu hari).
+     */
+    public static function reminderAlreadySentToday(int $tenantId, string $type, string $title): bool
+    {
+        return Notification::where('tenant_id', $tenantId)
+            ->where('type', $type)
+            ->where('title', $title)
+            ->whereDate('created_at', now()->toDateString())
+            ->exists();
+    }
+
     public static function sendSubscriptionReminder(Subscription $sub, int $daysRemaining): void
     {
         $tenant = $sub->tenant;
@@ -66,8 +80,8 @@ class NotificationDispatcherService
         }
 
         // 2. WhatsApp Multi-Channel Billing Notification (HTTP Gateway API)
-        $waApiKey = SaaSSetting::get('wa_api_key', '');
-        $waGatewayUrl = SaaSSetting::get('wa_gateway_url', 'https://api.fonnte.com/send');
+        $waApiKey = config('services.wa.api_key') ?: SaaSSetting::get('wa_api_key', '');
+        $waGatewayUrl = config('services.wa.gateway_url') ?: SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
         $phone = $owner?->phone ?? $owner?->tenant?->outlets?->first()?->phone;
 
         if (!empty($waApiKey) && !empty($phone)) {
@@ -89,12 +103,25 @@ class NotificationDispatcherService
                 $cleanPhone = '62' . substr($cleanPhone, 1);
             }
 
-            Http::withHeaders([
+            $response = Http::withHeaders([
                 'Authorization' => $apiKey,
             ])->timeout(5)->post($url, [
                 'target' => $cleanPhone,
                 'message' => $textMessage,
             ]);
+
+            // The gateway returns 401 for a wrong key and 5xx when the
+            // WhatsApp session is down. Http does not throw on those, so a
+            // missing check would log success for a message never sent.
+            if (! $response->successful()) {
+                Log::error("WA_BILLING_REMINDER_FAILED", [
+                    'phone' => $cleanPhone,
+                    'status' => $response->status(),
+                    'body' => mb_substr((string) $response->body(), 0, 300),
+                ]);
+
+                return;
+            }
 
             Log::info("WA_BILLING_REMINDER_SENT_SUCCESS", ['phone' => $cleanPhone]);
         } catch (\Throwable $e) {

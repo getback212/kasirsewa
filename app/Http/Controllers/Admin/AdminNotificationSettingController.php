@@ -28,12 +28,39 @@ class AdminNotificationSettingController extends Controller
             'wa_otp_template' => SaaSSetting::get('wa_otp_template', "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda."),
             'enable_wa_notifications' => SaaSSetting::get('enable_wa_notifications', '1') === '1',
             'enable_email_notifications' => SaaSSetting::get('enable_email_notifications', '1') === '1',
-            'scheduler_status' => 'ACTIVE 24/7 (Everyday at 00:00 WIB)',
+            'scheduler_status' => $this->schedulerStatus(),
         ];
 
         return Inertia::render('Admin/NotificationSettingsIndex', [
             'settings' => $settings,
         ]);
+    }
+
+    /**
+     * Report the real scheduled time of the billing/trial job rather than a
+     * hardcoded string, so the admin panel never lies after a schedule change.
+     */
+    private function schedulerStatus(): string
+    {
+        $event = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+            ->first(fn ($event) => str_contains($event->command ?? '', 'app:check-subscription-expiry'));
+
+        if (! $event) {
+            return 'TIDAK TERJADWAL — periksa routes/console.php';
+        }
+
+        $tz = $event->timezone ?? config('app.timezone');
+
+        // Render a plain daily cron as HH:MM for humans; fall back to the raw
+        // expression for anything more complex.
+        $cron = $event->expression;
+        if (preg_match('/^(\d{1,2}) (\d{1,2}) \* \* \*$/', $cron, $m)) {
+            $human = sprintf('%02d:%02d', (int) $m[2], (int) $m[1]);
+        } else {
+            $human = $cron;
+        }
+
+        return 'Aktif setiap hari pukul '.$human.' ('.$tz.')';
     }
 
     public function update(Request $request): RedirectResponse
