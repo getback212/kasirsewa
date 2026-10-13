@@ -9,7 +9,7 @@ class HealSequencesCommand extends Command
 {
     protected $signature = 'db:heal-sequences';
 
-    protected $description = 'Selaraskan sequence PostgreSQL dengan max(id) tiap tabel (setelah restore/import)';
+    protected $description = 'Selaraskan sequence PostgreSQL dengan max(id) tiap tabel (hanya dinaikkan) & bersihkan penetapan role yatim';
 
     public function handle(): int
     {
@@ -20,8 +20,13 @@ class HealSequencesCommand extends Command
         }
 
         PostgresSequenceHealer::heal();
+        $purged = PostgresSequenceHealer::purgeOrphanedRoleAssignments();
 
-        $this->info('Sequence PostgreSQL sudah diselaraskan dengan max(id) setiap tabel.');
+        $this->info('Sequence PostgreSQL sudah diselaraskan (hanya dinaikkan, tidak pernah diturunkan).');
+
+        if ($purged > 0) {
+            $this->info("{$purged} penetapan role/permission yatim (user-nya sudah dihapus) dibersihkan.");
+        }
 
         return self::SUCCESS;
     }

@@ -90,7 +90,11 @@ class GoogleAuthController extends Controller
                         'is_active' => true,
                     ]);
 
-                    $user->assignRole(UserRole::OWNER->value);
+                    // syncRoles, not assignRole: a new owner must own exactly
+                    // the OWNER role. If a leftover pivot row from a deleted
+                    // user already sits on this id, assignRole would keep it
+                    // and the owner would land in the cashier UI.
+                    $user->syncRoles([UserRole::OWNER->value]);
                     $tenant->update(['owner_id' => $user->id]);
 
                     $planId = session()->pull('google_plan_id');

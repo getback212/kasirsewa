@@ -94,7 +94,9 @@ class RegisterController extends Controller
                 'is_active' => true,
             ]);
 
-            $owner->assignRole(UserRole::OWNER->value);
+            // syncRoles (not assignRole): the new owner must hold exactly the
+            // OWNER role, never a stale assignment inherited via a reused id.
+            $owner->syncRoles([UserRole::OWNER->value]);
             $tenant->update(['owner_id' => $owner->id]);
 
             // 4. Create Initial Subscription (7-Day Free Trial for All plans)
