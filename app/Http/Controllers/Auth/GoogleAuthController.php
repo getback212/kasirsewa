@@ -64,19 +64,17 @@ class GoogleAuthController extends Controller
                     $company = Company::create([
                         'tenant_id' => $tenant->id,
                         'name' => $storeName,
-                        'phone' => '0812' . rand(10000000, 99999999),
-                        'email' => $googleUser->getEmail(),
-                        'address' => 'Alamat Utama Store',
+                        'registration_number' => 'REG-' . strtoupper(Str::random(6)),
+                        'is_active' => true,
                     ]);
 
                     $outlet = Outlet::create([
                         'company_id' => $company->id,
                         'tenant_id' => $tenant->id,
                         'name' => 'Outlet Pusat ' . $storeName,
-                        'code' => 'OUT-01',
+                        'code' => 'OUT-' . mt_rand(1000, 9999),
                         'phone' => '0812' . rand(10000000, 99999999),
                         'address' => 'Alamat Outlet Pusat',
-                        'is_main' => true,
                         'is_active' => true,
                     ]);
 
@@ -161,9 +159,9 @@ class GoogleAuthController extends Controller
                     Customer::create([
                         'company_id' => $company->id,
                         'tenant_id' => $tenant->id,
-                        'code' => 'CUST-' . rand(1000, 9999),
+                        'code' => 'CUST-UMUM-' . $tenant->id,
                         'name' => 'Pelanggan Umum',
-                        'phone' => '081200000000',
+                        'phone' => '-',
                     ]);
                 });
             } else {

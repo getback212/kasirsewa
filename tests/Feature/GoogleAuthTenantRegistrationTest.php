@@ -24,7 +24,6 @@ class GoogleAuthTenantRegistrationTest extends TestCase
         $abstractUser->shouldReceive('getNickname')->andReturn('sitigoogle');
 
         $provider = Mockery::mock('Laravel\Socialite\Contracts\Provider');
-        $provider->shouldReceive('stateless')->andReturnSelf();
         $provider->shouldReceive('user')->andReturn($abstractUser);
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
