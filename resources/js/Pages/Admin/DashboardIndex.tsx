@@ -48,9 +48,18 @@ export default function AdminDashboardIndex({
                         </p>
                     </div>
 
-                    <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping inline-block" />
-                        <span className="text-xs font-bold text-blue-400">System Mode: SUPER ADMIN</span>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/admin/enterprise/create"
+                            className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-purple-600/30 transition flex items-center gap-2"
+                        >
+                            <Building2 className="w-4 h-4" />
+                            Daftar Enterprise
+                        </Link>
+                        <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping inline-block" />
+                            <span className="text-xs font-bold text-blue-400">System Mode: SUPER ADMIN</span>
+                        </div>
                     </div>
                 </div>
 
