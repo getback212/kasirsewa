@@ -168,9 +168,11 @@
                     <li>✓ Support email</li>
                     <li>✗ API & Custom</li>
                 </ul>
-                <button class="w-full px-6 py-2 border-2 border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-900 transition font-semibold">
-                    Pilih Paket
-                </button>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="w-full px-6 py-2 border-2 border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-900 transition font-semibold inline-block text-center">
+                        Mulai Trial Gratis
+                    </a>
+                @endif
             </div>
 
             <!-- Professional Plan (Popular) -->
@@ -186,9 +188,11 @@
                     <li>✓ WhatsApp notification</li>
                     <li>✓ Priority support</li>
                 </ul>
-                <button class="w-full px-6 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition font-semibold">
-                    Mulai Trial Gratis
-                </button>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="w-full px-6 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition font-semibold inline-block text-center">
+                        Mulai Trial Gratis
+                    </a>
+                @endif
             </div>
 
             <!-- Enterprise Plan -->
@@ -203,9 +207,9 @@
                     <li>✓ Dedicated account manager</li>
                     <li>✓ On-premise option</li>
                 </ul>
-                <button class="w-full px-6 py-2 border-2 border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-900 transition font-semibold">
+                <a href="mailto:sales@kasirsewa.id" class="w-full px-6 py-2 border-2 border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-900 transition font-semibold inline-block text-center">
                     Hubungi Sales
-                </button>
+                </a>
             </div>
         </div>
     </section>
