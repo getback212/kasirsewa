@@ -172,32 +172,34 @@ export default function Register({ plans = [], selected_plan_id }: RegisterProps
                             </div>
                         </div>
 
-                        {/* PLAN SELECTOR */}
-                        <div>
-                            <label className="block font-bold text-slate-300 mb-1.5">Pilih Paket SaaS Berlangganan</label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {plans.map((p) => (
-                                    <button
-                                        key={p.id}
-                                        type="button"
-                                        onClick={() => setData('plan_id', p.id)}
-                                        className={`p-3 border rounded-2xl text-left transition cursor-pointer ${
-                                            data.plan_id === p.id
-                                                ? 'bg-blue-600/10 border-blue-500 text-blue-400 ring-2 ring-blue-500/30'
-                                                : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                                        }`}
-                                    >
-                                        <div className="font-bold text-white text-xs">{p.name}</div>
-                                        <div className="text-[10px] text-emerald-400 font-mono mt-0.5">
-                                            Rp {Number(p.monthly_price).toLocaleString('id-ID')}/bln
-                                        </div>
-                                        <div className="text-[10px] text-slate-500 font-mono mt-1">
-                                            {p.max_stores} Store • {p.max_users} Staff
-                                        </div>
-                                    </button>
-                                ))}
+                        {/* PLAN SELECTOR - Only show for Enterprise or if no plan selected */}
+                        {(selected_plan_id === 3 || !selected_plan_id) && (
+                            <div>
+                                <label className="block font-bold text-slate-300 mb-1.5">Pilih Paket SaaS Berlangganan</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {plans.map((p) => (
+                                        <button
+                                            key={p.id}
+                                            type="button"
+                                            onClick={() => setData('plan_id', p.id)}
+                                            className={`p-3 border rounded-2xl text-left transition cursor-pointer ${
+                                                data.plan_id === p.id
+                                                    ? 'bg-blue-600/10 border-blue-500 text-blue-400 ring-2 ring-blue-500/30'
+                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                            }`}
+                                        >
+                                            <div className="font-bold text-white text-xs">{p.name}</div>
+                                            <div className="text-[10px] text-emerald-400 font-mono mt-0.5">
+                                                Rp {Number(p.monthly_price).toLocaleString('id-ID')}/bln
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 font-mono mt-1">
+                                                {p.max_stores} Store • {p.max_users} Staff
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <button
                             type="submit"
