@@ -111,6 +111,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/tenants/{id}/impersonate', [TenantController::class, 'impersonate'])->name('admin.tenants.impersonate');
     Route::post('/admin/tenants/stop-impersonate', [TenantController::class, 'stopImpersonate'])->name('admin.tenants.stop_impersonate');
 
+    // Super Admin Enterprise Registration Routes
+    Route::get('/admin/enterprise/create', [\\App\\Http\\Controllers\\Admin\\EnterpriseRegistrationController::class, 'create'])->name('admin.enterprise.create');
+    Route::post('/admin/enterprise/store', [\\App\\Http\\Controllers\\Admin\\EnterpriseRegistrationController::class, 'store'])->name('admin.enterprise.store');
+    Route::get('/admin/enterprise/{tenant}', [\\App\\Http\\Controllers\\Admin\\EnterpriseRegistrationController::class, 'show'])->name('admin.enterprise.show');
+
     Route::get('/admin/plans', [PlanController::class, 'index'])->name('admin.plans.index');
     Route::post('/admin/plans', [PlanController::class, 'store'])->name('admin.plans.store');
     Route::put('/admin/plans/{id}', [PlanController::class, 'update'])->name('admin.plans.update');
