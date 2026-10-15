@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Sparkles, CheckCircle2, Phone, Mail, Send, Clock, ShieldCheck, Cpu } from 'lucide-react';
+import { Sparkles, CheckCircle2, AlertCircle, Phone, Mail, Send, Clock, ShieldCheck, Cpu } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface SettingsData {
@@ -22,7 +22,7 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
     const { flash } = usePage<NotificationSettingsPageProps>().props;
 
     const form = useForm({
-        wa_gateway_url: settings?.wa_gateway_url || 'http://172.17.0.1:3001/send',
+        wa_gateway_url: settings?.wa_gateway_url || 'http://kasirsewa_whatsapp:3001/send',
         wa_api_key: settings?.wa_api_key || 'baileys_free_gateway',
         wa_cs_number: settings?.wa_cs_number || '6281234567890',
         wa_otp_template: settings?.wa_otp_template || "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda.",
@@ -30,7 +30,9 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
         enable_email_notifications: settings?.enable_email_notifications !== false,
     });
 
-    const testForm = useForm({});
+    const testForm = useForm({
+        test_phone: settings?.wa_cs_number || '',
+    });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,11 +65,18 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
                         </p>
                     </div>
 
-                    <form onSubmit={handleTestSend}>
+                    <form onSubmit={handleTestSend} className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <input
+                            type="text"
+                            value={testForm.data.test_phone}
+                            onChange={(e) => testForm.setData('test_phone', e.target.value)}
+                            placeholder="Nomor WA tujuan tes (08xx)"
+                            className="px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-2xl text-xs text-white placeholder-slate-600 focus:border-emerald-500 focus:outline-none font-mono w-full sm:w-52"
+                        />
                         <button
                             type="submit"
                             disabled={testForm.processing}
-                            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition cursor-pointer active:scale-95"
+                            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 disabled:opacity-50"
                         >
                             <Send className="w-4 h-4" />
                             <span>{testForm.processing ? 'Mengirim...' : 'Tes Kirim Notifikasi'}</span>
@@ -80,6 +89,12 @@ export default function NotificationSettingsIndex({ settings }: NotificationSett
                     <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-semibold flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 shrink-0" />
                         <span>{flash.success}</span>
+                    </div>
+                )}
+                {flash.error && (
+                    <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-400 font-semibold flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{flash.error}</span>
                     </div>
                 )}
 

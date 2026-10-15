@@ -93,7 +93,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - kasirsewa_whatsapp_auth:/app/.wwebjs_auth
+      - kasirsewa_baileys_auth:/app/auth
     networks:
       - kasirsewa_network
 
@@ -108,6 +108,7 @@ services:
     volumes:
       - .:/var/www/html
     environment:
+      - TZ=Asia/Jakarta
       - WA_API_KEY=${WA_API_KEY:-baileys_free_gateway}
       - WA_GATEWAY_URL=${WA_GATEWAY_URL:-http://kasirsewa_whatsapp:3001/send}
     networks:
@@ -124,4 +125,4 @@ networks:
 volumes:
   kasirsewa_pgsql_data:
   kasirsewa_redis_data:
-  kasirsewa_whatsapp_auth:
+  kasirsewa_baileys_auth:

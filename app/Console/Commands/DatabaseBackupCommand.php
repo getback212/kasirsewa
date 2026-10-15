@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseBackupCommand extends Command
 {
@@ -20,10 +21,17 @@ class DatabaseBackupCommand extends Command
         $port = escapeshellarg((string) config('database.connections.pgsql.port'));
 
         $customPath = preg_replace('/[^a-zA-Z0-9_\/-]/', '', $this->option('path')) ?: 'backups';
-        $backupDir = storage_path("app/private/{$customPath}");
-        if (!file_exists($backupDir)) {
-            mkdir($backupDir, 0777, true);
+        // Pakai Storage facade agar konsisten dengan command backup lain
+        // dan bisa di-fake saat testing.
+        $disk = Storage::disk('local');
+        if (! $disk->exists($customPath) && ! $disk->makeDirectory($customPath)) {
+            $this->error('Gagal membuat direktori backup (permission ditolak). Hubungi administrator server.');
+            return Command::FAILURE;
         }
+        // Pastikan direktori bisa dibaca user web meskipun command dijalankan
+        // sebagai root (mis. via scheduler/queue container).
+        @chmod($disk->path($customPath), 0755);
+        $backupDir = $disk->path($customPath);
 
         $oldDir = storage_path('app/backups');
         if (file_exists($oldDir)) {
@@ -58,15 +66,19 @@ class DatabaseBackupCommand extends Command
             $this->error('Gagal mengompresi file backup PostgreSQL!');
             return Command::FAILURE;
         }
+        @chmod($gzFilePath, 0644);
 
         $fileSize = number_format(filesize($gzFilePath) / 1024, 2);
         $this->info("Backup PostgreSQL berhasil dibuat: {$filename}.gz ({$fileSize} KB)");
 
-        $files = glob("{$backupDir}/*.sql.gz");
+        $files = $disk->files($customPath);
         $expirationTime = now()->subDays(30)->timestamp;
         foreach ($files as $file) {
-            if (filemtime($file) < $expirationTime) {
-                @unlink($file);
+            if (! str_ends_with($file, '.sql.gz')) {
+                continue;
+            }
+            if ($disk->lastModified($file) < $expirationTime) {
+                $disk->delete($file);
             }
         }
 

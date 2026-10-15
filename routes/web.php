@@ -67,7 +67,7 @@ Route::get('/', function () {
 
 Route::get('/wa-qr', function () {
     try {
-        $res = \Illuminate\Support\Facades\Http::get('http://172.17.0.1:3001/qr');
+        $res = \Illuminate\Support\Facades\Http::get('http://kasirsewa_whatsapp:3001/qr');
         return response($res->body(), 200)->header('Content-Type', 'text/html');
     } catch (\Exception $e) {
         return response("Gagal mengambil QR Code: " . $e->getMessage(), 500);
@@ -157,6 +157,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::post('/products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle_status');
 
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
@@ -181,6 +182,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
     Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle_status');
+    Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Inventory & Stock Management Routes

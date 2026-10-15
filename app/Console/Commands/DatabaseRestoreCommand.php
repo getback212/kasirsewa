@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 use Exception;
 
 class DatabaseRestoreCommand extends Command
@@ -12,21 +13,38 @@ class DatabaseRestoreCommand extends Command
 
     public function handle(): int
     {
-        $filename = basename($this->argument('filename'));
-        $baseDir = storage_path('app/private');
-        $gzFilePath = "{$baseDir}/{$filename}";
+        $relative = $this->argument('filename');
 
-        if (! file_exists($gzFilePath)) {
-            $backupDir = storage_path('app/private/backups');
-            $gzFilePath = "{$backupDir}/{$filename}";
-        }
-
-        if (! file_exists($gzFilePath)) {
-            $this->error("File backup {$filename} tidak ditemukan di direktori backup!");
+        // Tolak path absolut & traversal: file harus berada di dalam
+        // direktori backup storage (controller sudah membatasi direktorinya
+        // per-role, jadi tenant tidak bisa menunjuk file tenant lain/global).
+        if (! is_string($relative) || $relative === ''
+            || str_contains($relative, '..')
+            || str_starts_with($relative, '/')
+            || str_contains($relative, "\0")
+        ) {
+            $this->error('Path file backup tidak valid.');
             return Command::FAILURE;
         }
 
-        $this->info("Memulai proses pemulihan (restore) database dari file: {$filename}...");
+        // Resolve lewat Storage facade agar konsisten saat disk di-fake dalam testing.
+        $disk = Storage::disk('local');
+        if (! $disk->exists($relative)) {
+            $this->error("File backup {$relative} tidak ditemukan di direktori backup!");
+            return Command::FAILURE;
+        }
+
+        $diskRoot = realpath($disk->path('.'));
+        $gzFilePath = realpath($disk->path($relative));
+
+        if ($gzFilePath === false || $diskRoot === false
+            || ! str_starts_with($gzFilePath, $diskRoot . DIRECTORY_SEPARATOR)
+        ) {
+            $this->error("File backup {$relative} tidak ditemukan di direktori backup!");
+            return Command::FAILURE;
+        }
+
+        $this->info("Memulai proses pemulihan (restore) database dari file: {$relative}...");
 
         $database = escapeshellarg(config('database.connections.pgsql.database'));
         $username = escapeshellarg(config('database.connections.pgsql.username'));

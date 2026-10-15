@@ -17,14 +17,8 @@ class DiscountController extends Controller
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
-        $query = Discount::where(function ($q) use ($tenantId, $user) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($user->company_id) {
-                $q->orWhere('company_id', $user->company_id);
-            }
-        });
+        $query = Discount::where('tenant_id', $tenantId)
+            ->where('company_id', $user->company_id);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -85,14 +79,9 @@ class DiscountController extends Controller
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
-        $discount = Discount::where(function ($q) use ($tenantId, $user) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($user->company_id) {
-                $q->orWhere('company_id', $user->company_id);
-            }
-        })->findOrFail($id);
+        $discount = Discount::where('tenant_id', $tenantId)
+            ->where('company_id', $user->company_id)
+            ->findOrFail($id);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -124,14 +113,9 @@ class DiscountController extends Controller
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
-        $discount = Discount::where(function ($q) use ($tenantId, $user) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($user->company_id) {
-                $q->orWhere('company_id', $user->company_id);
-            }
-        })->findOrFail($id);
+        $discount = Discount::where('tenant_id', $tenantId)
+            ->where('company_id', $user->company_id)
+            ->findOrFail($id);
 
         $name = $discount->name;
         $discount->delete();

@@ -40,7 +40,10 @@ class CategoryController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus kategori produk.');
         }
 
-        $category = Category::where('company_id', $user->company_id)->findOrFail($id);
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $category = Category::where('company_id', $user->company_id)
+            ->where('tenant_id', $tenantId)
+            ->findOrFail($id);
         $categoryName = $category->name;
         $category->delete();
 

@@ -118,12 +118,13 @@ class ProductController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengedit data produk.');
         }
 
+        $tenantId = session('active_tenant_id', $user->tenant_id);
         $product = Product::where('company_id', $user->company_id)->findOrFail($id);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:100', 'unique:products,sku,'.$product->id],
-            'barcode' => ['nullable', 'string', 'max:100', 'unique:products,barcode,'.$product->id],
+            'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->where('tenant_id', $tenantId)->ignore($product->id)],
+            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where('tenant_id', $tenantId)->ignore($product->id)],
             'category_id' => ['nullable', Rule::exists('categories', 'id')->where('company_id', $user->company_id)],
             'unit_id' => ['nullable', Rule::exists('units', 'id')->where('company_id', $user->company_id)],
             'purchase_price' => ['required', 'numeric', 'min:0'],

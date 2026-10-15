@@ -64,7 +64,7 @@ class NotificationDispatcherService
         static::dispatch($sub->tenant_id, $owner->id, 'SUBSCRIPTION_SUSPENDED', $title, $message, $owner);
     }
 
-    public static function dispatch(int $tenantId, int $userId, string $type, string $title, string $message, ?User $owner = null): void
+    public static function dispatch(int $tenantId, int $userId, string $type, string $title, string $message, ?User $owner = null): array
     {
         // 1. In-App Portal Notification Center (Always Active)
         Notification::create([
@@ -80,21 +80,26 @@ class NotificationDispatcherService
         }
 
         // 2. WhatsApp Multi-Channel Billing Notification (HTTP Gateway API)
+        // null = dilewati (tanpa API key / tanpa nomor), bool = hasil kirim.
+        $whatsappSent = null;
         $waApiKey = config('services.wa.api_key') ?: SaaSSetting::get('wa_api_key', '');
         $waGatewayUrl = config('services.wa.gateway_url') ?: SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
         $phone = $owner?->phone ?? $owner?->tenant?->outlets?->first()?->phone;
 
         if (!empty($waApiKey) && !empty($phone)) {
-            static::sendWhatsAppNotification($waGatewayUrl, $waApiKey, $phone, "*[KasirSewa SaaS Notification]*\n\n*{$title}*\n\n{$message}\n\nPerpanjang sekarang di: https://saas.superbackend.my.id/subscription");
+            $whatsappSent = static::sendWhatsAppNotification($waGatewayUrl, $waApiKey, $phone, "*[KasirSewa SaaS Notification]*\n\n*{$title}*\n\n{$message}\n\nPerpanjang sekarang di: https://saas.superbackend.my.id/subscription");
         }
 
         // 3. Email Multi-Channel Billing Notification
+        $emailSent = false;
         if (!empty($owner?->email)) {
-            static::sendEmailNotification($owner->email, $title, $message);
+            $emailSent = static::sendEmailNotification($owner->email, $title, $message);
         }
+
+        return ['in_app' => true, 'whatsapp' => $whatsappSent, 'email' => $emailSent];
     }
 
-    protected static function sendWhatsAppNotification(string $url, string $apiKey, string $targetPhone, string $textMessage): void
+    protected static function sendWhatsAppNotification(string $url, string $apiKey, string $targetPhone, string $textMessage): bool
     {
         try {
             // Clean phone number format
@@ -105,7 +110,7 @@ class NotificationDispatcherService
 
             $response = Http::withHeaders([
                 'Authorization' => $apiKey,
-            ])->timeout(5)->post($url, [
+            ])->timeout(20)->post($url, [
                 'target' => $cleanPhone,
                 'message' => $textMessage,
             ]);
@@ -120,24 +125,32 @@ class NotificationDispatcherService
                     'body' => mb_substr((string) $response->body(), 0, 300),
                 ]);
 
-                return;
+                return false;
             }
 
             Log::info("WA_BILLING_REMINDER_SENT_SUCCESS", ['phone' => $cleanPhone]);
+
+            return true;
         } catch (\Throwable $e) {
             Log::error("WA_BILLING_REMINDER_FAILED", ['error' => $e->getMessage()]);
+
+            return false;
         }
     }
 
-    protected static function sendEmailNotification(string $toEmail, string $subject, string $bodyText): void
+    protected static function sendEmailNotification(string $toEmail, string $subject, string $bodyText): bool
     {
         try {
             Mail::raw($bodyText . "\n\nPerpanjang di: https://saas.superbackend.my.id/subscription", function ($mail) use ($toEmail, $subject) {
                 $mail->to($toEmail)->subject("[KasirSewa SaaS] " . $subject);
             });
             Log::info("EMAIL_BILLING_REMINDER_SENT_SUCCESS", ['email' => $toEmail]);
+
+            return true;
         } catch (\Throwable $e) {
             Log::error("EMAIL_BILLING_REMINDER_FAILED", ['error' => $e->getMessage()]);
+
+            return false;
         }
     }
 }

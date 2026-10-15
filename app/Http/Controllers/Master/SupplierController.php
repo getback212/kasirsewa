@@ -80,7 +80,10 @@ class SupplierController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus data supplier.');
         }
 
-        $supplier = Supplier::where('company_id', $user->company_id)->findOrFail($id);
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $supplier = Supplier::where('company_id', $user->company_id)
+            ->where('tenant_id', $tenantId)
+            ->findOrFail($id);
         $supplierName = $supplier->name;
         $supplier->delete();
 

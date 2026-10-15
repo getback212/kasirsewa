@@ -2,6 +2,7 @@ FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
     postgresql-dev \
+    postgresql-client \
     libzip-dev \
     zip \
     unzip \

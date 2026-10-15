@@ -101,14 +101,10 @@ class UnitController extends Controller
         $user = $request->user();
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
-        $unit = Unit::where(function ($q) use ($tenantId, $user) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($user->company_id) {
-                $q->orWhere('company_id', $user->company_id);
-            }
-        })->findOrFail($id);
+        // Strict tenant isolation: unit must belong to current tenant AND company
+        $unit = Unit::where('tenant_id', $tenantId)
+            ->where('company_id', $user->company_id)
+            ->findOrFail($id);
 
         $unitName = $unit->name;
         $unit->delete();

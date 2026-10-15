@@ -12,9 +12,10 @@ interface BackupItem {
 
 interface BackupsPageProps extends PageProps {
     backups?: BackupItem[];
+    isSuperAdmin?: boolean;
 }
 
-export default function BackupsIndex({ backups = [] }: BackupsPageProps) {
+export default function BackupsIndex({ backups = [], isSuperAdmin = false }: BackupsPageProps) {
     const { flash } = usePage<BackupsPageProps>().props;
     const [isBackingUp, setIsBackingUp] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -49,9 +50,12 @@ export default function BackupsIndex({ backups = [] }: BackupsPageProps) {
     };
 
     const handleRestore = (filename: string) => {
-        if (confirm(`⚠️ PERINGATAN BESAR!\n\nApakah Anda yakin ingin memulihkan (RESTORE) database dari file ${filename}?\n\nSemua data transaksi dan stok saat ini akan dikembalikan ke kondisi saat file backup ini dibuat!`)) {
+        const message = isSuperAdmin
+            ? `⚠️ PERINGATAN BESAR!\n\nApakah Anda yakin ingin memulihkan (RESTORE) database dari file ${filename}?\n\nRestore global menimpa SELURUH database SaaS (semua tenant) ke kondisi saat file backup ini dibuat!`
+            : `⚠️ PERINGATAN!\n\nApakah Anda yakin ingin memulihkan data toko dari file ${filename}?\n\nHanya data milik tenant/toko Anda yang akan dikembalikan ke kondisi saat backup ini dibuat. Data tenant lain tidak tersentuh.`;
+        if (confirm(message)) {
             setRestoringFilename(filename);
-            router.post(`/backups/${filename}/restore`, {}, {
+            router.post(`/backups/restore/${filename}`, {}, {
                 onFinish: () => setRestoringFilename(null),
                 preserveScroll: true,
             });
@@ -60,7 +64,7 @@ export default function BackupsIndex({ backups = [] }: BackupsPageProps) {
 
     const handleDelete = (filename: string) => {
         if (confirm(`Apakah Anda yakin ingin menghapus file backup ${filename}?`)) {
-            router.delete(`/backups/${filename}`, {
+            router.delete(`/backups/delete/${filename}`, {
                 preserveScroll: true,
             });
         }
@@ -111,6 +115,14 @@ export default function BackupsIndex({ backups = [] }: BackupsPageProps) {
                         </button>
                     </div>
                 </div>
+
+                {/* TENANT SCOPE NOTICE (OWNER) */}
+                {!isSuperAdmin && (
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl text-xs text-blue-300 font-semibold flex items-center gap-2">
+                        <Database className="w-4 h-4 shrink-0" />
+                        <span>Backup Owner hanya berisi data milik tenant/toko Anda sendiri (tanpa data tenant lain). Restore hanya memproses file backup tenant Anda dan tidak menyentuh data tenant lain. Upload hanya menerima file backup tenant yang valid milik Anda.</span>
+                    </div>
+                )}
 
                 {/* FLASH NOTIFICATION */}
                 {flash.success && (
@@ -173,7 +185,7 @@ export default function BackupsIndex({ backups = [] }: BackupsPageProps) {
                                                     </button>
 
                                                     <a
-                                                        href={`/backups/${bk.filename}/download`}
+                                                        href={`/backups/download/${bk.filename}`}
                                                         className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition"
                                                     >
                                                         <Download className="w-3.5 h-3.5" /> Unduh

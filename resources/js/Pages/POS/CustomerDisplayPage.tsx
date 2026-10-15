@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { ShoppingBag, ShoppingCart, CheckCircle2, QrCode, Store, Sparkles, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, CheckCircle2, QrCode, Store, Sparkles, ShieldCheck, Maximize } from 'lucide-react';
 
 interface CustomerDisplayProps {
     outlet?: {
@@ -46,6 +46,28 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
     });
     const [showPairModal, setShowPairModal] = useState(false);
     const [showQrisManual, setShowQrisManual] = useState(false);
+    const [showViewAll, setShowViewAll] = useState(false);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+
+    useEffect(() => {
+        const toggleFullScreen = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        };
+        toggleFullScreen();
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsFullScreen(false);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isFullScreen]);
 
     const handleSavePairing = (code: string) => {
         setPairingCode(code);
@@ -165,17 +187,25 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                             >
                                 🔑 {pairingCode ? `PAIR: ${pairingCode}` : 'HUBUNGKAN KODE KASIR'}
                             </button>
+
+                            
                         </h1>
                         <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
                             <Store className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>{cartState.outlet_name || outlet?.name || 'KasirSewa Store'}</span>
-                        </p>
+</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-2 rounded-2xl">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <span className="text-xs font-bold text-slate-300">Selamat Datang di Toko Kami</span>
+                    <button
+                        onClick={() => setIsFullScreen(!isFullScreen)}
+                        className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 rounded-xl text-[10px] font-mono font-bold cursor-pointer transition flex items-center gap-1"
+                        title="Fullscreen"
+                    >
+                        <Maximize className="w-3.5 h-3.5" />
+                    </button>
                 </div>
             </header>
 
@@ -311,6 +341,8 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                 >
                                     ✕ Sembunyikan QRIS
                                 </button>
+
+                            
                             </div>
                         </div>
                     ) : (
@@ -331,6 +363,8 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                 <QrCode className="w-4 h-4" />
                                 <span>Tampilkan QRIS</span>
                             </button>
+
+                            
                         </div>
                     )}
 
@@ -347,6 +381,7 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                 🔑 Hubungkan Kode Kasir (Pairing Code)
                             </h3>
                             <button onClick={() => setShowPairModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                            
                         </div>
 
                         <p className="text-slate-400 leading-relaxed">
@@ -374,12 +409,16 @@ export default function CustomerDisplayPage({ outlet }: CustomerDisplayProps) {
                                 >
                                     Batal
                                 </button>
+
+                            
                                 <button
                                     type="submit"
                                     className="w-1/2 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/20"
                                 >
                                     Simpan & Hubungkan
                                 </button>
+
+                            
                             </div>
                         </form>
                     </div>

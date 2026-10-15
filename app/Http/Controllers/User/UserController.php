@@ -15,6 +15,7 @@ use Inertia\Response;
 use Spatie\Permission\Models\Role;
 
 use App\Services\Audit\AuditLogService;
+use App\Support\StaffScope;
 
 class UserController extends Controller
 {
@@ -26,18 +27,11 @@ class UserController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data staff pengguna.');
         }
 
-        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
-        $companyId = $currentUser->company_id;
+        $tenantId = StaffScope::tenantIdFor($currentUser);
 
         $query = User::with(['roles', 'outlet'])
-            ->where(function ($q) use ($tenantId, $companyId) {
-                if ($tenantId) {
-                    $q->where('tenant_id', $tenantId);
-                }
-                if ($companyId) {
-                    $q->orWhere('company_id', $companyId);
-                }
-            });
+            ->when($request->boolean('archived'), fn ($q) => $q->onlyTrashed())
+            ->where(fn ($q) => StaffScope::apply($q, $tenantId));
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -65,17 +59,11 @@ class UserController extends Controller
                     'outlet_name' => $user->outlet?->name ?? 'Semua Outlet',
                     'role' => $user->roles->first()?->name ?? 'CASHIER',
                     'created_at' => $user->created_at->format('Y-m-d H:i'),
+                    'is_archived' => $user->trashed(),
                 ];
             });
 
-        $outlets = Outlet::where(function ($q) use ($tenantId, $companyId) {
-                if ($tenantId) {
-                    $q->where('tenant_id', $tenantId);
-                }
-                if ($companyId) {
-                    $q->orWhere('company_id', $companyId);
-                }
-            })
+        $outlets = Outlet::where(fn ($q) => StaffScope::apply($q, $tenantId))
             ->where('is_active', true)
             ->get(['id', 'code', 'name']);
 
@@ -163,14 +151,14 @@ class UserController extends Controller
 
             // 1. WhatsApp Invitation via Baileys Gateway
             if (!empty($cleanPhone)) {
-                $waGatewayUrl = \App\Models\SaaSSetting::get('wa_gateway_url', 'http://172.17.0.1:3001/send');
+                $waGatewayUrl = \App\Models\SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
                 $waApiKey = \App\Models\SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
                 $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\n\nHalo *{$user->name}*,\n\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\n\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\nhttps://superbackend.my.id/login";
 
                 try {
                     \Illuminate\Support\Facades\Http::withHeaders([
                         'Authorization' => $waApiKey,
-                    ])->timeout(5)->post($waGatewayUrl, [
+                    ])->timeout(20)->post($waGatewayUrl, [
                         'target' => $cleanPhone,
                         'phone' => $cleanPhone,
                         'message' => $waMsg,
@@ -208,17 +196,9 @@ class UserController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengedit staff.');
         }
 
-        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
-        $companyId = $currentUser->company_id;
+        $tenantId = StaffScope::tenantIdFor($currentUser);
 
-        $user = User::where(function ($q) use ($tenantId, $companyId) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($companyId) {
-                $q->orWhere('company_id', $companyId);
-            }
-        })->findOrFail($id);
+        $user = User::where(fn ($q) => StaffScope::apply($q, $tenantId))->findOrFail($id);
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
@@ -271,17 +251,9 @@ class UserController extends Controller
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
-        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
-        $companyId = $currentUser->company_id;
+        $tenantId = StaffScope::tenantIdFor($currentUser);
 
-        $user = User::where(function ($q) use ($tenantId, $companyId) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($companyId) {
-                $q->orWhere('company_id', $companyId);
-            }
-        })->findOrFail($id);
+        $user = User::where(fn ($q) => StaffScope::apply($q, $tenantId))->findOrFail($id);
         $user->update(['is_active' => !$user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
@@ -300,17 +272,11 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif!');
         }
 
-        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
-        $companyId = $currentUser->company_id;
+        $tenantId = StaffScope::tenantIdFor($currentUser);
 
-        $user = User::where(function ($q) use ($tenantId, $companyId) {
-            if ($tenantId) {
-                $q->where('tenant_id', $tenantId);
-            }
-            if ($companyId) {
-                $q->orWhere('company_id', $companyId);
-            }
-        })->findOrFail($id);
+        $user = User::withTrashed()
+            ->where(fn ($q) => StaffScope::apply($q, $tenantId))
+            ->findOrFail($id);
 
         if ($user->hasRole([UserRole::SUPER_ADMIN->value, UserRole::OWNER->value])) {
             return back()->with('error', 'Akun Pemilik Toko / Owner Utama dilindungi dan tidak dapat dihapus!');
@@ -318,15 +284,24 @@ class UserController extends Controller
 
         $userName = $user->name;
         $deletedUserData = $user->only(['name', 'email']);
-        $user->delete();
 
-        AuditLogService::log(
-            action: 'USER_DELETE',
-            modelType: 'User',
-            modelId: $id,
-            oldValues: $deletedUserData
-        );
+        try {
+            if ($request->boolean('force')) {
+                $user->assertNoBusinessRecords();
+                $user->forceDelete();
+                AuditLogService::log(
+                    action: 'USER_FORCE_DELETE',
+                    modelType: 'User',
+                    modelId: $id,
+                    oldValues: $deletedUserData
+                );
+                return back()->with('success', "Akun staff {$userName} telah dihapus permanen dari sistem!");
+            }
 
-        return back()->with('success', "Akun staff {$userName} telah berhasil dihapus dari sistem!");
+            $user->delete();
+            return back()->with('success', "Akun staff {$userName} telah dinonaktifkan dari sistem!");
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

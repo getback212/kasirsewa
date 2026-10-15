@@ -66,7 +66,7 @@ class VerifyOtpController extends Controller
         try {
             $res = Http::withHeaders([
                 'Authorization' => $waApiKey,
-            ])->timeout(5)->post($waGatewayUrl, [
+            ])->timeout(20)->post($waGatewayUrl, [
                 'target' => $phone,
                 'phone' => $phone,
                 'message' => $message,

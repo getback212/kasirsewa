@@ -53,6 +53,50 @@ class TenantIsolationSecurityTest extends TestCase
         $response->assertDontSee('AUDIT_CROSS_COMPANY_SAME_ACTOR');
     }
 
+    public function test_owner_cannot_see_logs_authored_by_super_admin(): void
+    {
+        $owner1 = $this->ownerOfCompany(1);
+        $superAdmin = User::where('email', 'admin@example.com')->firstOrFail();
+
+        // Log milik company owner, tetapi pelakunya Super Admin -> wajib disembunyikan.
+        AuditLog::create([
+            'company_id' => 1,
+            'user_id' => $superAdmin->id,
+            'action' => 'AUDIT_SUPER_ADMIN_GLOBAL_LOGIN',
+        ]);
+
+        $response = $this->actingAs($owner1)->get('/audit-logs');
+
+        $response->assertOk();
+        $response->assertDontSee('AUDIT_SUPER_ADMIN_GLOBAL_LOGIN');
+
+        // Super Admin tetap melihat semua log termasuk miliknya sendiri.
+        $adminResponse = $this->actingAs($superAdmin)->get('/audit-logs');
+
+        $adminResponse->assertOk();
+        $adminResponse->assertSee('AUDIT_SUPER_ADMIN_GLOBAL_LOGIN');
+    }
+
+    public function test_impersonation_entry_is_attributed_to_super_admin_and_hidden_from_owner(): void
+    {
+        $owner1 = $this->ownerOfCompany(1);
+        $superAdmin = User::where('email', 'admin@example.com')->firstOrFail();
+
+        $this->actingAs($superAdmin)->post("/admin/tenants/{$owner1->tenant_id}/impersonate");
+
+        // Entri impersonasi wajib tercatat atas nama Super Admin pelaksana.
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'SAAS_TENANT_IMPERSONATE',
+            'user_id' => $superAdmin->id,
+        ]);
+
+        // Owner tidak melihat entri impersonasi dalam daftar audit log-nya.
+        $response = $this->actingAs($owner1)->get('/audit-logs');
+
+        $response->assertOk();
+        $response->assertDontSee('SAAS_TENANT_IMPERSONATE');
+    }
+
     public function test_close_shift_action_rejects_shift_owned_by_another_company(): void
     {
         $owner1 = $this->ownerOfCompany(1);

@@ -19,13 +19,22 @@ class AuditLogController extends Controller
 
         $query = AuditLog::with('user:id,name,email');
 
-        // Scoping: non-SUPER_ADMIN hanya melihat log milik company sendiri
+        // Scoping: non-SUPER_ADMIN hanya melihat log milik company sendiri,
+        // dan tidak pernah melihat aktivitas Super Admin global (mis. login admin SaaS).
         if (! $user->hasRole('SUPER_ADMIN')) {
             $companyId = $user->company_id;
             if (! $companyId) {
                 abort(403, 'Akun Anda belum terhubung ke company manapun.');
             }
             $query->where('company_id', $companyId);
+            // Entri impersonasi platform bukan aktivitas tenant: sembunyikan
+            // semuanya, termasuk baris lama yang terlanjur tercatat atas nama owner.
+            $query->whereNotIn('action', ['SAAS_TENANT_IMPERSONATE', 'SAAS_TENANT_STOP_IMPERSONATE']);
+            $query->whereDoesntHave('user', function ($q) {
+                $q->whereHas('roles', function ($r) {
+                    $r->where('name', 'SUPER_ADMIN');
+                });
+            });
         }
 
         if ($request->filled('search')) {
@@ -50,6 +59,10 @@ class AuditLogController extends Controller
     public function destroy(Request $request, int $id)
     {
         $user = $request->user();
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk menghapus audit log.');
+        }
+
         $query = AuditLog::query();
         if (! $user->hasRole('SUPER_ADMIN')) {
             $companyId = $user->company_id;
@@ -57,6 +70,12 @@ class AuditLogController extends Controller
                 abort(403, 'Akun Anda belum terhubung ke company manapun.');
             }
             $query->where('company_id', $companyId);
+            $query->whereNotIn('action', ['SAAS_TENANT_IMPERSONATE', 'SAAS_TENANT_STOP_IMPERSONATE']);
+            $query->whereDoesntHave('user', function ($q) {
+                $q->whereHas('roles', function ($r) {
+                    $r->where('name', 'SUPER_ADMIN');
+                });
+            });
         }
         $log = $query->findOrFail($id);
         $log->delete();

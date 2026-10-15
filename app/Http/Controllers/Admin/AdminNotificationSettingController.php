@@ -22,7 +22,7 @@ class AdminNotificationSettingController extends Controller
         }
 
         $settings = [
-            'wa_gateway_url' => SaaSSetting::get('wa_gateway_url', 'http://172.17.0.1:3001/send'),
+            'wa_gateway_url' => SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send'),
             'wa_api_key' => SaaSSetting::get('wa_api_key', 'baileys_free_gateway'),
             'wa_cs_number' => SaaSSetting::get('wa_cs_number', '6281234567890'),
             'wa_otp_template' => SaaSSetting::get('wa_otp_template', "🔐 *Kode OTP Verifikasi WhatsApp KasirSewa*\n\nKode OTP Anda adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun toko Anda."),
@@ -100,7 +100,24 @@ class AdminNotificationSettingController extends Controller
             abort(403, 'Hanya Super Admin.');
         }
 
-        NotificationDispatcherService::dispatch(
+        $validated = $request->validate([
+            'test_phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        // Super Admin tidak punya nomor HP: target tes diambil dari input,
+        // lalu fallback ke nomor CS. Tanpa nomor valid, kanal WA pasti
+        // dilewati dispatcher — laporkan jujur, jangan klaim berhasil.
+        $target = preg_replace('/[^0-9]/', '', (string) ($validated['test_phone'] ?? $user->phone ?? ''));
+        if ($target === '') {
+            $target = preg_replace('/[^0-9]/', '', (string) SaaSSetting::get('wa_cs_number', ''));
+        }
+        if (str_starts_with($target, '0')) {
+            $target = '62' . substr($target, 1);
+        }
+        // Set di memori saja (tanpa save) agar dispatcher memakai nomor tes ini.
+        $user->phone = $target !== '' ? $target : null;
+
+        $result = NotificationDispatcherService::dispatch(
             tenantId: $user->tenant_id ?? 1,
             userId: $user->id,
             type: 'TEST_BILLING_REMINDER',
@@ -109,6 +126,15 @@ class AdminNotificationSettingController extends Controller
             owner: $user
         );
 
-        return redirect()->back()->with('success', 'Pengujian pengiriman notifikasi billing multi-channel berhasil dikirim!');
+        $emailMark = $result['email'] ? '✅' : '❌';
+        if ($result['whatsapp'] === true) {
+            return redirect()->back()->with('success', "Pengujian berhasil! Portal ✅, WhatsApp ✅ ke {$target}, Email {$emailMark}.");
+        }
+
+        if ($result['whatsapp'] === false) {
+            return redirect()->back()->with('error', "WhatsApp GAGAL terkirim ke {$target} (cek QR gateway di /wa-qr & log server). Portal ✅, Email {$emailMark}.");
+        }
+
+        return redirect()->back()->with('error', 'WhatsApp dilewati: tidak ada nomor tujuan/API key. Isi nomor WA tujuan tes lalu coba lagi. Portal ✅.');
     }
 }

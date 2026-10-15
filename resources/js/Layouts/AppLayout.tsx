@@ -370,11 +370,17 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                     }
 
                                     // Hide store operational menus from Super Admin when NOT impersonating a tenant
-                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription) {
+                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription && (group.id === 'stok' || group.id === 'operasional')) {
                                         return null;
                                     }
 
                                     let filteredItems = group.items.filter(item => hasPermission(item.permission));
+
+                                    // Global Super Admin (not impersonating) only gets the Audit Logs & Backup tools
+                                    // from the "Laporan & Audit" group (Laporan Keuangan needs an active outlet).
+                                    if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id === 'laporan') {
+                                        filteredItems = filteredItems.filter(item => item.path === '/audit-logs' || item.path === '/backups');
+                                    }
 
                                     if (filteredItems.length === 0) return null;
 
@@ -595,6 +601,17 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                                         <Receipt className="w-3.5 h-3.5 text-emerald-400" />
                                                         <span>Riwayat Tagihan Invoice</span>
                                                     </Link>
+                                                    <div className="px-3 py-1 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                                        Keamanan Sistem
+                                                    </div>
+                                                    <Link
+                                                        href="/audit-logs"
+                                                        onClick={() => setUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                                                    >
+                                                        <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                                                        <span>Audit Logs System</span>
+                                                    </Link>
                                                     <div className="my-1 border-t border-slate-800/80" />
                                                 </>
                                             )}
@@ -719,11 +736,16 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                     )}
 
                     {navigationGroups.map((group, idx) => {
-                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && (group.id === 'stok' || group.id === 'operasional' || group.id === 'laporan')) {
+                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && (group.id === 'stok' || group.id === 'operasional')) {
                             return null;
                         }
 
                         let filteredItems = group.items.filter(item => hasPermission(item.permission));
+
+                        // Global Super Admin (not impersonating) only gets the Audit Logs & Backup tools
+                        if (roles.includes('SUPER_ADMIN') && !tenantSubscription && group.id === 'laporan') {
+                            filteredItems = filteredItems.filter(item => item.path === '/audit-logs' || item.path === '/backups');
+                        }
 
                         if (filteredItems.length === 0) return null;
 
