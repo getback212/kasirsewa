@@ -306,10 +306,12 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                         </div>
 
                         <a
-                            href="mailto:sales@kasirsewa.id"
+                            href={`https://wa.me/${waCsNumber}?text=Halo%20Tim%20KasirSewa,%20saya%20tertarik%20dengan%20paket%20Enterprise%20Unlimited.%20Saya%20ingin%20konsultasi%20lebih%20lanjut.`}
+                            target="_blank"
+                            rel="noreferrer"
                             className="w-full py-2.5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-xs rounded-lg sm:rounded-2xl text-center transition block mt-3 sm:mt-6"
                         >
-                            Hubungi Sales
+                            Hubungi Sales via WA
                         </a>
                     </div>
                 </div>
