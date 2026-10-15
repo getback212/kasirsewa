@@ -110,7 +110,9 @@ class OutletController extends Controller
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        $outlet = Outlet::where('company_id', $user->company_id)->findOrFail($id);
+        $outlet = Outlet::where('company_id', $user->company_id)
+            ->where('tenant_id', $tenantId)
+            ->findOrFail($id);
 
         $validated = $request->validate([
             'code' => [

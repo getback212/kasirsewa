@@ -98,7 +98,9 @@ class StoreController extends Controller
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        $store = Outlet::where('tenant_id', $tenantId)->findOrFail($id);
+        $store = Outlet::where('tenant_id', $tenantId)
+            ->where('company_id', $user->company_id)
+            ->findOrFail($id);
 
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', Rule::unique('outlets', 'code')->where('tenant_id', $tenantId)->ignore($store->id)],
