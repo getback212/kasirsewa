@@ -27,10 +27,20 @@ use Inertia\Response;
 
 class RegisterController extends Controller
 {
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $plans = Plan::where('is_active', true)->get();
-        return Inertia::render('Auth/Register', ['plans' => $plans]);
+        $selectedPlanSlug = $request->query('plan', 'starter');
+        
+        // Map slug to plan: starter, pro, enterprise
+        $selectedPlan = $plans->firstWhere('slug', $selectedPlanSlug) 
+            ?? $plans->firstWhere('slug', 'starter')
+            ?? $plans->first();
+        
+        return Inertia::render('Auth/Register', [
+            'plans' => $plans,
+            'selected_plan_id' => $selectedPlan?->id ?? ($plans->first()?->id ?? 1)
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

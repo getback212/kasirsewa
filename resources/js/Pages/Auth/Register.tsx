@@ -15,9 +15,10 @@ interface Plan {
 
 interface RegisterProps {
     plans: Plan[];
+    selected_plan_id?: number;
 }
 
-export default function Register({ plans = [] }: RegisterProps) {
+export default function Register({ plans = [], selected_plan_id }: RegisterProps) {
     const { data, setData, post, processing, errors } = useForm({
         store_name: '',
         owner_name: '',
@@ -25,7 +26,7 @@ export default function Register({ plans = [] }: RegisterProps) {
         phone: '',
         password: '',
         password_confirmation: '',
-        plan_id: plans[0]?.id || 1,
+        plan_id: selected_plan_id || plans[0]?.id || 1,
         billing_cycle: 'monthly',
     });
 
