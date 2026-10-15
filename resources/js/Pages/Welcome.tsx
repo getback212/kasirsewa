@@ -251,7 +251,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register?plan=starter-basic"
                             className="w-full py-2.5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-xs rounded-lg sm:rounded-2xl text-center transition block mt-3 sm:mt-6"
                         >
-                            Daftar Starter (Trial 7 Hari)
+                            Mulai Trial Gratis
                         </Link>
                     </div>
 
@@ -282,7 +282,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             href="/register?plan=business-pro"
                             className="w-full py-2.5 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs sm:text-xs rounded-lg sm:rounded-2xl text-center shadow-lg shadow-blue-600/30 transition block mt-3 sm:mt-6"
                         >
-                            Daftar Pro (Trial 7 Hari)
+                            Mulai Trial Gratis
                         </Link>
                     </div>
 
@@ -305,12 +305,12 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                             </ul>
                         </div>
 
-                        <Link
-                            href="/register?plan=enterprise-unlimited"
+                        <a
+                            href="mailto:sales@kasirsewa.id"
                             className="w-full py-2.5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-xs rounded-lg sm:rounded-2xl text-center transition block mt-3 sm:mt-6"
                         >
-                            Daftar Enterprise (Trial 7 Hari)
-                        </Link>
+                            Hubungi Sales
+                        </a>
                     </div>
                 </div>
             </section>
