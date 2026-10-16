@@ -62,31 +62,26 @@ class User extends Authenticatable
     }
 
     /**
-     * A hard delete cascades through most of the business tables
-     * (sales, purchases, shifts, expenses, cash_movements, ... — all
-     * ON DELETE CASCADE), which destroys sales history. Refuse it while those
-     * records exist; the staff account should be deactivated (soft deleted)
-     * instead, or the tenant purged intentionally.
+     * Validate user has no active business records (prevents orphaned foreign keys).
+     * Called on both soft delete and hard delete to maintain referential integrity.
      */
     public function assertNoBusinessRecords(): void
     {
         foreach (self::CASCADE_OWNED_TABLES as $table => $column) {
             if (DB::table($table)
                 ->where($column, $this->id)
-                ->when(method_exists($this, 'trashed') && $this->trashed(), function ($q) {
-                    // ignore
-                })
                 ->exists()) {
                 throw new RuntimeException(
-                    "Tidak dapat menghapus permanen akun ini: masih ada data pada tabel '{$table}'. "
-                    .'Nonaktifkan akun staff (soft delete) agar riwayat transaksi tetap utuh.'
+                    "Tidak dapat menghapus akun ini: masih ada data transaksi pada tabel '{$table}'. "
+                    .'Pastikan tidak ada transaksi aktif sebelum menghapus akun staff.'
                 );
             }
         }
     }
 
     /**
-     * Tables whose rows are destroyed by a hard user delete.
+     * Tables whose rows reference this user; cannot delete if records exist.
+     * Includes transaction tables + audit trail to maintain referential integrity.
      *
      * @var array<string, string>
      */
@@ -101,6 +96,7 @@ class User extends Authenticatable
         'stock_opnames' => 'user_id',
         'stock_transfers' => 'user_id',
         'stock_movements' => 'user_id',
+        'audit_logs' => 'user_id',  // Audit trail must remain linked
     ];
 
     public function company(): BelongsTo

@@ -259,8 +259,10 @@ class UserController extends Controller
         $deletedUserData = $user->only(['name', 'email']);
 
         try {
+            // Validate no active business records (both soft + hard delete)
+            $user->assertNoBusinessRecords();
+
             if ($request->boolean('force')) {
-                $user->assertNoBusinessRecords();
                 $user->forceDelete();
                 AuditLogService::log(
                     action: 'USER_FORCE_DELETE',
