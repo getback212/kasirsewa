@@ -665,17 +665,14 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 )}
                             </div>
 
-                            {/* MOBILE MENU TOGGLE — tenant/staff only.
-                                Super admin mobile intentionally keeps only the profile menu. */}
-                            {!roles.includes('SUPER_ADMIN') && (
-                                <button
-                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 active:scale-95 transition cursor-pointer"
-                                    aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
-                                >
-                                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                                </button>
-                            )}
+                            {/* MOBILE MENU TOGGLE */}
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 active:scale-95 transition cursor-pointer"
+                                aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
+                            >
+                                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                            </button>
 
                         </div>
 
@@ -687,7 +684,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             {/* REMOVED - Menu moved to top nav */}
 
             {/* MOBILE DRAWER MENU */}
-            {mobileMenuOpen && !roles.includes('SUPER_ADMIN') && (
+            {mobileMenuOpen && (
                 <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
                     {/* SUPER ADMIN: Direct Dashboard & POS buttons matching desktop top nav */}
                     {roles.includes('SUPER_ADMIN') && !tenantSubscription && (
