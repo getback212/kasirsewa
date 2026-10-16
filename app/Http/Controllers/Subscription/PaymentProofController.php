@@ -102,6 +102,23 @@ class PaymentProofController extends Controller
             'paid_at' => now(),
         ]);
 
+        // Activate subscription (trial → active)
+        if ($invoice->subscription_id) {
+            $subscription = \App\Models\Subscription::find($invoice->subscription_id);
+            if ($subscription && $subscription->status === 'trial') {
+                // Calculate subscription end date based on plan duration
+                $plan = $subscription->plan;
+                $billingCycleDays = $subscription->billing_cycle === 'yearly' ? 365 : 30;
+                
+                $subscription->update([
+                    'status' => 'active',
+                    'started_at' => now(),
+                    'ends_at' => now()->addDays($billingCycleDays),
+                    'trial_ends_at' => null, // Clear trial end date
+                ]);
+            }
+        }
+
         AuditLogService::log(
             action: 'PAYMENT_PROOF_VERIFIED',
             modelType: 'SaaSPayment',
