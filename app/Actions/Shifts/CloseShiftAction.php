@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\Payment;
 use App\Models\CashMovement;
 use App\Models\User;
+use App\Services\Report\DailyClosingReportService;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -52,6 +53,9 @@ class CloseShiftAction
                 'status' => 'closed',
                 'closed_at' => now(),
             ]);
+
+            // Generate and send daily closing report
+            DailyClosingReportService::generateAndNotify($shift);
 
             return $shift;
         });
