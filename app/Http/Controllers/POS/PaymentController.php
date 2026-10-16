@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\Shift;
 use App\Models\Tenant;
+use App\Services\Audit\AuditLogService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -99,6 +100,22 @@ class PaymentController extends Controller
                 pointsDiscountAmount: (float) ($validated['points_discount_amount'] ?? 0.00)
             );
 
+            // Audit log: sale completed
+            AuditLogService::log(
+                'POS_SALE_COMPLETED',
+                'Sale',
+                $sale->id,
+                null,
+                [
+                    'invoice_number' => $sale->invoice_number,
+                    'customer_id' => $validated['customer_id'],
+                    'items_count' => count($validated['items']),
+                    'grand_total' => (float) $validated['grand_total'],
+                    'payment_methods_count' => count($validated['payments']),
+                    'discount_code_used' => $validated['discount_code'] ?? null,
+                ]
+            );
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Transaksi penjualan berhasil diproses!',
@@ -112,24 +129,52 @@ class PaymentController extends Controller
                 ],
             ]);
         } catch (\App\Exceptions\CreditLimitExceededException $e) {
+            AuditLogService::log(
+                'POS_SALE_FAILED_CREDIT_LIMIT',
+                'Sale',
+                null,
+                null,
+                ['customer_id' => $validated['customer_id'] ?? null, 'grand_total' => $validated['grand_total']]
+            );
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getUserMessage(),
                 'error_type' => 'credit_limit_exceeded',
             ], 422);
         } catch (\App\Exceptions\InsufficientStockException $e) {
+            AuditLogService::log(
+                'POS_SALE_FAILED_INSUFFICIENT_STOCK',
+                'Sale',
+                null,
+                null,
+                ['items_count' => count($validated['items'])]
+            );
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getUserMessage(),
                 'error_type' => 'insufficient_stock',
             ], 422);
         } catch (\App\Exceptions\KasirSewaException $e) {
+            AuditLogService::log(
+                'POS_SALE_FAILED_KASIR_SEWA_ERROR',
+                'Sale',
+                null,
+                null,
+                ['error' => $e->getMessage()]
+            );
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getUserMessage(),
                 'error_type' => 'kasir_sewa_error',
             ], 422);
         } catch (\InvalidArgumentException $e) {
+            AuditLogService::log(
+                'POS_SALE_FAILED_VALIDATION',
+                'Sale',
+                null,
+                null,
+                ['error' => $e->getMessage()]
+            );
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage(),
@@ -137,6 +182,13 @@ class PaymentController extends Controller
             ], 422);
         } catch (Exception $e) {
             Log::error('POS checkout error: ' . $e->getMessage(), ['exception' => $e]);
+            AuditLogService::log(
+                'POS_SALE_FAILED_INTERNAL_ERROR',
+                'Sale',
+                null,
+                null,
+                ['error_class' => get_class($e)]
+            );
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan saat memproses transaksi. Hubungi admin jika masalah berlanjut.',

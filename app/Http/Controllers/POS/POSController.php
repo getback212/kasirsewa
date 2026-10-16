@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shift;
 use App\Models\Stock;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -288,6 +289,20 @@ class POSController extends Controller
                     'subtotal' => $subtotal,
                 ]);
             }
+
+            // Audit log: transaction held
+            AuditLogService::log(
+                'POS_TRANSACTION_HELD',
+                'HeldTransaction',
+                $held->id,
+                null,
+                [
+                    'customer_id' => $validated['customer_id'],
+                    'reference_note' => $validated['reference_note'],
+                    'items_count' => count($validated['items']),
+                    'grand_total' => $grandTotal,
+                ]
+            );
         });
 
         return back()->with('success', 'Transaksi keranjang berhasil ditahan sementara (Hold).');
@@ -304,6 +319,15 @@ class POSController extends Controller
             ->firstOrFail();
 
         $held->delete();
+
+        // Audit log: held transaction deleted
+        AuditLogService::log(
+            'POS_TRANSACTION_HOLD_DESTROYED',
+            'HeldTransaction',
+            $id,
+            ['grand_total' => $held->grand_total, 'reference_note' => $held->reference_note],
+            null
+        );
 
         return back()->with('success', 'Transaksi ditahan telah dilanjutkan dan dihapus dari daftar hold.');
     }
