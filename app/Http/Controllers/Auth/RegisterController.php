@@ -66,13 +66,23 @@ class RegisterController extends Controller
     public function create(Request $request): Response
     {
         $plans = Plan::where('is_active', true)->get();
+        
+        // Accept both plan_id (numeric) and plan (slug) parameters
         $planIdFromQuery = $request->query('plan_id');
+        $planSlugFromQuery = $request->query('plan');
 
-        // Map plan_id to plan object
         $selectedPlan = null;
+        
+        // Try by numeric ID first
         if ($planIdFromQuery) {
             $selectedPlan = $plans->firstWhere('id', (int) $planIdFromQuery);
         }
+        
+        // Try by slug if ID not found
+        if (!$selectedPlan && $planSlugFromQuery) {
+            $selectedPlan = $plans->firstWhere('slug', $planSlugFromQuery);
+        }
+        
         $selectedPlan = $selectedPlan ?? $plans->first();
 
         // Check if redirected from Google OAuth (new email)
