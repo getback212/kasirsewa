@@ -20,6 +20,8 @@ class PaymentProofController extends Controller
         $validated = $request->validate([
             'invoice_id' => 'required|exists:invoices,id',
             'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // max 5MB
+            'sender_bank' => 'nullable|string|max:100',
+            'sender_name' => 'nullable|string|max:255',
         ]);
 
         $invoice = Invoice::findOrFail($validated['invoice_id']);
@@ -55,6 +57,10 @@ class PaymentProofController extends Controller
             'status' => 'pending', // Tunggu Super Admin verifikasi
             'proof_rejection_reason' => null, // Clear previous rejection
             'proof_verified_at' => null, // Clear previous verification
+            'payload' => json_encode([
+                'sender_bank' => $validated['sender_bank'] ?? null,
+                'sender_name' => $validated['sender_name'] ?? null,
+            ]),
         ]);
 
         AuditLogService::log(
