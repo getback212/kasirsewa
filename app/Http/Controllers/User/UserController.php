@@ -252,6 +252,15 @@ class UserController extends Controller
             ->findOrFail($id);
 
         if ($user->hasRole([UserRole::SUPER_ADMIN->value, UserRole::OWNER->value])) {
+            // Check if this owner is linked to any tenant (prevent orphaning tenant.owner_id)
+            $ownedTenants = \App\Models\Tenant::where('owner_id', $id)->count();
+            if ($ownedTenants > 0) {
+                return back()->with(
+                    'error',
+                    "Tidak dapat menghapus akun Owner ini: masih ditugaskan sebagai pemilik di {$ownedTenants} tenant. "
+                    .'Silakan tetapkan owner baru untuk masing-masing tenant terlebih dahulu.'
+                );
+            }
             return back()->with('error', 'Akun Pemilik Toko / Owner Utama dilindungi dan tidak dapat dihapus!');
         }
 
