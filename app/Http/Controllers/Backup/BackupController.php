@@ -70,6 +70,15 @@ class BackupController extends Controller
     public function runBackup(Request $request): RedirectResponse
     {
         $user = $request->user();
+        
+        // Guard: Require phone verification
+        if (is_null($user->phone_verified_at)) {
+            return redirect()->route('verify.otp')->with(
+                'error',
+                'Verifikasi WhatsApp diperlukan sebelum membuat backup. Silakan verifikasi nomor Anda terlebih dahulu.'
+            );
+        }
+
         if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses untuk membuat backup database.');
         }
@@ -102,6 +111,15 @@ class BackupController extends Controller
     public function upload(Request $request): RedirectResponse
     {
         $user = $request->user();
+        
+        // Guard: Require phone verification
+        if (is_null($user->phone_verified_at)) {
+            return redirect()->route('verify.otp')->with(
+                'error',
+                'Verifikasi WhatsApp diperlukan sebelum meng-upload backup. Silakan verifikasi nomor Anda terlebih dahulu.'
+            );
+        }
+
         if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses untuk meng-upload backup.');
         }
@@ -113,7 +131,7 @@ class BackupController extends Controller
         $file = $request->file('backup_file');
         $originalName = $file->getClientOriginalName();
 
-        $cleanName = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $originalName);
+        $cleanName = preg_replace('/[^a-zA-Z0-9_\\.-]/', '_', $originalName);
         if (! str_ends_with($cleanName, '.sql.gz') && ! str_ends_with($cleanName, '.sql') && ! str_ends_with($cleanName, '.gz')) {
             $cleanName .= '.sql.gz';
         }
@@ -165,6 +183,15 @@ class BackupController extends Controller
     public function restore(Request $request, string $filename): RedirectResponse
     {
         $user = $request->user();
+        
+        // Guard 1: Require phone verification
+        if (is_null($user->phone_verified_at)) {
+            return redirect()->route('verify.otp')->with(
+                'error',
+                'Verifikasi WhatsApp diperlukan sebelum melakukan restore data. Silakan verifikasi nomor Anda terlebih dahulu.'
+            );
+        }
+
         $filename = $this->safeFilename($filename);
         $backupDir = $this->getBackupDir($request);
         $filePath = "{$backupDir}/{$filename}";
@@ -194,6 +221,15 @@ class BackupController extends Controller
         $tenantId = session('active_tenant_id', $user->tenant_id);
         if (! $tenantId || ! Tenant::whereKey($tenantId)->exists()) {
             abort(403, 'Tenant aktif tidak valid.');
+        }
+
+        // Guard 2: Block restore if subscription is on trial
+        $subscription = \App\Models\Subscription::where('tenant_id', $tenantId)->first();
+        if ($subscription && $subscription->status === 'trial') {
+            return back()->with(
+                'error',
+                'Restore data tidak tersedia untuk paket trial. Silakan upgrade ke paket berbayar terlebih dahulu untuk mengakses fitur restore.'
+            );
         }
 
         $exitCode = Artisan::call(TenantRestoreCommand::class, [
