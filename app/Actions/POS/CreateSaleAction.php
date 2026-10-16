@@ -75,15 +75,30 @@ class CreateSaleAction
 
             if ($hasKasbonPayment) {
                 if (!$customerId) {
-                    throw new InvalidArgumentException("Metode pembayaran Kasbon/Piutang wajib memilih Pelanggan Member!");
+                    throw new InvalidArgumentException('Metode pembayaran Kasbon/Piutang wajib memilih Pelanggan Member!');
                 }
+            }
+
+            // ✅ NEW: Enforce credit limit for ALL customers (both kasbon & cash)
+            if ($customerId) {
                 $customer = \App\Models\Customer::whereKey($customerId)
                     ->where('company_id', $companyId)
                     ->firstOrFail();
+                
                 $unpaidAmount = max(0, $grandTotal - $paidAmount);
-                if (($customer->credit_balance + $unpaidAmount) > $customer->credit_limit) {
-                    throw new InvalidArgumentException("Batas limit piutang/kasbon pelanggan {$customer->name} (Max Rp ".number_format((float) $customer->credit_limit, 0, ',', '.').") terlampaui!");
+                $projectedCredit = (float) $customer->credit_balance + $unpaidAmount;
+                $creditLimit = (float) $customer->credit_limit;
+
+                if ($projectedCredit > $creditLimit) {
+                    $limitStr = number_format($creditLimit, 0, ',', '.');
+                    $balanceStr = number_format((float) $customer->credit_balance, 0, ',', '.');
+                    $addStr = number_format($unpaidAmount, 0, ',', '.');
+                    throw new InvalidArgumentException(
+                        "Batas limit kredit pelanggan {$customer->name} telah terlampaui! " .
+                        "Limit: Rp {$limitStr}, Saldo: Rp {$balanceStr}, Tambahan: Rp {$addStr}."
+                    );
                 }
+
                 $customer->increment('credit_balance', $unpaidAmount);
             }
 

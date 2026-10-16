@@ -18,10 +18,14 @@ class Customer extends Model
         'phone',
         'email',
         'address',
+        'credit_balance',
+        'credit_limit',
         'debt_balance',
     ];
 
     protected $casts = [
+        'credit_balance' => 'decimal:2',
+        'credit_limit' => 'decimal:2',
         'debt_balance' => 'decimal:2',
     ];
 }
