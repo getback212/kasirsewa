@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\User\BulkImportUserRequest;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Models\Outlet;
@@ -307,4 +308,43 @@ class UserController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
-}
+
+    public function bulkImport(BulkImportUserRequest $request): RedirectResponse
+    {
+        $currentUser = $request->user();
+        $tenantId = session('active_tenant_id', $currentUser->tenant_id);
+
+        $file = $request->file('csv_file');
+        $results = \App\Services\User\BulkUserImportService::import(
+            $file,
+            $tenantId,
+            $currentUser->company_id ?? 1
+        );
+
+        if ($results['success'] === 0 && !empty($results['errors'])) {
+            return back()->with('error', 'Import gagal: '.implode(' | ', array_slice($results['errors'], 0, 3)));
+        }
+
+        $message = "{$results['success']} user berhasil diimport.";
+        if (!empty($results['errors'])) {
+            $errorCount = count($results['errors']);
+            $message .= " {$errorCount} baris error.";
+            AuditLogService::log(
+                action: 'USER_BULK_IMPORT_PARTIAL',
+                modelType: 'User',
+                modelId: 0,
+                newValues: ['imported' => $results['success'], 'errors' => $errorCount, 'total_rows' => $results['success'] + $errorCount]
+            );
+            
+            return back()->with('warning', $message)->with('errors', $results['errors']);
+        }
+
+        AuditLogService::log(
+            action: 'USER_BULK_IMPORT',
+            modelType: 'User',
+            modelId: 0,
+            newValues: ['count' => $results['success'], 'users' => $results['users']]
+        );
+
+        return back()->with('success', $message);
+    }

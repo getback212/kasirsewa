@@ -198,6 +198,7 @@ Route::middleware('auth')->group(function () {
         // Staff User Management Routes
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::post('/users/bulk-import', [UserController::class, 'bulkImport'])->name('users.bulk_import');
         Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
         Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle_status');
         Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
