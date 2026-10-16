@@ -181,6 +181,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 { name: 'Kelola Tenant SaaS', path: '/admin/tenants', icon: Building2, permission: 'manage-tenants' },
                 { name: 'Pengaturan Paket SaaS', path: '/admin/plans', icon: Sparkles, permission: 'manage-plans' },
                 { name: 'Rekening Pembayaran SaaS', path: '/admin/payment-settings', icon: CreditCard, permission: 'manage-plans' },
+                { name: 'Verifikasi Bukti Pembayaran', path: '/admin/payment-proofs', icon: Check, permission: 'manage-plans' },
                 { name: 'Notifikasi WA & Email SaaS', path: '/admin/notification-settings', icon: Sparkles, permission: 'manage-plans' },
                 { name: 'Riwayat Tagihan Invoice', path: '/invoices', icon: CreditCard, permission: 'view-reports-financial' },
             ]
