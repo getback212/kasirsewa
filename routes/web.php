@@ -130,7 +130,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/tenants/stop-impersonate', [TenantController::class, 'stopImpersonate'])->name('admin.tenants.stop_impersonate');
 
     // Admin Payment Proof Verification
-    Route::get('/admin/payment-proofs', [AdminPaymentProofController::class, 'index'])->name('admin.payment_proofs.index');
+    Route::get('/admin/payment-proofs', [AdminPaymentProofController::class, 'index'])
+        ->middleware('role:SUPER_ADMIN')
+        ->name('admin.payment_proofs.index');
 
     // Super Admin Enterprise Registration Routes
     Route::get('/admin/enterprise/create', [EnterpriseRegistrationController::class, 'create'])->name('admin.enterprise.create');
