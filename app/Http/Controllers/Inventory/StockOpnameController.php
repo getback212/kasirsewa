@@ -10,6 +10,7 @@ use App\Models\StockOpname;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -76,8 +77,13 @@ class StockOpnameController extends Controller
             );
 
             return redirect()->back()->with('success', 'Audit Stock Opname berhasil disimpan & stok gudang otomatis disesuaikan!');
+        } catch (\App\Exceptions\InventoryTransactionException $e) {
+            return redirect()->back()->with('error', $e->getUserMessage())->withInput();
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->with('error', $e->getMessage())->withInput();
         } catch (Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            Log::error('StockOpname store error: ' . $e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses audit stok. Hubungi admin jika masalah berlanjut.')->withInput();
         }
     }
 }
