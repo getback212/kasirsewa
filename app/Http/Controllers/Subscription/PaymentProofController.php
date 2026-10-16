@@ -49,9 +49,12 @@ class PaymentProofController extends Controller
         $path = $file->store('payment_proofs', 'public');
 
         // Update payment with proof
+        // Clear rejection reason if owner re-uploads (reset to pending verification)
         $payment->update([
             'payment_proof' => $path,
             'status' => 'pending', // Tunggu Super Admin verifikasi
+            'proof_rejection_reason' => null, // Clear previous rejection
+            'proof_verified_at' => null, // Clear previous verification
         ]);
 
         AuditLogService::log(
