@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminNotificationSettingController;
 use App\Http\Controllers\Admin\AdminPaymentSettingController;
+use App\Http\Controllers\Admin\AdminPaymentProofController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\EnterpriseRegistrationController;
 use App\Http\Controllers\Admin\PlanController;
@@ -127,6 +128,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/tenants/{id}', [TenantController::class, 'destroy'])->name('admin.tenants.destroy');
     Route::post('/admin/tenants/{id}/impersonate', [TenantController::class, 'impersonate'])->name('admin.tenants.impersonate');
     Route::post('/admin/tenants/stop-impersonate', [TenantController::class, 'stopImpersonate'])->name('admin.tenants.stop_impersonate');
+
+    // Admin Payment Proof Verification
+    Route::get('/admin/payment-proofs', [AdminPaymentProofController::class, 'index'])->name('admin.payment_proofs.index');
 
     // Super Admin Enterprise Registration Routes
     Route::get('/admin/enterprise/create', [EnterpriseRegistrationController::class, 'create'])->name('admin.enterprise.create');
