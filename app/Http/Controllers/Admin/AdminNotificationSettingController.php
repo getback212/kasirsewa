@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SaaSSetting;
 use App\Services\Audit\AuditLogService;
 use App\Services\Notification\NotificationDispatcherService;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,7 +18,7 @@ class AdminNotificationSettingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mengatur notifikasi billing multi-channel.');
         }
 
@@ -42,7 +43,7 @@ class AdminNotificationSettingController extends Controller
      */
     private function schedulerStatus(): string
     {
-        $event = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+        $event = collect(app(Schedule::class)->events())
             ->first(fn ($event) => str_contains($event->command ?? '', 'app:check-subscription-expiry'));
 
         if (! $event) {
@@ -67,7 +68,7 @@ class AdminNotificationSettingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang memperbarui notifikasi.');
         }
 
@@ -96,7 +97,7 @@ class AdminNotificationSettingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin.');
         }
 
@@ -112,7 +113,7 @@ class AdminNotificationSettingController extends Controller
             $target = preg_replace('/[^0-9]/', '', (string) SaaSSetting::get('wa_cs_number', ''));
         }
         if (str_starts_with($target, '0')) {
-            $target = '62' . substr($target, 1);
+            $target = '62'.substr($target, 1);
         }
         // Set di memori saja (tanpa save) agar dispatcher memakai nomor tes ini.
         $user->phone = $target !== '' ? $target : null;

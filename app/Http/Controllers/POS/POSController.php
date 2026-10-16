@@ -66,7 +66,7 @@ class POSController extends Controller
 
         $categories = Category::where('company_id', $user->company_id)->where('is_active', true)->get(['id', 'name']);
         $customers = Customer::where('company_id', $user->company_id)->get(['id', 'code', 'name', 'phone', 'points', 'credit_balance', 'credit_limit']);
-        $discounts = Discount::where('tenant_id', $activeOutletId ? \App\Models\Outlet::find($activeOutletId)?->tenant_id : null)
+        $discounts = Discount::where('tenant_id', $activeOutletId ? Outlet::find($activeOutletId)?->tenant_id : null)
             ->where('is_active', true)
             ->get();
 

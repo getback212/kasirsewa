@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 class TenantRestoreCommand extends Command
 {
     protected $signature = 'db:restore-tenant {filename : Path relatif file .sql.gz di storage/app/private} {--tenant= : ID tenant pemilik file}';
+
     protected $description = 'Memulihkan data satu tenant dari file backup tenant (format COPY SQL .sql.gz)';
 
     /** Tabel yang boleh di-restore, urutan hapus (anak dulu). */
@@ -37,6 +38,7 @@ class TenantRestoreCommand extends Command
         $tenantId = (int) $this->option('tenant');
         if ($tenantId <= 0 || ! DB::table('tenants')->where('id', $tenantId)->exists()) {
             $this->error("Tenant #{$this->option('tenant')} tidak ditemukan.");
+
             return Command::FAILURE;
         }
 
@@ -50,9 +52,10 @@ class TenantRestoreCommand extends Command
             || str_starts_with($relative, '/')
             || str_contains($relative, "\0")
             || ! str_starts_with($relative, $expectedDir)
-            || ! preg_match('/^tenant_' . $tenantId . '_backup_.+\.sql(\.gz)?$/', $baseName)
+            || ! preg_match('/^tenant_'.$tenantId.'_backup_.+\.sql(\.gz)?$/', $baseName)
         ) {
             $this->error('File backup tidak valid untuk tenant ini.');
+
             return Command::FAILURE;
         }
 
@@ -60,15 +63,17 @@ class TenantRestoreCommand extends Command
         $disk = Storage::disk('local');
         if (! $disk->exists($relative)) {
             $this->error('File backup tidak ditemukan.');
+
             return Command::FAILURE;
         }
 
         $diskRoot = realpath($disk->path('.'));
         $fullPath = realpath($disk->path($relative));
         if ($fullPath === false || $diskRoot === false
-            || ! str_starts_with($fullPath, $diskRoot . DIRECTORY_SEPARATOR)
+            || ! str_starts_with($fullPath, $diskRoot.DIRECTORY_SEPARATOR)
         ) {
             $this->error('File backup tidak valid.');
+
             return Command::FAILURE;
         }
 
@@ -76,17 +81,20 @@ class TenantRestoreCommand extends Command
             $parsed = self::parseFile($fullPath);
         } catch (\RuntimeException $e) {
             $this->error($e->getMessage());
+
             return Command::FAILURE;
         }
 
         if ($parsed['header_tenant_id'] !== $tenantId || ! $parsed['is_tenant_backup']) {
             $this->error('File backup bukan milik tenant ini.');
+
             return Command::FAILURE;
         }
 
         $blocks = $parsed['blocks'];
         if (empty($blocks)) {
             $this->error('File backup tidak berisi data tenant yang valid.');
+
             return Command::FAILURE;
         }
 
@@ -95,6 +103,7 @@ class TenantRestoreCommand extends Command
         $contentError = self::validateBelongsToTenant($parsed, $tenantId);
         if ($contentError !== null) {
             $this->error($contentError);
+
             return Command::FAILURE;
         }
 
@@ -113,7 +122,7 @@ class TenantRestoreCommand extends Command
 
         $this->fixSequences(array_keys($blocks));
 
-        $this->info("Restore tenant #{$tenantId} berhasil: {$restoredRows} baris dari " . basename($fullPath));
+        $this->info("Restore tenant #{$tenantId} berhasil: {$restoredRows} baris dari ".basename($fullPath));
 
         return Command::SUCCESS;
     }
@@ -145,10 +154,12 @@ class TenantRestoreCommand extends Command
 
                 if (str_starts_with($line, '-- KasirSewa tenant backup')) {
                     $isTenantBackup = true;
+
                     continue;
                 }
                 if (preg_match('/^-- tenant_id: (\d+)$/', $line, $m)) {
                     $headerTenantId = (int) $m[1];
+
                     continue;
                 }
                 if (str_starts_with($line, '--') || $line === '') {
@@ -161,6 +172,7 @@ class TenantRestoreCommand extends Command
                         if (! in_array($table, self::DELETE_ORDER, true)) {
                             // Blok global (tenants/companies) atau tak dikenal: lewati.
                             self::skipBlock($readLine);
+
                             continue;
                         }
                         $currentTable = $table;
@@ -170,12 +182,14 @@ class TenantRestoreCommand extends Command
                         );
                         $blocks[$currentTable] = ['columns' => $currentColumns, 'rows' => []];
                     }
+
                     continue;
                 }
 
                 if ($line === '\.') {
                     $currentTable = null;
                     $currentColumns = [];
+
                     continue;
                 }
 
@@ -273,6 +287,7 @@ class TenantRestoreCommand extends Command
             if (! isset($blocks[$table]) || ! in_array('id', $blocks[$table]['columns'], true)) {
                 return [];
             }
+
             return array_map(strval(...), array_column($blocks[$table]['rows'], 'id'));
         };
 

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -19,8 +20,8 @@ use Illuminate\Database\Eloquent\Builder;
 final class StaffScope
 {
     /**
-     * @param  Builder<\App\Models\User>  $query
-     * @return Builder<\App\Models\User>
+     * @param  Builder<User>  $query
+     * @return Builder<User>
      */
     public static function apply(Builder $query, ?int $tenantId): Builder
     {
@@ -37,7 +38,7 @@ final class StaffScope
      * Tenant a user may manage staff in: the session's active tenant, else the
      * account's own tenant.
      */
-    public static function tenantIdFor(\App\Models\User $user): ?int
+    public static function tenantIdFor(User $user): ?int
     {
         $active = session('active_tenant_id');
 

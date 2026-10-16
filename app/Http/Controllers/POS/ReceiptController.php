@@ -16,8 +16,8 @@ class ReceiptController extends Controller
         $user = $request->user();
         $query = Sale::with(['outlet.company', 'cashier', 'customer', 'items', 'payments']);
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
-            if (!$user->company_id) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
+            if (! $user->company_id) {
                 abort(403, 'Akun Anda belum terhubung ke company manapun.');
             }
 
@@ -40,8 +40,8 @@ class ReceiptController extends Controller
         $user = $request->user();
         $query = Sale::with(['outlet.company', 'cashier', 'customer', 'items', 'payments']);
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
-            if (!$user->company_id) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
+            if (! $user->company_id) {
                 abort(403, 'Akun Anda belum terhubung ke company manapun.');
             }
 

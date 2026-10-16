@@ -14,7 +14,7 @@ class SupplierController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('create-suppliers')) {
+        if (! $user->hasPermissionTo('create-suppliers')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menambah data supplier.');
         }
 
@@ -45,7 +45,7 @@ class SupplierController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('edit-suppliers')) {
+        if (! $user->hasPermissionTo('edit-suppliers')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengubah data supplier.');
         }
 
@@ -76,7 +76,7 @@ class SupplierController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('delete-suppliers')) {
+        if (! $user->hasPermissionTo('delete-suppliers')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus data supplier.');
         }
 

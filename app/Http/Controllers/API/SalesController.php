@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Outlet;
 use App\Models\Sale;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SalesController extends Controller
 {
@@ -19,11 +20,11 @@ class SalesController extends Controller
         $dateTo = $request->date('date_to');
 
         // Validate outlet belongs to user's company
-        $outletExists = \App\Models\Outlet::where('id', $outletId)
+        $outletExists = Outlet::where('id', $outletId)
             ->where('company_id', $user->company_id)
             ->exists();
 
-        if (!$outletExists) {
+        if (! $outletExists) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Outlet tidak ditemukan atau tidak sesuai dengan perusahaan Anda.',
@@ -82,7 +83,7 @@ class SalesController extends Controller
             ->whereHas('outlet', fn ($q) => $q->where('company_id', $user->company_id))
             ->first();
 
-        if (!$sale) {
+        if (! $sale) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Transaksi penjualan tidak ditemukan.',
@@ -124,11 +125,11 @@ class SalesController extends Controller
         $dateTo = $request->date('date_to');
 
         // Validate outlet belongs to user's company
-        $outletExists = \App\Models\Outlet::where('id', $outletId)
+        $outletExists = Outlet::where('id', $outletId)
             ->where('company_id', $user->company_id)
             ->exists();
 
-        if (!$outletExists) {
+        if (! $outletExists) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Outlet tidak ditemukan atau tidak sesuai dengan perusahaan Anda.',

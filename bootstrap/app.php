@@ -1,16 +1,19 @@
 <?php
 
+use App\Exceptions\KasirSewaException;
+use App\Http\Middleware\ApiAuthenticate;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeadersMiddleware;
+use App\Http\Middleware\SubscriptionAccessMiddleware;
+use App\Http\Middleware\TenantContextMiddleware;
+use App\Http\Middleware\TenantDomainResolver;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\SecurityHeadersMiddleware;
-use App\Http\Middleware\TenantContextMiddleware;
-use App\Http\Middleware\TenantDomainResolver;
-use App\Http\Middleware\SubscriptionAccessMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Http\Middleware\ApiAuthenticate;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -46,8 +49,8 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         // Handle KasirSewaException: render user-friendly message, log internal details
-        $exceptions->render(function (\App\Exceptions\KasirSewaException $e, Request $request) {
-            Log::error('KasirSewaException: ' . $e->getMessage());
+        $exceptions->render(function (KasirSewaException $e, Request $request) {
+            Log::error('KasirSewaException: '.$e->getMessage());
 
             if ($request->expectsJson()) {
                 return $e->render();
@@ -57,8 +60,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Handle InvalidArgumentException: generic validation errors
-        $exceptions->render(function (\InvalidArgumentException $e, Request $request) {
-            Log::warning('InvalidArgumentException: ' . $e->getMessage());
+        $exceptions->render(function (InvalidArgumentException $e, Request $request) {
+            Log::warning('InvalidArgumentException: '.$e->getMessage());
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => $e->getMessage(), 'error' => true], 400);
@@ -68,8 +71,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Handle PDOException: database errors (generic message to user)
-        $exceptions->render(function (\PDOException $e, Request $request) {
-            Log::error('Database error: ' . $e->getMessage());
+        $exceptions->render(function (PDOException $e, Request $request) {
+            Log::error('Database error: '.$e->getMessage());
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Database error. Please contact support.', 'error' => true], 500);
@@ -79,8 +82,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Handle QueryException: Eloquent errors
-        $exceptions->render(function (\Illuminate\Database\QueryException $e, Request $request) {
-            Log::error('Query exception: ' . $e->getMessage());
+        $exceptions->render(function (QueryException $e, Request $request) {
+            Log::error('Query exception: '.$e->getMessage());
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Database error. Please contact support.', 'error' => true], 500);
@@ -90,8 +93,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Handle ModelNotFoundException: resource not found
-        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, Request $request) {
-            Log::warning('Model not found: ' . $e->getMessage());
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
+            Log::warning('Model not found: '.$e->getMessage());
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Resource not found.', 'error' => true], 404);

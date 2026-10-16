@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Outlet;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -13,8 +15,8 @@ return new class extends Migration
         });
 
         // Isi token acak untuk outlet yang sudah ada.
-        foreach (\App\Models\Outlet::whereNull('display_pair_token')->cursor() as $outlet) {
-            $outlet->update(['display_pair_token' => 'DISP-'.mb_strtoupper(\Illuminate\Support\Str::random(12))]);
+        foreach (Outlet::whereNull('display_pair_token')->cursor() as $outlet) {
+            $outlet->update(['display_pair_token' => 'DISP-'.mb_strtoupper(Str::random(12))]);
         }
     }
 

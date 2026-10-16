@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
-use App\Models\Outlet;
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\Company;
+use App\Models\Outlet;
+use App\Models\Tenant;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class TenantNameSyncTest extends TestCase
@@ -17,7 +19,7 @@ class TenantNameSyncTest extends TestCase
 
     public function disabled_test_updating_outlet_name_syncs_tenant_name_for_super_admin_legacy()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $tenant = Tenant::create([
             'name' => 'Toko Lawas Google',
@@ -25,7 +27,7 @@ class TenantNameSyncTest extends TestCase
             'status' => 'active',
         ]);
 
-        $company = \App\Models\Company::create([
+        $company = Company::create([
             'tenant_id' => $tenant->id,
             'name' => 'Toko Lawas Google',
         ]);

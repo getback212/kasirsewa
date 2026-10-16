@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\QRISNotificationController;
 use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\InventoryController;
+use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\QRISNotificationController;
 use App\Http\Controllers\API\SalesController;
 use App\Http\Controllers\POS\BarcodeController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

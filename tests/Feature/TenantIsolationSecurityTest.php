@@ -115,7 +115,7 @@ class TenantIsolationSecurityTest extends TestCase
 
         $caught = false;
         try {
-            (new CloseShiftAction())->execute(
+            (new CloseShiftAction)->execute(
                 shiftId: $shift->id,
                 actualCash: 0.0,
                 userId: $owner2->id

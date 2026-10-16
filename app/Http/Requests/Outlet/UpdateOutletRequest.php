@@ -15,7 +15,7 @@ class UpdateOutletRequest extends FormRequest
     public function rules(): array
     {
         $outletId = $this->route('id');
-        
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'code' => ['sometimes', 'required', 'string', 'max:50', Rule::unique('outlets', 'code')->ignore($outletId)],

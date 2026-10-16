@@ -2,12 +2,12 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Http\Request;
-use Inertia\Middleware;
 use App\Models\Outlet;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\Product;
+use Illuminate\Http\Request;
+use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -21,7 +21,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        
+
         $currentOutletId = session('active_outlet_id');
         $currentOutlet = null;
         $availableOutlets = [];
@@ -45,7 +45,7 @@ class HandleInertiaRequests extends Middleware
                     $currentOutlet = $availableOutlets->firstWhere('id', $currentOutletId);
                 }
 
-                if (!$currentOutlet && $availableOutlets->count() > 0) {
+                if (! $currentOutlet && $availableOutlets->count() > 0) {
                     $currentOutlet = $availableOutlets->firstWhere('id', $user->outlet_id) ?? $availableOutlets->first();
                     session(['active_outlet_id' => $currentOutlet?->id]);
                 }

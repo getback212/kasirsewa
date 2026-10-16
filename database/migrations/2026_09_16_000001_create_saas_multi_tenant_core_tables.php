@@ -44,7 +44,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
             $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
             $table->enum('status', [
-                'trial', 'pending', 'active', 'past_due', 'grace_period', 'suspended', 'expired', 'cancelled'
+                'trial', 'pending', 'active', 'past_due', 'grace_period', 'suspended', 'expired', 'cancelled',
             ])->default('trial');
             $table->enum('billing_cycle', ['monthly', 'yearly'])->default('monthly');
             $table->timestamp('starts_at')->nullable();

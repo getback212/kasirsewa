@@ -2,17 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
-use App\Models\Company;
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\Company;
+use App\Models\Tenant;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class TenantDomainUpdateTest extends TestCase
 {
     public function test_owner_can_update_subdomain_and_custom_domain_successfully()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $tenant = Tenant::create([
             'name' => 'Toko Subdomain Test',

@@ -2,13 +2,12 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Invoice;
 use App\Models\SaaSPayment;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Audit\AuditLogService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Exception;
 
 class PaymentService
 {
@@ -24,7 +23,7 @@ class PaymentService
                 return true;
             }
 
-            $paymentTime = $paidAt ? \Carbon\Carbon::parse($paidAt) : now();
+            $paymentTime = $paidAt ? Carbon::parse($paidAt) : now();
 
             $payment->update([
                 'status' => 'completed',
@@ -43,7 +42,7 @@ class PaymentService
                     $subscription = Subscription::find($invoice->subscription_id);
                     if ($subscription) {
                         $daysToAdd = $subscription->billing_cycle === 'yearly' ? 365 : 30;
-                        
+
                         $newStartsAt = $subscription->expires_at && $subscription->expires_at->isFuture()
                             ? $subscription->starts_at
                             : now();

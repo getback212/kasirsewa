@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -24,7 +26,7 @@ class WhatsAppOtpVerificationTest extends TestCase
 
     public function test_google_user_can_view_otp_page_send_otp_and_verify_whatsapp()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         $this->fakeGateway();
 
         $googleUser = User::factory()->create([
@@ -68,7 +70,7 @@ class WhatsAppOtpVerificationTest extends TestCase
 
     public function test_cashier_can_send_otp_and_verify_whatsapp_redirecting_to_pos()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         $this->fakeGateway();
 
         $cashier = User::factory()->create([
@@ -107,7 +109,7 @@ class WhatsAppOtpVerificationTest extends TestCase
      */
     public function test_otp_send_fails_closed_when_the_gateway_rejects_the_message()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         $this->fakeGateway();
 
         $user = User::factory()->create([
@@ -134,7 +136,7 @@ class WhatsAppOtpVerificationTest extends TestCase
      */
     public function test_otp_send_fails_closed_when_the_gateway_is_unreachable()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         $this->fakeGateway('http://unreachable-gateway.invalid/send');
 
         $user = User::factory()->create([
@@ -144,7 +146,7 @@ class WhatsAppOtpVerificationTest extends TestCase
         $user->assignRole(UserRole::OWNER->value);
 
         Http::fake([
-            'http://unreachable-gateway.invalid/*' => fn () => throw new \Illuminate\Http\Client\ConnectionException('Connection refused'),
+            'http://unreachable-gateway.invalid/*' => fn () => throw new ConnectionException('Connection refused'),
         ]);
 
         $response = $this->actingAs($user)->post('/verify-otp/send', [

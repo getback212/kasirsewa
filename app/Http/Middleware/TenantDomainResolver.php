@@ -31,7 +31,7 @@ class TenantDomainResolver
 
         // A host under our own base domain that maps to no tenant is a dead
         // subdomain — surface 404 instead of silently landing on the main app.
-        if (! $tenant && str_ends_with($host, '.' . TenantDomain::BASE_DOMAIN)) {
+        if (! $tenant && str_ends_with($host, '.'.TenantDomain::BASE_DOMAIN)) {
             abort(404, 'Tenant tidak ditemukan.');
         }
 

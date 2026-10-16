@@ -3,9 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\Subscription;
+use Database\Seeders\RolePermissionSeeder;
 use Laravel\Socialite\Facades\Socialite;
 use Mockery;
 use Tests\TestCase;
@@ -18,7 +19,7 @@ class GoogleAuthTenantRegistrationTest extends TestCase
      */
     public function test_unregistered_user_via_google_redirects_to_register()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
         $abstractUser->shouldReceive('getId')->andReturn('112233445566778899');
@@ -33,7 +34,7 @@ class GoogleAuthTenantRegistrationTest extends TestCase
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
         $response = $this->get('/auth/google/callback');
-        
+
         // ✅ FIXED: Redirect to /register, not /dashboard
         $response->assertRedirect('/register');
         $response->assertSessionHas('info', '📧 Email Anda belum terdaftar. Silakan daftar terlebih dahulu untuk membuat toko baru.');
@@ -55,7 +56,7 @@ class GoogleAuthTenantRegistrationTest extends TestCase
      */
     public function test_existing_user_via_google_redirects_to_dashboard()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         // 1. Create existing user
         $plan = Plan::where('slug', 'starter-basic')->first() ?? Plan::create([

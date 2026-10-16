@@ -2,6 +2,7 @@
 
 namespace App\Actions\Shifts;
 
+use App\Models\Outlet;
 use App\Models\Shift;
 use InvalidArgumentException;
 
@@ -18,7 +19,7 @@ class OpenShiftAction
             throw new InvalidArgumentException('Anda sudah memiliki sesi shift kasir yang sedang aktif!');
         }
 
-        $outlet = \App\Models\Outlet::find($outletId);
+        $outlet = Outlet::find($outletId);
         $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
 
         return Shift::create([

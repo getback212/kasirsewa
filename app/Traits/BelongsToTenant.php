@@ -19,7 +19,7 @@ trait BelongsToTenant
 
         static::addGlobalScope('tenant_isolation', function (Builder $builder) {
             if (session()->has('active_tenant_id')) {
-                $builder->where($builder->getModel()->getTable() . '.tenant_id', session('active_tenant_id'));
+                $builder->where($builder->getModel()->getTable().'.tenant_id', session('active_tenant_id'));
             }
         });
     }

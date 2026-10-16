@@ -6,10 +6,11 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Outlet extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use BelongsToTenant, HasFactory;
 
     protected $fillable = [
         'company_id',
@@ -34,8 +35,8 @@ class Outlet extends Model
     {
         if (! $this->display_pair_token) {
             do {
-                $token = 'DISP-'.mb_strtoupper(\Illuminate\Support\Str::random(12));
-            } while (\App\Models\Outlet::where('display_pair_token', $token)->exists());
+                $token = 'DISP-'.mb_strtoupper(Str::random(12));
+            } while (Outlet::where('display_pair_token', $token)->exists());
 
             $this->forceFill(['display_pair_token' => $token])->save();
         }
@@ -47,7 +48,7 @@ class Outlet extends Model
     {
         static::creating(function (self $outlet) {
             if (! $outlet->display_pair_token) {
-                $outlet->display_pair_token = 'DISP-'.mb_strtoupper(\Illuminate\Support\Str::random(12));
+                $outlet->display_pair_token = 'DISP-'.mb_strtoupper(Str::random(12));
             }
         });
     }

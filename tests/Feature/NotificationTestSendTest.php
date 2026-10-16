@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\SaaSSetting;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -49,7 +50,7 @@ class NotificationTestSendTest extends TestCase
     {
         config()->set('services.wa.api_key', 'test-wa-key');
         config()->set('services.wa.gateway_url', 'http://kasirsewa_whatsapp:3001/send');
-        \App\Models\SaaSSetting::set('wa_cs_number', '');
+        SaaSSetting::set('wa_cs_number', '');
         Http::fake(['*' => Http::response(['success' => true], 200)]);
 
         $response = $this->actingAs($this->superAdmin())

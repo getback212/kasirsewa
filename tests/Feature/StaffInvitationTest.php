@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\Outlet;
+use App\Models\Tenant;
 use App\Models\User;
-use App\Enums\UserRole;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -14,7 +15,7 @@ class StaffInvitationTest extends TestCase
 {
     public function test_owner_can_create_staff_and_send_gmail_and_whatsapp_invitation()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
         Mail::fake();
 
         $tenant = Tenant::create(['name' => 'Toko Invite Test', 'slug' => 'toko-invite-test', 'status' => 'active']);

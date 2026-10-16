@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreCustomerRequest;
-use App\Http\Requests\Customer\UpdateCustomerRequest;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Tenant;
-use App\Models\Company;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,12 +19,12 @@ class CustomerController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('view-customers')) {
+        if (! $user->hasPermissionTo('view-customers')) {
             abort(403, 'Anda tidak memiliki hak akses melihat data pelanggan member.');
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        if (!$tenantId && $user->hasRole('SUPER_ADMIN')) {
+        if (! $tenantId && $user->hasRole('SUPER_ADMIN')) {
             $firstTenant = Tenant::first();
             $tenantId = $firstTenant?->id;
         }
@@ -39,8 +38,8 @@ class CustomerController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('phone', 'ILIKE', "%{$search}%")
-                  ->orWhere('code', 'ILIKE', "%{$search}%");
+                    ->orWhere('phone', 'ILIKE', "%{$search}%")
+                    ->orWhere('code', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -57,7 +56,7 @@ class CustomerController extends Controller
         $validated = $request->validated();
 
         $tenantId = session('active_tenant_id', $request->user()->tenant_id);
-        if (!$tenantId && $request->user()->hasRole('SUPER_ADMIN')) {
+        if (! $tenantId && $request->user()->hasRole('SUPER_ADMIN')) {
             $firstTenant = Tenant::first();
             $tenantId = $firstTenant?->id ?? 1;
         }
@@ -88,14 +87,14 @@ class CustomerController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('delete-customers')) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('delete-customers')) {
             abort(403, 'Anda tidak memiliki hak akses menghapus data pelanggan member.');
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        
+
         $query = Customer::query();
-        if (!$user->hasRole('SUPER_ADMIN') && $tenantId) {
+        if (! $user->hasRole('SUPER_ADMIN') && $tenantId) {
             $query->where('tenant_id', $tenantId);
         }
 
@@ -134,6 +133,6 @@ class CustomerController extends Controller
             'remaining_credit' => $customer->credit_balance,
         ]);
 
-        return redirect()->back()->with('success', "Pelunasan piutang/kasbon member {$customer->name} sebesar Rp " . number_format($payAmount, 0, ',', '.') . " berhasil dicatat!");
+        return redirect()->back()->with('success', "Pelunasan piutang/kasbon member {$customer->name} sebesar Rp ".number_format($payAmount, 0, ',', '.').' berhasil dicatat!');
     }
 }

@@ -2,14 +2,18 @@
 
 namespace App\Actions\POS;
 
-use App\Models\Sale;
-use App\Models\SaleItem;
-use App\Models\Payment;
-use App\Models\Product;
 use App\Actions\Inventory\AdjustStockAction;
 use App\Actions\Inventory\ValidateStockAvailabilityAction;
-use App\Enums\StockMovementType;
 use App\Enums\SaleStatus;
+use App\Enums\StockMovementType;
+use App\Exceptions\CreditLimitExceededException;
+use App\Models\Customer;
+use App\Models\Outlet;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -52,12 +56,12 @@ class CreateSaleAction
             $pointsUsed,
             $pointsDiscountAmount
         ) {
-            $companyId = \App\Models\User::findOrFail($cashierId)->company_id;
-            if (!$companyId) {
+            $companyId = User::findOrFail($cashierId)->company_id;
+            if (! $companyId) {
                 throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
             }
 
-            $outlet = \App\Models\Outlet::whereKey($outletId)
+            $outlet = Outlet::whereKey($outletId)
                 ->where('company_id', $companyId)
                 ->firstOrFail();
             $tenantId = $outlet->tenant_id ?? session('active_tenant_id');
@@ -75,28 +79,28 @@ class CreateSaleAction
 
             $totalPaymentsAmount = array_sum(array_column($payments, 'amount'));
 
-            if (!$hasKasbonPayment && $totalPaymentsAmount < $grandTotal) {
-                throw new InvalidArgumentException("Jumlah nominal pembayaran (Rp ".number_format($totalPaymentsAmount, 0, ',', '.').") kurang dari Grand Total (Rp ".number_format($grandTotal, 0, ',', '.').")!");
+            if (! $hasKasbonPayment && $totalPaymentsAmount < $grandTotal) {
+                throw new InvalidArgumentException('Jumlah nominal pembayaran (Rp '.number_format($totalPaymentsAmount, 0, ',', '.').') kurang dari Grand Total (Rp '.number_format($grandTotal, 0, ',', '.').')!');
             }
 
             if ($hasKasbonPayment) {
-                if (!$customerId) {
+                if (! $customerId) {
                     throw new InvalidArgumentException('Metode pembayaran Kasbon/Piutang wajib memilih Pelanggan Member!');
                 }
             }
 
             // ✅ NEW: Enforce credit limit for ALL customers (both kasbon & cash)
             if ($customerId) {
-                $customer = \App\Models\Customer::whereKey($customerId)
+                $customer = Customer::whereKey($customerId)
                     ->where('company_id', $companyId)
                     ->firstOrFail();
-                
+
                 $unpaidAmount = max(0, $grandTotal - $paidAmount);
                 $projectedCredit = (float) $customer->credit_balance + $unpaidAmount;
                 $creditLimit = (float) $customer->credit_limit;
 
                 if ($projectedCredit > $creditLimit) {
-                    throw new \App\Exceptions\CreditLimitExceededException(
+                    throw new CreditLimitExceededException(
                         $customer->name,
                         $creditLimit,
                         (float) $customer->credit_balance,
@@ -109,7 +113,7 @@ class CreateSaleAction
 
             // Reward / Redeem Loyalty Points
             if ($customerId) {
-                $customer = \App\Models\Customer::whereKey($customerId)
+                $customer = Customer::whereKey($customerId)
                     ->where('company_id', $companyId)
                     ->first();
                 if ($customer) {

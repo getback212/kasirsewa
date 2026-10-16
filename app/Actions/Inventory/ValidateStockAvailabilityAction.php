@@ -2,9 +2,9 @@
 
 namespace App\Actions\Inventory;
 
-use App\Models\Stock;
 use App\Exceptions\InsufficientStockException;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\Stock;
 
 /**
  * Validate stock availability BEFORE transaction
@@ -14,9 +14,9 @@ class ValidateStockAvailabilityAction
 {
     /**
      * Validate that all items have sufficient stock at outlet
-     * 
-     * @param int $outletId
-     * @param array $items - array of ['product_id' => int, 'quantity' => float]
+     *
+     * @param  array  $items  - array of ['product_id' => int, 'quantity' => float]
+     *
      * @throws InsufficientStockException if any item lacks stock
      */
     public function execute(int $outletId, array $items): void
@@ -34,7 +34,7 @@ class ValidateStockAvailabilityAction
             $availableQty = $stock ? (float) $stock->quantity : 0.00;
 
             if ($availableQty < $requestedQty) {
-                $product = \App\Models\Product::find($productId);
+                $product = Product::find($productId);
                 throw new InsufficientStockException(
                     $product->name ?? "Product #$productId",
                     (int) $requestedQty,

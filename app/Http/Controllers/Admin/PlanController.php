@@ -17,7 +17,7 @@ class PlanController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mengelola paket berlangganan SaaS.');
         }
 
@@ -32,7 +32,7 @@ class PlanController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Aksi ini hanya untuk Super Admin.');
         }
 
@@ -76,7 +76,7 @@ class PlanController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Aksi ini hanya untuk Super Admin.');
         }
 

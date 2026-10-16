@@ -2,10 +2,10 @@
 
 namespace App\Services\Report;
 
-use App\Models\Sale;
 use App\Models\Expense;
-use App\Models\Shift;
 use App\Models\Payment;
+use App\Models\Sale;
+use App\Models\Shift;
 use App\Services\Notification\NotificationDispatcherService;
 use Illuminate\Support\Facades\Log;
 
@@ -31,7 +31,7 @@ class DailyClosingReportService
 
             return $summary;
         } catch (\Throwable $e) {
-            Log::error('DailyClosingReport generation failed: ' . $e->getMessage(), [
+            Log::error('DailyClosingReport generation failed: '.$e->getMessage(), [
                 'shift_id' => $shift->id,
                 'exception' => $e,
             ]);
@@ -60,13 +60,13 @@ class DailyClosingReportService
         // 2. Payment method breakdown
         $paymentBreakdown = Payment::whereHas('sale', function ($q) use ($shift, $startTime, $endTime) {
             $q->where('outlet_id', $shift->outlet_id)
-              ->where('cashier_id', $shift->user_id)
-              ->whereBetween('created_at', [$startTime, $endTime])
-              ->where('status', 'completed');
+                ->where('cashier_id', $shift->user_id)
+                ->whereBetween('created_at', [$startTime, $endTime])
+                ->where('status', 'completed');
         })->groupBy('payment_method')
-          ->selectRaw('payment_method, SUM(amount) as total, COUNT(*) as count')
-          ->get()
-          ->mapWithKeys(fn ($p) => [$p->payment_method => ['total' => (float) $p->total, 'count' => (int) $p->count]]);
+            ->selectRaw('payment_method, SUM(amount) as total, COUNT(*) as count')
+            ->get()
+            ->mapWithKeys(fn ($p) => [$p->payment_method => ['total' => (float) $p->total, 'count' => (int) $p->count]]);
 
         // 3. Expenses
         $expenses = Expense::where('outlet_id', $shift->outlet_id)
@@ -136,24 +136,24 @@ class DailyClosingReportService
         $csv .= "RINGKASAN PENJUALAN\n";
         $csv .= "Total Transaksi,{$summary['total_transactions']}\n";
         $csv .= "Total Item,{$summary['total_items']}\n";
-        $csv .= "Total Penjualan," . number_format($summary['total_sales'], 0) . "\n";
-        $csv .= "Diskon," . number_format($summary['total_discount'], 0) . "\n";
-        $csv .= "Pajak," . number_format($summary['total_tax'], 0) . "\n\n";
+        $csv .= 'Total Penjualan,'.number_format($summary['total_sales'], 0)."\n";
+        $csv .= 'Diskon,'.number_format($summary['total_discount'], 0)."\n";
+        $csv .= 'Pajak,'.number_format($summary['total_tax'], 0)."\n\n";
 
         $csv .= "PENGELUARAN\n";
-        $csv .= "Total Biaya," . number_format($summary['total_expenses'], 0) . "\n";
+        $csv .= 'Total Biaya,'.number_format($summary['total_expenses'], 0)."\n";
         foreach ($summary['expense_categories'] as $category => $amount) {
-            $csv .= "{$category}," . number_format($amount, 0) . "\n";
+            $csv .= "{$category},".number_format($amount, 0)."\n";
         }
         $csv .= "\n";
 
         $csv .= "KEUNTUNGAN\n";
-        $csv .= "Profit," . number_format($summary['profit'], 0) . "\n";
-        $csv .= "Profit Margin," . $summary['profit_margin'] . "%\n\n";
+        $csv .= 'Profit,'.number_format($summary['profit'], 0)."\n";
+        $csv .= 'Profit Margin,'.$summary['profit_margin']."%\n\n";
 
         $csv .= "METODE PEMBAYARAN\n";
         foreach ($summary['payment_breakdown'] as $method => $data) {
-            $csv .= "{$method}," . number_format($data['total'], 0) . ",({$data['count']} transaksi)\n";
+            $csv .= "{$method},".number_format($data['total'], 0).",({$data['count']} transaksi)\n";
         }
 
         return $csv;

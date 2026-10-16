@@ -31,7 +31,9 @@ class NotificationDispatcherService
     {
         $tenant = $sub->tenant;
         $owner = $tenant->owner ?? User::where('tenant_id', $sub->tenant_id)->first();
-        if (!$owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $title = "Pengingat Tagihan SaaS (H-{$daysRemaining})";
         $formattedDate = $sub->expires_at ? $sub->expires_at->format('d M Y') : 'segera';
@@ -44,7 +46,9 @@ class NotificationDispatcherService
     {
         $tenant = $sub->tenant;
         $owner = $tenant->owner ?? User::where('tenant_id', $sub->tenant_id)->first();
-        if (!$owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $title = 'Masa Aktif Berlangganan Berakhir (Masa Tenggang 7 Hari)';
         $graceDate = $sub->grace_until ? $sub->grace_until->format('d M Y') : '7 hari ke depan';
@@ -57,7 +61,9 @@ class NotificationDispatcherService
     {
         $tenant = $sub->tenant;
         $owner = $tenant->owner ?? User::where('tenant_id', $sub->tenant_id)->first();
-        if (!$owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $title = 'Layanan SaaS Di-Suspend Sementara';
         $message = "Halo {$owner->name}, masa tenggang berlangganan toko {$tenant->name} telah berakhir. Akses kasir di-suspend sementara. Data Anda tersimpan aman dan akan aktif kembali setelah konfirmasi pembayaran.";
@@ -69,7 +75,9 @@ class NotificationDispatcherService
     {
         $tenant = Tenant::find($tenantId);
         $owner = $tenant->owner ?? User::where('tenant_id', $tenantId)->where('is_active', true)->first();
-        if (!$owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $title = "Stok Produk Menipis: {$productName}";
         $message = "Halo {$owner->name}, stok produk '{$productName}' di toko {$tenant->name} menipis. Stok tersisa: {$currentStock} unit (minimum: {$minStock} unit). Segera lakukan pemesanan kembali.";
@@ -81,10 +89,12 @@ class NotificationDispatcherService
     {
         $tenant = Tenant::find($tenantId);
         $owner = $tenant->owner ?? User::where('tenant_id', $tenantId)->where('is_active', true)->first();
-        if (!$owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $title = 'Pembayaran Gagal';
-        $message = "Halo {$owner->name}, transaksi pembayaran sebesar Rp " . number_format($amount, 0, ',', '.') . " di toko {$tenant->name} gagal diproses. Alasan: {$reason}. Silakan coba lagi atau hubungi tim support.";
+        $message = "Halo {$owner->name}, transaksi pembayaran sebesar Rp ".number_format($amount, 0, ',', '.')." di toko {$tenant->name} gagal diproses. Alasan: {$reason}. Silakan coba lagi atau hubungi tim support.";
 
         static::dispatch($tenantId, $owner->id, 'PAYMENT_FAILURE', $title, $message, $owner);
     }
@@ -93,7 +103,9 @@ class NotificationDispatcherService
     {
         $tenant = Tenant::find($tenantId);
         $owner = $tenant->owner ?? User::where('tenant_id', $tenantId)->where('is_active', true)->first();
-        if (!$owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $totalSales = number_format($summary['total_sales'] ?? 0, 0, ',', '.');
         $totalTransactions = $summary['total_transactions'] ?? 0;
@@ -102,11 +114,11 @@ class NotificationDispatcherService
 
         $title = 'Laporan Penutupan Harian Toko';
         $message = "Halo {$owner->name}, berikut ringkasan penjualan toko {$tenant->name} hari ini:\n\n"
-            . "Total Penjualan: Rp {$totalSales}\n"
-            . "Jumlah Transaksi: {$totalTransactions}\n"
-            . "Total Biaya: Rp {$totalExpenses}\n"
-            . "Keuntungan: Rp {$profit}\n\n"
-            . "Lihat laporan lengkap di portal: https://saas.superbackend.my.id/reports";
+            ."Total Penjualan: Rp {$totalSales}\n"
+            ."Jumlah Transaksi: {$totalTransactions}\n"
+            ."Total Biaya: Rp {$totalExpenses}\n"
+            ."Keuntungan: Rp {$profit}\n\n"
+            .'Lihat laporan lengkap di portal: https://saas.superbackend.my.id/reports';
 
         static::dispatch($tenantId, $owner->id, 'DAILY_REPORT', $title, $message, $owner);
     }
@@ -114,7 +126,9 @@ class NotificationDispatcherService
     public static function sendEmployeeInvitationAlert(int $tenantId, int $userId, string $employeeName): void
     {
         $user = User::find($userId);
-        if (!$user) return;
+        if (! $user) {
+            return;
+        }
 
         $title = 'Karyawan Baru Ditambahkan';
         $message = "Halo {$user->name}, karyawan baru '{$employeeName}' telah ditambahkan ke sistem. Mereka akan menerima email dengan kredensial login.";
@@ -125,7 +139,9 @@ class NotificationDispatcherService
     public static function sendEmployeeActivationAlert(int $tenantId, int $employeeUserId, string $activatedBy): void
     {
         $employee = User::find($employeeUserId);
-        if (!$employee) return;
+        if (! $employee) {
+            return;
+        }
 
         $title = 'Akun Anda Diaktifkan';
         $message = "Halo {$employee->name}, akun Anda telah diaktifkan oleh {$activatedBy}. Anda sekarang dapat login dan menggunakan sistem.";
@@ -144,7 +160,7 @@ class NotificationDispatcherService
             'message' => $message,
         ]);
 
-        if (!$owner) {
+        if (! $owner) {
             $owner = User::find($userId);
         }
 
@@ -155,13 +171,13 @@ class NotificationDispatcherService
         $waGatewayUrl = config('services.wa.gateway_url') ?: SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
         $phone = $owner?->phone ?? $owner?->tenant?->outlets?->first()?->phone;
 
-        if (!empty($waApiKey) && !empty($phone)) {
+        if (! empty($waApiKey) && ! empty($phone)) {
             $whatsappSent = static::sendWhatsAppNotification($waGatewayUrl, $waApiKey, $phone, "*[KasirSewa SaaS Notification]*\n\n*{$title}*\n\n{$message}\n\nPerpanjang sekarang di: https://saas.superbackend.my.id/subscription");
         }
 
         // 3. Email Multi-Channel Billing Notification
         $emailSent = false;
-        if (!empty($owner?->email)) {
+        if (! empty($owner?->email)) {
             $emailSent = static::sendEmailNotification($owner->email, $title, $message);
         }
 
@@ -174,7 +190,7 @@ class NotificationDispatcherService
             // Clean phone number format
             $cleanPhone = preg_replace('/[^0-9]/', '', $targetPhone);
             if (str_starts_with($cleanPhone, '0')) {
-                $cleanPhone = '62' . substr($cleanPhone, 1);
+                $cleanPhone = '62'.substr($cleanPhone, 1);
             }
 
             $response = Http::withHeaders([
@@ -188,7 +204,7 @@ class NotificationDispatcherService
             // WhatsApp session is down. Http does not throw on those, so a
             // missing check would log success for a message never sent.
             if (! $response->successful()) {
-                Log::error("WA_BILLING_REMINDER_FAILED", [
+                Log::error('WA_BILLING_REMINDER_FAILED', [
                     'phone' => $cleanPhone,
                     'status' => $response->status(),
                     'body' => mb_substr((string) $response->body(), 0, 300),
@@ -197,11 +213,11 @@ class NotificationDispatcherService
                 return false;
             }
 
-            Log::info("WA_BILLING_REMINDER_SENT_SUCCESS", ['phone' => $cleanPhone]);
+            Log::info('WA_BILLING_REMINDER_SENT_SUCCESS', ['phone' => $cleanPhone]);
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("WA_BILLING_REMINDER_FAILED", ['error' => $e->getMessage()]);
+            Log::error('WA_BILLING_REMINDER_FAILED', ['error' => $e->getMessage()]);
 
             return false;
         }
@@ -210,14 +226,14 @@ class NotificationDispatcherService
     protected static function sendEmailNotification(string $toEmail, string $subject, string $bodyText): bool
     {
         try {
-            Mail::raw($bodyText . "\n\nPerpanjang di: https://saas.superbackend.my.id/subscription", function ($mail) use ($toEmail, $subject) {
-                $mail->to($toEmail)->subject("[KasirSewa SaaS] " . $subject);
+            Mail::raw($bodyText."\n\nPerpanjang di: https://saas.superbackend.my.id/subscription", function ($mail) use ($toEmail, $subject) {
+                $mail->to($toEmail)->subject('[KasirSewa SaaS] '.$subject);
             });
-            Log::info("EMAIL_BILLING_REMINDER_SENT_SUCCESS", ['email' => $toEmail]);
+            Log::info('EMAIL_BILLING_REMINDER_SENT_SUCCESS', ['email' => $toEmail]);
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("EMAIL_BILLING_REMINDER_FAILED", ['error' => $e->getMessage()]);
+            Log::error('EMAIL_BILLING_REMINDER_FAILED', ['error' => $e->getMessage()]);
 
             return false;
         }

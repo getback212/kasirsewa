@@ -14,7 +14,7 @@ class CategoryController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('create-categories')) {
+        if (! $user->hasPermissionTo('create-categories')) {
             abort(403, 'Anda tidak memiliki hak akses untuk membuat kategori produk baru.');
         }
 
@@ -36,7 +36,7 @@ class CategoryController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPermissionTo('delete-categories')) {
+        if (! $user->hasPermissionTo('delete-categories')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus kategori produk.');
         }
 

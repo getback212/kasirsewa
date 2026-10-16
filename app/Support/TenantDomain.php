@@ -31,15 +31,15 @@ final class TenantDomain
         }
 
         if (! str_contains($domain, '.')) {
-            $domain .= '.' . self::BASE_DOMAIN;
+            $domain .= '.'.self::BASE_DOMAIN;
         }
 
         if (strlen($domain) > 253 || ! preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/', $domain)) {
             throw ValidationException::withMessages(['domain' => 'Format subdomain/domain tidak valid. Gunakan huruf kecil, angka, dan tanda hubung.']);
         }
 
-        if ($domain === self::BASE_DOMAIN || str_ends_with($domain, '.' . self::BASE_DOMAIN)) {
-            $label = str($domain)->before('.' . self::BASE_DOMAIN)->toString();
+        if ($domain === self::BASE_DOMAIN || str_ends_with($domain, '.'.self::BASE_DOMAIN)) {
+            $label = str($domain)->before('.'.self::BASE_DOMAIN)->toString();
             if ($label === '' || str_contains($label, '.') || in_array($label, self::RESERVED_LABELS, true)) {
                 throw ValidationException::withMessages(['domain' => 'Nama subdomain tersebut dicadangkan sistem atau tidak valid.']);
             }
@@ -50,7 +50,7 @@ final class TenantDomain
 
     public static function isMainHost(string $host): bool
     {
-        return in_array(strtolower($host), [self::BASE_DOMAIN, 'www.' . self::BASE_DOMAIN, 'saas.' . self::BASE_DOMAIN, 'localhost', '127.0.0.1'], true);
+        return in_array(strtolower($host), [self::BASE_DOMAIN, 'www.'.self::BASE_DOMAIN, 'saas.'.self::BASE_DOMAIN, 'localhost', '127.0.0.1'], true);
     }
 
     /**
@@ -61,6 +61,6 @@ final class TenantDomain
     {
         $host = strtolower($host);
 
-        return $host === self::BASE_DOMAIN || str_ends_with($host, '.' . self::BASE_DOMAIN);
+        return $host === self::BASE_DOMAIN || str_ends_with($host, '.'.self::BASE_DOMAIN);
     }
 }

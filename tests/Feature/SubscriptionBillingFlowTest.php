@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Invoice;
+use App\Models\Outlet;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class SubscriptionBillingFlowTest extends TestCase
@@ -16,7 +18,7 @@ class SubscriptionBillingFlowTest extends TestCase
      */
     public function test_full_subscription_billing_flow()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $plan = Plan::firstOrCreate(['slug' => 'starter-test'], [
             'name' => 'Starter Test',
@@ -27,12 +29,12 @@ class SubscriptionBillingFlowTest extends TestCase
 
         // 1. Create tenant & owner (trial)
         $tenant = Tenant::create(['name' => 'Test Flow Tenant', 'status' => 'active']);
-        
+
         // Create default outlet using factory (handles all required fields)
-        $outlet = \App\Models\Outlet::factory()->create([
+        $outlet = Outlet::factory()->create([
             'tenant_id' => $tenant->id,
         ]);
-        
+
         $owner = User::create([
             'name' => 'Owner Flow',
             'email' => 'owner.flow@test.com',
@@ -90,7 +92,6 @@ class SubscriptionBillingFlowTest extends TestCase
         // After submit, middleware might redirect back to subscription (tenant is past_due)
         // This is OK — payment still recorded
         $response->assertRedirect();
-
 
         // 9. Verify invoice pending verification
         $invoice->refresh();

@@ -2,11 +2,14 @@
 
 namespace App\Actions\Purchase;
 
-use App\Models\Purchase;
-use App\Models\PurchaseItem;
-use App\Models\Product;
 use App\Actions\Inventory\AdjustStockAction;
 use App\Enums\StockMovementType;
+use App\Models\Outlet;
+use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\PurchaseItem;
+use App\Models\Supplier;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class CreatePurchaseAction
@@ -37,17 +40,17 @@ class CreatePurchaseAction
             $grandTotal,
             $note
         ) {
-            $companyId = \App\Models\User::findOrFail($userId)->company_id;
-            if (!$companyId) {
+            $companyId = User::findOrFail($userId)->company_id;
+            if (! $companyId) {
                 throw new \InvalidArgumentException('Pengguna tidak memiliki company aktif.');
             }
 
-            $outlet = \App\Models\Outlet::whereKey($outletId)
+            $outlet = Outlet::whereKey($outletId)
                 ->where('company_id', $companyId)
                 ->firstOrFail();
             $tenantId = $outlet->tenant_id ?? session('active_tenant_id');
 
-            \App\Models\Supplier::whereKey($supplierId)
+            Supplier::whereKey($supplierId)
                 ->where('company_id', $companyId)
                 ->firstOrFail();
 

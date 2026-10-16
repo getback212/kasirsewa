@@ -16,7 +16,7 @@ class AdminProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasRole('SUPER_ADMIN')) {
+        if (! $user || ! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang dapat mengedit profil.');
         }
 
@@ -36,7 +36,7 @@ class AdminProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasRole('SUPER_ADMIN')) {
+        if (! $user || ! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang dapat mengedit profil.');
         }
 
@@ -48,8 +48,8 @@ class AdminProfileController extends Controller
         ]);
 
         // Password change requires current password confirmation.
-        if (!empty($validated['password'])) {
-            if (empty($validated['current_password']) || !Hash::check($validated['current_password'], $user->password)) {
+        if (! empty($validated['password'])) {
+            if (empty($validated['current_password']) || ! Hash::check($validated['current_password'], $user->password)) {
                 return back()->withErrors([
                     'current_password' => 'Kata sandi saat ini tidak sesuai.',
                 ])->withInput();
@@ -59,7 +59,7 @@ class AdminProfileController extends Controller
         $user->name = $validated['name'];
         $user->email = $validated['email'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->password = $validated['password'];
         }
 

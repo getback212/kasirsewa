@@ -49,7 +49,9 @@ class AuditLogService
 
     private static function sanitize(?array $data): ?array
     {
-        if (! $data) return null;
+        if (! $data) {
+            return null;
+        }
 
         $sensitiveFields = ['password', 'password_confirmation', 'remember_token', 'token', 'secret'];
 

@@ -9,12 +9,14 @@ use Illuminate\Support\Facades\Schema;
 class ProductionWipeCommand extends Command
 {
     protected $signature = 'db:production-wipe {--force : Jalankan pembersihan tanpa konfirmasi}';
+
     protected $description = 'Membersihkan seluruh data uji coba (penjualan, stok, faktur, shift, audit log) untuk persiapan produksi 100% bersih.';
 
     public function handle()
     {
-        if (!$this->option('force') && !$this->confirm('⚠️ PERINGATAN BESAR!\n\nApakah Anda yakin ingin MENGHAPUS BERSIH seluruh data transaksi, stok, faktur restok, dan shift kasir dummy?\n\nTindakan ini tidak dapat dibatalkan!')) {
+        if (! $this->option('force') && ! $this->confirm('⚠️ PERINGATAN BESAR!\n\nApakah Anda yakin ingin MENGHAPUS BERSIH seluruh data transaksi, stok, faktur restok, dan shift kasir dummy?\n\nTindakan ini tidak dapat dibatalkan!')) {
             $this->info('Proses pembersihan dibatalkan.');
+
             return 0;
         }
 

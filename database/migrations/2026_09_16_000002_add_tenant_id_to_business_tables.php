@@ -11,11 +11,11 @@ return new class extends Migration
         $tables = [
             'categories', 'units', 'products', 'stocks', 'customers', 'suppliers',
             'purchases', 'sales', 'held_transactions', 'shifts',
-            'expenses', 'stock_movements', 'stock_opnames', 'stock_transfers', 'audit_logs'
+            'expenses', 'stock_movements', 'stock_opnames', 'stock_transfers', 'audit_logs',
         ];
 
         foreach ($tables as $tableName) {
-            if (Schema::hasTable($tableName) && !Schema::hasColumn($tableName, 'tenant_id')) {
+            if (Schema::hasTable($tableName) && ! Schema::hasColumn($tableName, 'tenant_id')) {
                 Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                     $table->foreignId('tenant_id')->nullable()->after('id')->constrained('tenants')->onDelete('cascade');
                     $table->index(['tenant_id'], "idx_{$tableName}_tenant_id");
@@ -29,12 +29,12 @@ return new class extends Migration
         $tables = [
             'categories', 'units', 'products', 'stocks', 'customers', 'suppliers',
             'purchases', 'sales', 'held_transactions', 'shifts',
-            'expenses', 'stock_movements', 'stock_opnames', 'stock_transfers', 'audit_logs'
+            'expenses', 'stock_movements', 'stock_opnames', 'stock_transfers', 'audit_logs',
         ];
 
         foreach ($tables as $tableName) {
             if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'tenant_id')) {
-                Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                Schema::table($tableName, function (Blueprint $table) {
                     $table->dropForeign(['tenant_id']);
                     $table->dropColumn('tenant_id');
                 });

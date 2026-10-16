@@ -2,23 +2,19 @@
 
 namespace App\Http\Controllers\Tenant;
 
-use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\Subscription;
-use App\Models\Plan;
-use App\Models\User;
-use App\Models\Outlet;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Models\Product;
-use App\Models\Stock;
 use App\Enums\UserRole;
+use App\Http\Controllers\Controller;
+use App\Models\Plan;
+use App\Models\Stock;
+use App\Models\Subscription;
+use App\Models\Tenant;
+use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +25,7 @@ class TenantController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mengelola data seluruh tenant.');
         }
 
@@ -38,8 +34,8 @@ class TenantController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('slug', 'ILIKE', "%{$search}%")
-                  ->orWhere('domain', 'ILIKE', "%{$search}%");
+                ->orWhere('slug', 'ILIKE', "%{$search}%")
+                ->orWhere('domain', 'ILIKE', "%{$search}%");
         }
 
         $tenants = $query->latest()->paginate(15)->withQueryString();
@@ -56,7 +52,7 @@ class TenantController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Aksi ini hanya untuk Super Admin.');
         }
 
@@ -118,7 +114,7 @@ class TenantController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Aksi ini hanya untuk Super Admin.');
         }
 
@@ -157,7 +153,7 @@ class TenantController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang menghapus data tenant.');
         }
 
@@ -227,7 +223,7 @@ class TenantController extends Controller
             }
             DB::table('users')->where('tenant_id', $tenantId)->delete();
 
-            if (!empty($companyIds)) {
+            if (! empty($companyIds)) {
                 DB::table('companies')->whereIn('id', $companyIds)->delete();
             }
 
@@ -243,7 +239,7 @@ class TenantController extends Controller
     public function impersonate(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        if (!$user || !$user->hasRole('SUPER_ADMIN')) {
+        if (! $user || ! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Aksi ini hanya untuk Super Admin.');
         }
 
@@ -254,7 +250,7 @@ class TenantController extends Controller
         $tenant = Tenant::with('owner')->findOrFail($id);
         $owner = $tenant->owner;
 
-        if (!$owner || !$owner->is_active || !$owner->hasRole(UserRole::OWNER->value)) {
+        if (! $owner || ! $owner->is_active || ! $owner->hasRole(UserRole::OWNER->value)) {
             return redirect()->route('admin.tenants.index')->with('error', 'Tenant ini belum memiliki akun Owner aktif untuk di-impersonate.');
         }
 
@@ -276,12 +272,12 @@ class TenantController extends Controller
     public function stopImpersonate(Request $request): RedirectResponse
     {
         $impersonatorId = $request->session()->get('impersonator_id');
-        if (!$impersonatorId) {
+        if (! $impersonatorId) {
             abort(403, 'Tidak ada sesi impersonate yang aktif.');
         }
 
         $superAdmin = User::find($impersonatorId);
-        if (!$superAdmin || !$superAdmin->is_active || !$superAdmin->hasRole('SUPER_ADMIN')) {
+        if (! $superAdmin || ! $superAdmin->is_active || ! $superAdmin->hasRole('SUPER_ADMIN')) {
             auth()->guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

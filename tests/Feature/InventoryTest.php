@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Product;
-use App\Models\Outlet;
-use App\Models\Stock;
 use App\Actions\Inventory\AdjustStockAction;
 use App\Enums\StockMovementType;
+use App\Models\Outlet;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
+use Tests\TestCase;
 
 class InventoryTest extends TestCase
 {

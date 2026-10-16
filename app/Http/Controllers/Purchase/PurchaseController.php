@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Purchase;
 
 use App\Actions\Purchase\CreatePurchaseAction;
+use App\Exceptions\InventoryTransactionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Purchase\StorePurchaseRequest;
 use App\Models\Product;
@@ -12,7 +13,6 @@ use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -80,12 +80,13 @@ class PurchaseController extends Controller
             );
 
             return redirect()->back()->with('success', 'Transaksi restok barang dari supplier berhasil disimpan!');
-        } catch (\App\Exceptions\InventoryTransactionException $e) {
+        } catch (InventoryTransactionException $e) {
             return redirect()->back()->with('error', $e->getUserMessage())->withInput();
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()->with('error', $e->getMessage())->withInput();
         } catch (Exception $e) {
-            Log::error('Purchase store error: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('Purchase store error: '.$e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan transaksi restok. Hubungi admin jika masalah berlanjut.')->withInput();
         }
     }

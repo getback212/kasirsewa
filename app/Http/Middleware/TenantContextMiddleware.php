@@ -18,7 +18,7 @@ class TenantContextMiddleware
                 if ($request->hasHeader('X-Tenant-Id')) {
                     session(['active_tenant_id' => (int) $request->header('X-Tenant-Id')]);
                 }
-            } else if ($user->tenant_id) {
+            } elseif ($user->tenant_id) {
                 // Tenant users are strictly locked to their assigned tenant_id
                 session(['active_tenant_id' => $user->tenant_id]);
             }

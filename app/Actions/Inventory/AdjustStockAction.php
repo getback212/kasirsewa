@@ -2,9 +2,10 @@
 
 namespace App\Actions\Inventory;
 
+use App\Enums\StockMovementType;
+use App\Models\Outlet;
 use App\Models\Stock;
 use App\Models\StockMovement;
-use App\Enums\StockMovementType;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -30,7 +31,7 @@ class AdjustStockAction
             $referenceId,
             $note
         ) {
-            $outlet = \App\Models\Outlet::find($outletId);
+            $outlet = Outlet::find($outletId);
             $tenantId = $outlet?->tenant_id ?? session('active_tenant_id');
 
             // Pessimistic Row Locking to prevent race condition

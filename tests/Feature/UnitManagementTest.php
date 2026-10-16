@@ -2,18 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
-use App\Models\Company;
-use App\Models\User;
-use App\Models\Unit;
 use App\Enums\UserRole;
+use App\Models\Company;
+use App\Models\Tenant;
+use App\Models\Unit;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class UnitManagementTest extends TestCase
 {
     public function test_owner_can_create_and_manage_units()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $tenant = Tenant::create(['name' => 'Toko Unit Test', 'slug' => 'toko-unit-test', 'status' => 'active']);
         $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Toko Unit Test']);

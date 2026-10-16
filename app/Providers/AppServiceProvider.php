@@ -3,10 +3,11 @@
 namespace App\Providers;
 
 use App\Support\PostgresSequenceHealer;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,20 +44,21 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiters(): void
     {
-        // In test environment, define no-op rate limiters
+        // Skip rate limiting in test environment: define stub limiters that allow everything
         if ($this->app->environment('testing')) {
-            RateLimiter::for('login', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('superadmin-login', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('password-recovery', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('email-verification', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('api-login', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('api', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('api-webhooks', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('pos-checkout', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('product-search', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('reports', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('otp-request', fn (Request $request) => RateLimiter::unlimited());
-            RateLimiter::for('employee-invite', fn (Request $request) => RateLimiter::unlimited());
+            RateLimiter::for('login', fn () => Limit::perMinute(99999));
+            RateLimiter::for('superadmin-login', fn () => Limit::perMinute(99999));
+            RateLimiter::for('password-recovery', fn () => Limit::perHour(99999));
+            RateLimiter::for('email-verification', fn () => Limit::perHour(99999));
+            RateLimiter::for('api-login', fn () => Limit::perMinute(99999));
+            RateLimiter::for('api', fn () => Limit::perMinute(99999));
+            RateLimiter::for('api-webhooks', fn () => Limit::perMinute(99999));
+            RateLimiter::for('pos-checkout', fn () => Limit::perMinute(99999));
+            RateLimiter::for('product-search', fn () => Limit::perMinute(99999));
+            RateLimiter::for('reports', fn () => Limit::perHour(99999));
+            RateLimiter::for('otp-request', fn () => Limit::perHour(99999));
+            RateLimiter::for('employee-invite', fn () => Limit::perDay(99999));
+
             return;
         }
 
@@ -73,14 +75,14 @@ class AppServiceProvider extends ServiceProvider
         // Password recovery: 3 per hour per email
         RateLimiter::for('password-recovery', function (Request $request) {
             return RateLimiter::limit(3)->perHour()->by(
-                $request->input('email', '') . '|' . $request->ip()
+                $request->input('email', '').'|'.$request->ip()
             );
         });
 
         // Email verification: 3 per hour per email
         RateLimiter::for('email-verification', function (Request $request) {
             return RateLimiter::limit(3)->perHour()->by(
-                $request->user()?->email . '|' . $request->ip()
+                $request->user()?->email.'|'.$request->ip()
             );
         });
 
@@ -117,7 +119,7 @@ class AppServiceProvider extends ServiceProvider
         // OTP/SMS requests: 3 per 10 minutes per phone
         RateLimiter::for('otp-request', function (Request $request) {
             return RateLimiter::limit(3)->perTenMinutes()->by(
-                $request->input('phone', '') . '|' . $request->ip()
+                $request->input('phone', '').'|'.$request->ip()
             );
         });
 

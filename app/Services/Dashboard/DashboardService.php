@@ -2,13 +2,13 @@
 
 namespace App\Services\Dashboard;
 
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Stock;
-use App\Models\Product;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
@@ -40,8 +40,8 @@ class DashboardService
         if ($isManagement) {
             $todayCogs = (float) SaleItem::whereHas('sale', function ($q) use ($outletId, $todayStart, $todayEnd) {
                 $q->where('outlet_id', $outletId)
-                  ->where('transaction_status', 'completed')
-                  ->whereBetween('sale_date', [$todayStart, $todayEnd]);
+                    ->where('transaction_status', 'completed')
+                    ->whereBetween('sale_date', [$todayStart, $todayEnd]);
             })->sum(DB::raw('quantity * cost_price_snapshot'));
 
             $todayGrossProfit = max(0, $todaySalesTotal - $todayCogs);
@@ -56,6 +56,7 @@ class DashboardService
                 $stockQty = Stock::where('outlet_id', $outletId)
                     ->where('product_id', $product->id)
                     ->value('quantity') ?? 0.00;
+
                 return $stockQty <= $product->minimum_stock;
             })
             ->map(function ($product) use ($outletId) {
@@ -86,6 +87,7 @@ class DashboardService
 
         $recentSales = $recentSalesQuery->get()->map(function ($s) {
             $payment = $s->payments->first();
+
             return [
                 'id' => $s->id,
                 'invoice_number' => $s->invoice_number,
@@ -101,7 +103,7 @@ class DashboardService
         // 5. Hourly Sales Trend Today (Cross DB dialect support for PgSQL & SQLite Tests)
         $hourExpression = DB::getDriverName() === 'sqlite'
             ? "strftime('%H', sale_date)"
-            : "EXTRACT(HOUR FROM sale_date)";
+            : 'EXTRACT(HOUR FROM sale_date)';
 
         $hourlySales = Sale::where('outlet_id', $outletId)
             ->where('transaction_status', 'completed')

@@ -23,10 +23,10 @@ trait BelongsToOutlet
                 if ($user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
                     $selectedOutletId = session('active_outlet_id', $user->outlet_id);
                     if ($selectedOutletId) {
-                        $builder->where($builder->getModel()->getTable() . '.outlet_id', $selectedOutletId);
+                        $builder->where($builder->getModel()->getTable().'.outlet_id', $selectedOutletId);
                     }
                 } else {
-                    $builder->where($builder->getModel()->getTable() . '.outlet_id', $user->outlet_id);
+                    $builder->where($builder->getModel()->getTable().'.outlet_id', $user->outlet_id);
                 }
             }
         });

@@ -15,7 +15,7 @@ class PlanFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'Paket ' . $this->faker->unique()->word(),
+            'name' => 'Paket '.$this->faker->unique()->word(),
             'slug' => $this->faker->unique()->slug(),
             'description' => $this->faker->sentence(),
             'monthly_price' => 99000,

@@ -5,7 +5,6 @@ namespace App\Services\Payment;
 use App\Models\Invoice;
 use App\Models\SaaSPayment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class ManualPaymentGateway implements PaymentGatewayInterface
 {
@@ -43,6 +42,7 @@ class ManualPaymentGateway implements PaymentGatewayInterface
     public function refund(SaaSPayment $payment, ?float $amount = null): bool
     {
         $payment->update(['status' => 'refunded']);
+
         return true;
     }
 }

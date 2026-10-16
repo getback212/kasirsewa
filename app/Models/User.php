@@ -3,16 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, SoftDeletes;
+    use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -70,7 +71,7 @@ class User extends Authenticatable
     public function assertNoBusinessRecords(): void
     {
         foreach (self::CASCADE_OWNED_TABLES as $table => $column) {
-            if (\Illuminate\Support\Facades\DB::table($table)
+            if (DB::table($table)
                 ->where($column, $this->id)
                 ->when(method_exists($this, 'trashed') && $this->trashed(), function ($q) {
                     // ignore
@@ -78,7 +79,7 @@ class User extends Authenticatable
                 ->exists()) {
                 throw new RuntimeException(
                     "Tidak dapat menghapus permanen akun ini: masih ada data pada tabel '{$table}'. "
-                    . 'Nonaktifkan akun staff (soft delete) agar riwayat transaksi tetap utuh.'
+                    .'Nonaktifkan akun staff (soft delete) agar riwayat transaksi tetap utuh.'
                 );
             }
         }

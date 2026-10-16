@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 class DatabaseBackupCommand extends Command
 {
     protected $signature = 'db:backup {--path= : Subdirektori penyimpanan file backup}';
+
     protected $description = 'Membuat backup database PostgreSQL terkompresi (.sql.gz) secara otomatis';
 
     public function handle(): int
@@ -26,6 +27,7 @@ class DatabaseBackupCommand extends Command
         $disk = Storage::disk('local');
         if (! $disk->exists($customPath) && ! $disk->makeDirectory($customPath)) {
             $this->error('Gagal membuat direktori backup (permission ditolak). Hubungi administrator server.');
+
             return Command::FAILURE;
         }
         // Pastikan direktori bisa dibaca user web meskipun command dijalankan
@@ -36,8 +38,8 @@ class DatabaseBackupCommand extends Command
         $oldDir = storage_path('app/backups');
         if (file_exists($oldDir)) {
             foreach (glob("{$oldDir}/*.sql.gz") as $oldFile) {
-                $targetFile = $backupDir . '/' . basename($oldFile);
-                if (!file_exists($targetFile)) {
+                $targetFile = $backupDir.'/'.basename($oldFile);
+                if (! file_exists($targetFile)) {
                     @rename($oldFile, $targetFile);
                 }
             }
@@ -45,25 +47,27 @@ class DatabaseBackupCommand extends Command
 
         $timestamp = now()->format('Y-m-d_H-i-s');
         $filename = "pos_backup_{$timestamp}.sql";
-        $filePath = $backupDir . '/' . $filename;
-        $gzFilePath = $filePath . '.gz';
+        $filePath = $backupDir.'/'.$filename;
+        $gzFilePath = $filePath.'.gz';
 
         putenv("PGPASSWORD={$password}");
 
-        $cmd = "pg_dump -h {$host} -p {$port} -U {$username} -d {$database} -F p -f " . escapeshellarg($filePath);
+        $cmd = "pg_dump -h {$host} -p {$port} -U {$username} -d {$database} -F p -f ".escapeshellarg($filePath);
         exec($cmd, $output, $returnCode);
 
         putenv('PGPASSWORD');
 
-        if ($returnCode !== 0 || !file_exists($filePath)) {
+        if ($returnCode !== 0 || ! file_exists($filePath)) {
             $this->error('Gagal membuat backup database PostgreSQL!');
+
             return Command::FAILURE;
         }
 
-        exec('gzip -f ' . escapeshellarg($filePath), $output, $returnCode);
+        exec('gzip -f '.escapeshellarg($filePath), $output, $returnCode);
 
-        if ($returnCode !== 0 || !file_exists($gzFilePath)) {
+        if ($returnCode !== 0 || ! file_exists($gzFilePath)) {
             $this->error('Gagal mengompresi file backup PostgreSQL!');
+
             return Command::FAILURE;
         }
         @chmod($gzFilePath, 0644);

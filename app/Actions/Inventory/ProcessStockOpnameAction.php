@@ -2,11 +2,13 @@
 
 namespace App\Actions\Inventory;
 
+use App\Enums\StockMovementType;
+use App\Models\Outlet;
+use App\Models\Product;
+use App\Models\Stock;
 use App\Models\StockOpname;
 use App\Models\StockOpnameItem;
-use App\Models\Stock;
-use App\Actions\Inventory\AdjustStockAction;
-use App\Enums\StockMovementType;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ProcessStockOpnameAction
@@ -22,12 +24,12 @@ class ProcessStockOpnameAction
         ?string $note = null
     ): StockOpname {
         return DB::transaction(function () use ($outletId, $userId, $items, $note) {
-            $companyId = \App\Models\User::findOrFail($userId)->company_id;
-            if (!$companyId) {
+            $companyId = User::findOrFail($userId)->company_id;
+            if (! $companyId) {
                 throw new \InvalidArgumentException('Pengguna tidak memiliki company aktif.');
             }
 
-            $outlet = \App\Models\Outlet::whereKey($outletId)
+            $outlet = Outlet::whereKey($outletId)
                 ->where('company_id', $companyId)
                 ->firstOrFail();
 
@@ -43,7 +45,7 @@ class ProcessStockOpnameAction
             ]);
 
             foreach ($items as $itemData) {
-                $productQuery = \App\Models\Product::whereKey($itemData['product_id']);
+                $productQuery = Product::whereKey($itemData['product_id']);
                 if ($companyId) {
                     $productQuery->where('company_id', $companyId);
                 }
@@ -52,7 +54,7 @@ class ProcessStockOpnameAction
                 $productId = (int) $itemData['product_id'];
                 $physicalQty = (float) $itemData['physical_quantity'];
 
-                $systemQty = (float) (\App\Models\Stock::where('outlet_id', $outletId)
+                $systemQty = (float) (Stock::where('outlet_id', $outletId)
                     ->where('product_id', $productId)
                     ->value('quantity') ?? 0.00);
 

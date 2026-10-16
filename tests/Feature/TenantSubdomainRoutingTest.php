@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Company;
+use App\Enums\UserRole;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Enums\UserRole;
 use App\Support\TenantDomain;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;

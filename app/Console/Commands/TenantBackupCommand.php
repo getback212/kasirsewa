@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 class TenantBackupCommand extends Command
 {
     protected $signature = 'db:backup-tenant {--tenant= : ID tenant yang dibackup} {--path= : Subdirektori penyimpanan file backup}';
+
     protected $description = 'Membuat backup data satu tenant saja (format COPY SQL terkompresi .sql.gz)';
 
     public function handle(): int
@@ -25,6 +26,7 @@ class TenantBackupCommand extends Command
         $tenantId = (int) $this->option('tenant');
         if ($tenantId <= 0 || ! DB::table('tenants')->where('id', $tenantId)->exists()) {
             $this->error("Tenant #{$this->option('tenant')} tidak ditemukan.");
+
             return Command::FAILURE;
         }
 
@@ -34,6 +36,7 @@ class TenantBackupCommand extends Command
         $disk = Storage::disk('local');
         if (! $disk->exists($customPath) && ! $disk->makeDirectory($customPath)) {
             $this->error('Gagal membuat direktori backup (permission ditolak). Hubungi administrator server.');
+
             return Command::FAILURE;
         }
         // Pastikan direktori bisa dibaca user web meskipun command dijalankan
@@ -47,6 +50,7 @@ class TenantBackupCommand extends Command
         $handle = gzopen($gzFilePath, 'wb9');
         if ($handle === false) {
             $this->error('Gagal membuat file backup.');
+
             return Command::FAILURE;
         }
 
@@ -147,18 +151,18 @@ class TenantBackupCommand extends Command
         $lines = [
             '-- KasirSewa tenant backup (DATA ONLY, format COPY PostgreSQL)',
             "-- tenant_id: {$tenantId}",
-            '-- created_at: ' . now()->toDateTimeString(),
+            '-- created_at: '.now()->toDateTimeString(),
             '-- Berisi HANYA data milik tenant di atas, tanpa data tenant lain.',
             '-- Untuk restore darurat hubungi Super Admin (impor via psql dengan skema yang sama).',
             '',
         ];
         foreach ($lines as $line) {
-            gzwrite($handle, $line . "\n");
+            gzwrite($handle, $line."\n");
         }
     }
 
     /**
-     * @param mixed $handle
+     * @param  mixed  $handle
      */
     protected function exportTable($handle, string $table, $query): int
     {
@@ -166,6 +170,7 @@ class TenantBackupCommand extends Command
             $columns = Schema::getColumnListing($table);
         } catch (\Throwable) {
             $this->warn("Tabel {$table} tidak ada, dilewati.");
+
             return 0;
         }
 
@@ -177,6 +182,7 @@ class TenantBackupCommand extends Command
             $count = (clone $query)->count();
         } catch (\Throwable) {
             $this->warn("Tabel {$table} tidak bisa dibaca, dilewati.");
+
             return 0;
         }
 
@@ -184,7 +190,7 @@ class TenantBackupCommand extends Command
             return 0;
         }
 
-        $quoted = implode(', ', array_map(fn ($c) => '"' . str_replace('"', '""', $c) . '"', $columns));
+        $quoted = implode(', ', array_map(fn ($c) => '"'.str_replace('"', '""', $c).'"', $columns));
         gzwrite($handle, "COPY \"{$table}\" ({$quoted}) FROM stdin;\n");
 
         $rows = 0;
@@ -194,7 +200,7 @@ class TenantBackupCommand extends Command
                 foreach ($columns as $column) {
                     $values[] = $this->formatValue($row->{$column} ?? null);
                 }
-                gzwrite($handle, implode("\t", $values) . "\n");
+                gzwrite($handle, implode("\t", $values)."\n");
                 $rows++;
             }
         } catch (\Throwable) {
@@ -204,7 +210,7 @@ class TenantBackupCommand extends Command
                 foreach ($columns as $column) {
                     $values[] = $this->formatValue($row->{$column} ?? null);
                 }
-                gzwrite($handle, implode("\t", $values) . "\n");
+                gzwrite($handle, implode("\t", $values)."\n");
                 $rows++;
             }
         }

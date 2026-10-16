@@ -2,27 +2,28 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Category;
 use App\Models\Company;
-use App\Models\Outlet;
-use App\Models\User;
-use App\Models\Subscription;
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use App\Models\Category;
-use App\Models\Unit;
-use App\Models\Customer;
+use App\Models\Outlet;
 use App\Models\Plan;
-use App\Enums\UserRole;
+use App\Models\Subscription;
+use App\Models\Tenant;
+use App\Models\Unit;
+use App\Models\User;
+use App\Services\Audit\AuditLogService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
 
 class EnterpriseRegistrationController extends Controller
 {
@@ -30,7 +31,7 @@ class EnterpriseRegistrationController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mendaftarkan Enterprise.');
         }
 
@@ -47,7 +48,7 @@ class EnterpriseRegistrationController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mendaftarkan Enterprise.');
         }
 
@@ -64,11 +65,11 @@ class EnterpriseRegistrationController extends Controller
         try {
             $tenantData = DB::transaction(function () use ($validated) {
                 // 1. Create Tenant
-                $slug = Str::slug($validated['store_name']) . '-' . rand(100, 999);
+                $slug = Str::slug($validated['store_name']).'-'.rand(100, 999);
                 $tenant = Tenant::create([
                     'name' => $validated['store_name'],
                     'slug' => $slug,
-                    'domain' => $slug . '.superbackend.my.id',
+                    'domain' => $slug.'.superbackend.my.id',
                     'status' => 'active',
                 ]);
 
@@ -76,7 +77,7 @@ class EnterpriseRegistrationController extends Controller
                 $company = Company::create([
                     'tenant_id' => $tenant->id,
                     'name' => $validated['store_name'],
-                    'registration_number' => 'REG-' . strtoupper(Str::random(6)),
+                    'registration_number' => 'REG-'.strtoupper(Str::random(6)),
                     'is_active' => true,
                 ]);
 
@@ -84,8 +85,8 @@ class EnterpriseRegistrationController extends Controller
                 $outlet = Outlet::create([
                     'company_id' => $company->id,
                     'tenant_id' => $tenant->id,
-                    'name' => 'Outlet Pusat ' . $validated['store_name'],
-                    'code' => 'OUT-' . mt_rand(1000, 9999),
+                    'name' => 'Outlet Pusat '.$validated['store_name'],
+                    'code' => 'OUT-'.mt_rand(1000, 9999),
                     'phone' => $validated['owner_phone'],
                     'address' => $validated['outlet_address'],
                     'is_active' => true,
@@ -140,9 +141,9 @@ class EnterpriseRegistrationController extends Controller
                     'due_at' => $expiresAt,
                 ]);
 
-                $desc = $validated['subscription_status'] === 'trial' 
+                $desc = $validated['subscription_status'] === 'trial'
                     ? "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})"
-                    : "💼 PAKET {$plan->name} - " . strtoupper($validated['billing_cycle']);
+                    : "💼 PAKET {$plan->name} - ".strtoupper($validated['billing_cycle']);
 
                 InvoiceItem::create([
                     'invoice_id' => $invoice->id,
@@ -171,7 +172,7 @@ class EnterpriseRegistrationController extends Controller
                 Customer::create([
                     'company_id' => $company->id,
                     'tenant_id' => $tenant->id,
-                    'code' => 'CUST-UMUM-' . $tenant->id,
+                    'code' => 'CUST-UMUM-'.$tenant->id,
                     'name' => 'Pelanggan Umum',
                     'phone' => '-',
                 ]);
@@ -194,11 +195,11 @@ class EnterpriseRegistrationController extends Controller
             ]);
 
             $resetLink = route('password.reset', ['token' => $resetToken, 'email' => $tenantData['owner_email']]);
-            
+
             $tenantData['reset_link'] = $resetLink;
 
             // Log audit
-            \App\Services\Audit\AuditLogService::log(
+            AuditLogService::log(
                 action: 'ENTERPRISE_REGISTRATION_CREATED',
                 modelType: 'Tenant',
                 modelId: $tenantData['tenant']->id,
@@ -216,13 +217,13 @@ class EnterpriseRegistrationController extends Controller
                 ->with('reset_link', $tenantData['reset_link'])
                 ->with('owner_email', $tenantData['owner_email']);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Enterprise Registration Failed', [
+            Log::error('Enterprise Registration Failed', [
                 'exception' => $e::class,
                 'message' => $e->getMessage(),
             ]);
 
             return redirect()->back()
-                ->with('error', '❌ Gagal mendaftarkan Enterprise. ' . $e->getMessage());
+                ->with('error', '❌ Gagal mendaftarkan Enterprise. '.$e->getMessage());
         }
     }
 
@@ -230,7 +231,7 @@ class EnterpriseRegistrationController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang melihat detail Enterprise.');
         }
 

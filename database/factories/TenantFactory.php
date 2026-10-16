@@ -20,7 +20,7 @@ class TenantFactory extends Factory
         return [
             'uuid' => (string) Str::uuid(),
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->numberBetween(1000, 9999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1000, 9999),
             'status' => 'active',
         ];
     }

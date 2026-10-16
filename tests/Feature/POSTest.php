@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Product;
-use App\Models\Outlet;
-use App\Models\Stock;
 use App\Actions\POS\CreateSaleAction;
 use App\Actions\Shifts\OpenShiftAction;
+use App\Models\Outlet;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class POSTest extends TestCase
 {

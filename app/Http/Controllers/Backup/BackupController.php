@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Backup;
 
-use App\Http\Controllers\Controller;
 use App\Console\Commands\DatabaseBackupCommand;
 use App\Console\Commands\DatabaseRestoreCommand;
 use App\Console\Commands\TenantBackupCommand;
 use App\Console\Commands\TenantRestoreCommand;
+use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +21,7 @@ class BackupController extends Controller
     {
         $filename = basename($filename);
 
-        if ($filename === '' || str_contains($filename, '..') || !preg_match('/^[a-zA-Z0-9_\-.]+$/', $filename)) {
+        if ($filename === '' || str_contains($filename, '..') || ! preg_match('/^[a-zA-Z0-9_\-.]+$/', $filename)) {
             abort(400, 'Nama file backup tidak valid.');
         }
 
@@ -35,13 +35,14 @@ class BackupController extends Controller
             return 'backups/saas_global';
         }
         $tenantId = session('active_tenant_id', $user->tenant_id ?? 'common');
+
         return "backups/tenants/tenant_{$tenantId}";
     }
 
     public function index(Request $request): Response
     {
         $user = $request->user();
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('view-audit-logs')) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola backup database.');
         }
 
@@ -55,7 +56,7 @@ class BackupController extends Controller
 
             return [
                 'filename' => $filename,
-                'size' => number_format($size / 1024, 2) . ' KB',
+                'size' => number_format($size / 1024, 2).' KB',
                 'created_at' => date('Y-m-d H:i:s', $lastModified),
             ];
         })->sortByDesc('created_at')->values()->all();
@@ -69,7 +70,7 @@ class BackupController extends Controller
     public function runBackup(Request $request): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('view-audit-logs')) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses untuk membuat backup database.');
         }
 
@@ -87,7 +88,7 @@ class BackupController extends Controller
         // Owner: backup khusus data tenant sendiri (tanpa data tenant lain).
         // Tenant diambil dari sisi server (tidak pernah dari input user).
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        if (!$tenantId || !Tenant::whereKey($tenantId)->exists()) {
+        if (! $tenantId || ! Tenant::whereKey($tenantId)->exists()) {
             abort(403, 'Tenant aktif tidak valid.');
         }
 
@@ -101,7 +102,7 @@ class BackupController extends Controller
     public function upload(Request $request): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('view-audit-logs')) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses untuk meng-upload backup.');
         }
 
@@ -113,7 +114,7 @@ class BackupController extends Controller
         $originalName = $file->getClientOriginalName();
 
         $cleanName = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $originalName);
-        if (!str_ends_with($cleanName, '.sql.gz') && !str_ends_with($cleanName, '.sql') && !str_ends_with($cleanName, '.gz')) {
+        if (! str_ends_with($cleanName, '.sql.gz') && ! str_ends_with($cleanName, '.sql') && ! str_ends_with($cleanName, '.gz')) {
             $cleanName .= '.sql.gz';
         }
 
@@ -123,9 +124,9 @@ class BackupController extends Controller
         // Owner hanya boleh meng-upload file backup VALID milik tenant-nya
         // sendiri (nama, header, dan seluruh isi dicek). File racikan/asing
         // langsung dihapus dan ditolak.
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             $tenantId = session('active_tenant_id', $user->tenant_id);
-            if (!$tenantId || !Tenant::whereKey($tenantId)->exists()) {
+            if (! $tenantId || ! Tenant::whereKey($tenantId)->exists()) {
                 abort(403, 'Tenant aktif tidak valid.');
             }
 
@@ -134,6 +135,7 @@ class BackupController extends Controller
             $error = $this->validateTenantUpload($disk->path($storedPath), (int) $tenantId);
             if ($error !== null) {
                 $disk->delete($storedPath);
+
                 return back()->with('error', "Upload ditolak: {$error}");
             }
         }
@@ -147,8 +149,8 @@ class BackupController extends Controller
      */
     protected function validateTenantUpload(string $fullPath, int $tenantId): ?string
     {
-        if (! preg_match('/tenant_' . $tenantId . '_backup_.+\.sql(\.gz)?$/', basename($fullPath))) {
-            return 'nama file harus pola backup tenant (tenant_' . $tenantId . '_backup_*.sql.gz).';
+        if (! preg_match('/tenant_'.$tenantId.'_backup_.+\.sql(\.gz)?$/', basename($fullPath))) {
+            return 'nama file harus pola backup tenant (tenant_'.$tenantId.'_backup_*.sql.gz).';
         }
 
         try {
@@ -175,6 +177,7 @@ class BackupController extends Controller
 
             if ($exitCode === 0) {
                 Artisan::call('cache:clear');
+
                 return back()->with('success', "Database PostgreSQL berhasil dipulihkan (restore) dari file {$filename}!");
             }
 
@@ -184,12 +187,12 @@ class BackupController extends Controller
         // Owner: restore hanya dari file backup tenant sendiri, dan hanya
         // baris milik tenant-nya yang dihapus/ditulis ulang. Tenant diambil
         // dari sisi server (tidak pernah dari input user).
-        if (!$user->hasRole('OWNER') && !$user->hasPermissionTo('view-audit-logs')) {
+        if (! $user->hasRole('OWNER') && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses untuk memulihkan data.');
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
-        if (!$tenantId || !Tenant::whereKey($tenantId)->exists()) {
+        if (! $tenantId || ! Tenant::whereKey($tenantId)->exists()) {
             abort(403, 'Tenant aktif tidak valid.');
         }
 
@@ -206,7 +209,7 @@ class BackupController extends Controller
     public function download(Request $request, string $filename)
     {
         $user = $request->user();
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('view-audit-logs')) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
@@ -214,7 +217,7 @@ class BackupController extends Controller
         $backupDir = $this->getBackupDir($request);
         $filePath = "{$backupDir}/{$filename}";
 
-        if (!Storage::disk('local')->exists($filePath)) {
+        if (! Storage::disk('local')->exists($filePath)) {
             abort(404, 'File backup tidak ditemukan.');
         }
 
@@ -224,7 +227,7 @@ class BackupController extends Controller
     public function delete(Request $request, string $filename): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER']) && !$user->hasPermissionTo('view-audit-logs')) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER']) && ! $user->hasPermissionTo('view-audit-logs')) {
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
@@ -234,6 +237,7 @@ class BackupController extends Controller
 
         if (Storage::disk('local')->exists($filePath)) {
             Storage::disk('local')->delete($filePath);
+
             return back()->with('success', "File backup {$filename} berhasil dihapus!");
         }
 

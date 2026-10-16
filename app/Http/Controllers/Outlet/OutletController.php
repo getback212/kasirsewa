@@ -13,15 +13,12 @@ use App\Services\Domain\TenantDomainProvisioner;
 use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OutletController extends Controller
 {
-    public function __construct(private readonly TenantDomainProvisioner $domainProvisioner)
-    {
-    }
+    public function __construct(private readonly TenantDomainProvisioner $domainProvisioner) {}
 
     public function index(Request $request): Response
     {
@@ -88,7 +85,7 @@ class OutletController extends Controller
     public function update(UpdateOutletRequest $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        
+
         $tenantId = session('active_tenant_id', $user->tenant_id);
         $outlet = Outlet::where('company_id', $user->company_id)
             ->where('tenant_id', $tenantId)

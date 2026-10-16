@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class SuperAdminLoginTest extends TestCase
@@ -106,7 +105,7 @@ class SuperAdminLoginTest extends TestCase
      */
     public function test_audit_log_uses_existing_company_id(): void
     {
-        $company = \App\Models\Company::create([
+        $company = Company::create([
             'name' => 'Test Company',
             'registration_number' => 'TEST-001',
             'is_active' => true,

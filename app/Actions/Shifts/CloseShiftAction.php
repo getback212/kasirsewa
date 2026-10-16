@@ -2,10 +2,9 @@
 
 namespace App\Actions\Shifts;
 
-use App\Models\Shift;
-use App\Models\Sale;
-use App\Models\Payment;
 use App\Models\CashMovement;
+use App\Models\Payment;
+use App\Models\Shift;
 use App\Models\User;
 use App\Services\Report\DailyClosingReportService;
 use Illuminate\Support\Facades\DB;
@@ -33,9 +32,9 @@ class CloseShiftAction
             // Calculate total cash sales in this shift session
             $cashSales = Payment::whereHas('sale', function ($q) use ($shift) {
                 $q->where('outlet_id', $shift->outlet_id)
-                  ->where('cashier_id', $shift->user_id)
-                  ->where('sale_date', '>=', $shift->opened_at)
-                  ->where('transaction_status', 'completed');
+                    ->where('cashier_id', $shift->user_id)
+                    ->where('sale_date', '>=', $shift->opened_at)
+                    ->where('transaction_status', 'completed');
             })->where('payment_method', 'cash')->sum('amount');
 
             // Calculate cash in and cash out movements

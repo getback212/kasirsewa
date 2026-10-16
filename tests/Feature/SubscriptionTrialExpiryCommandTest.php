@@ -6,14 +6,14 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SubscriptionTrialExpiryCommandTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -25,7 +25,7 @@ class SubscriptionTrialExpiryCommandTest extends TestCase
     #[Test]
     public function command_sends_trial_h1_reminder_via_whatsapp()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $plan = Plan::factory()->create([
             'name' => 'Starter',
@@ -61,8 +61,9 @@ class SubscriptionTrialExpiryCommandTest extends TestCase
             ->assertSuccessful();
 
         // WA reminder should be sent for trial expiring in 1 day
-        Http::assertSent(function ($request) use ($owner) {
+        Http::assertSent(function ($request) {
             $body = $request->data();
+
             return isset($body['target']) && str_contains($body['target'], '81234567890')
                 && isset($body['message']) && str_contains($body['message'], 'Pengingat Tagihan SaaS (H-1)');
         });
@@ -71,7 +72,7 @@ class SubscriptionTrialExpiryCommandTest extends TestCase
     #[Test]
     public function command_expires_trial_and_sends_expired_notification()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $plan = Plan::factory()->create([
             'name' => 'Starter',
@@ -109,8 +110,9 @@ class SubscriptionTrialExpiryCommandTest extends TestCase
         $this->assertEquals('expired', $subscription->status);
 
         // WA expired notification should be sent
-        Http::assertSent(function ($request) use ($owner) {
+        Http::assertSent(function ($request) {
             $body = $request->data();
+
             return isset($body['target']) && str_contains($body['target'], '81299998888')
                 && isset($body['message']) && str_contains($body['message'], 'Masa Aktif Berlangganan Berakhir');
         });
@@ -119,7 +121,7 @@ class SubscriptionTrialExpiryCommandTest extends TestCase
     #[Test]
     public function command_does_not_duplicate_reminder_for_same_subscription()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $plan = Plan::factory()->create([
             'name' => 'Starter',
@@ -157,6 +159,7 @@ class SubscriptionTrialExpiryCommandTest extends TestCase
         // WA should only be sent once for H-1 reminder
         $sentCount = collect(Http::recorded())->filter(function ($record) {
             $body = $record[0]->data();
+
             return isset($body['message']) && str_contains($body['message'], 'Pengingat Tagihan SaaS (H-1)');
         })->count();
 

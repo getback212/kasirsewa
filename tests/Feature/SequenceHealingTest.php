@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
+use App\Support\PostgresSequenceHealer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -43,7 +43,7 @@ class SequenceHealingTest extends TestCase
         // Tests run on sqlite; the healer must bail out instead of erroring.
         config()->set('database.default', 'sqlite');
 
-        \App\Support\PostgresSequenceHealer::heal();
+        PostgresSequenceHealer::heal();
 
         $this->assertTrue(true);
     }

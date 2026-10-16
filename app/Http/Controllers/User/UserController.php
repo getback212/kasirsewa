@@ -2,22 +2,24 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
-use App\Models\User;
 use App\Models\Outlet;
-use App\Enums\UserRole;
+use App\Models\SaaSSetting;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Services\Audit\AuditLogService;
+use App\Support\StaffScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\Permission\Models\Role;
-
-use App\Services\Audit\AuditLogService;
-use App\Support\StaffScope;
 
 class UserController extends Controller
 {
@@ -25,7 +27,7 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
 
-        if (!$currentUser->hasPermissionTo('view-users')) {
+        if (! $currentUser->hasPermissionTo('view-users')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data staff pengguna.');
         }
 
@@ -39,7 +41,7 @@ class UserController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('email', 'ILIKE', "%{$search}%");
+                    ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -93,7 +95,7 @@ class UserController extends Controller
 
         $tenantId = session('active_tenant_id', $currentUser->tenant_id);
         if ($tenantId) {
-            $tenant = \App\Models\Tenant::with('subscription.plan')->find($tenantId);
+            $tenant = Tenant::with('subscription.plan')->find($tenantId);
             if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
                 $maxUsers = $tenant->subscription->plan->max_users;
                 $currentUsersCount = User::where('tenant_id', $tenantId)->count();
@@ -107,10 +109,10 @@ class UserController extends Controller
         $validated = $request->validated();
 
         $cleanPhone = null;
-        if (!empty($validated['phone'])) {
+        if (! empty($validated['phone'])) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
             if (str_starts_with($cleanPhone, '0')) {
-                $cleanPhone = '62' . substr($cleanPhone, 1);
+                $cleanPhone = '62'.substr($cleanPhone, 1);
             }
         }
 
@@ -130,7 +132,7 @@ class UserController extends Controller
 
         // Send Email & WhatsApp Invitation if enabled
         if ($request->boolean('send_invite', true)) {
-            $roleLabel = match($validated['role']) {
+            $roleLabel = match ($validated['role']) {
                 'MANAGER' => 'Manager Toko',
                 'CASHIER' => 'Kasir',
                 'WAREHOUSE' => 'Staf Gudang',
@@ -138,13 +140,13 @@ class UserController extends Controller
             };
 
             // 1. WhatsApp Invitation via Baileys Gateway
-            if (!empty($cleanPhone)) {
-                $waGatewayUrl = \App\Models\SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
-                $waApiKey = \App\Models\SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
+            if (! empty($cleanPhone)) {
+                $waGatewayUrl = SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
+                $waApiKey = SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
                 $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\\n\\nHalo *{$user->name}*,\\n\\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\\n\\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\\nhttps://superbackend.my.id/login";
 
                 try {
-                    \Illuminate\Support\Facades\Http::withHeaders([
+                    Http::withHeaders([
                         'Authorization' => $waApiKey,
                     ])->timeout(20)->post($waGatewayUrl, [
                         'target' => $cleanPhone,
@@ -152,17 +154,17 @@ class UserController extends Controller
                         'message' => $waMsg,
                     ]);
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to send staff WA invite: ' . $e->getMessage());
+                    Log::error('Failed to send staff WA invite: '.$e->getMessage());
                 }
             }
 
             // 2. Email Invitation
             try {
-                \Illuminate\Support\Facades\Mail::raw("Halo {$user->name},\\n\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\n\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
-                    $mail->to($user->email)->subject("✉️ Undangan Bergabung Staf Toko - KasirSewa POS");
+                Mail::raw("Halo {$user->name},\\n\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\n\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
+                    $mail->to($user->email)->subject('✉️ Undangan Bergabung Staf Toko - KasirSewa POS');
                 });
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to send staff email invite: ' . $e->getMessage());
+                Log::error('Failed to send staff email invite: '.$e->getMessage());
             }
         }
 
@@ -217,16 +219,17 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
 
-        if (!$currentUser->hasPermissionTo('edit-users')) {
+        if (! $currentUser->hasPermissionTo('edit-users')) {
             abort(403, 'Anda tidak memiliki hak akses.');
         }
 
         $tenantId = StaffScope::tenantIdFor($currentUser);
 
         $user = User::where(fn ($q) => StaffScope::apply($q, $tenantId))->findOrFail($id);
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
         return back()->with('success', "Akun staff {$user->name} berhasil {$statusText}.");
     }
 
@@ -234,7 +237,7 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
 
-        if (!$currentUser->hasRole([UserRole::SUPER_ADMIN->value, UserRole::OWNER->value]) && !$currentUser->hasPermissionTo('delete-users')) {
+        if (! $currentUser->hasRole([UserRole::SUPER_ADMIN->value, UserRole::OWNER->value]) && ! $currentUser->hasPermissionTo('delete-users')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus akun staff.');
         }
 
@@ -265,10 +268,12 @@ class UserController extends Controller
                     modelId: $id,
                     oldValues: $deletedUserData
                 );
+
                 return back()->with('success', "Akun staff {$userName} telah dihapus permanen dari sistem!");
             }
 
             $user->delete();
+
             return back()->with('success', "Akun staff {$userName} telah dinonaktifkan dari sistem!");
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());

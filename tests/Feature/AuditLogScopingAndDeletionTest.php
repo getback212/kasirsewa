@@ -2,16 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\User;
-use App\Enums\UserRole;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class AuditLogScopingAndDeletionTest extends TestCase
 {
     public function test_super_admin_can_view_all_logs_and_delete_single_audit_log_entry()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $superAdmin = User::factory()->create(['tenant_id' => null]);
         $superAdmin->assignRole(UserRole::SUPER_ADMIN->value);

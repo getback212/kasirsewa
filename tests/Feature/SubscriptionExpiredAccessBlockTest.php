@@ -6,13 +6,14 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class SubscriptionExpiredAccessBlockTest extends TestCase
 {
     public function test_owner_with_expired_trial_cannot_access_dashboard()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         // Create plan
         $plan = Plan::firstOrCreate(['slug' => 'test-plan'], [
@@ -61,7 +62,7 @@ class SubscriptionExpiredAccessBlockTest extends TestCase
 
     public function test_owner_with_expired_subscription_can_access_subscription_page()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $plan = Plan::firstOrCreate(['slug' => 'test-plan'], [
             'name' => 'Test Plan',

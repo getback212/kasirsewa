@@ -2,20 +2,21 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\Outlet;
-use App\Models\User;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Enums\UserRole;
+use App\Models\Tenant;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class CrossDeviceCustomerDisplayTest extends TestCase
 {
     public function test_guest_and_cashier_can_access_customer_display_and_read_state_without_login()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $plan = Plan::firstOrCreate(['slug' => 'starter-basic'], ['name' => 'Starter Basic', 'monthly_price' => 99000, 'yearly_price' => 990000, 'max_stores' => 1, 'max_users' => 3, 'max_products' => 500, 'is_active' => true]);
         $tenant = Tenant::create(['name' => 'Toko Dual Display Test', 'slug' => 'toko-dual-display-test', 'status' => 'active']);
@@ -39,7 +40,7 @@ class CrossDeviceCustomerDisplayTest extends TestCase
         $broadcastResponse = $this->actingAs($owner)->withSession(['active_tenant_id' => $tenant->id])->postJson('/pos/customer-display/state', [
             'type' => 'CART_UPDATE',
             'items' => [
-                ['product_id' => 1, 'name' => 'Kopi Susu Merdeka', 'price' => 15000, 'quantity' => 2, 'subtotal' => 30000]
+                ['product_id' => 1, 'name' => 'Kopi Susu Merdeka', 'price' => 15000, 'quantity' => 2, 'subtotal' => 30000],
             ],
             'subtotal' => 30000,
             'grandTotal' => 30000,
@@ -49,13 +50,13 @@ class CrossDeviceCustomerDisplayTest extends TestCase
 
         // 3. Unauthenticated guest on device B reads state via GET API using pair code
         $this->app['auth']->forgetGuards(); // flush actingAs so this request is a true guest
-        $getStateResponse = $this->getJson('/pos/customer-display/state?pair_code=' . $outlet->display_pair_token);
+        $getStateResponse = $this->getJson('/pos/customer-display/state?pair_code='.$outlet->display_pair_token);
         $getStateResponse->assertStatus(200);
         $getStateResponse->assertJsonFragment(['name' => 'Kopi Susu Merdeka', 'grandTotal' => 30000]);
 
         // 4. Guest without pair_code cannot enumerate outlet_id to read cart data
         $this->app['auth']->forgetGuards(); // flush actingAs so this request is a true guest
-        $enumResponse = $this->getJson('/pos/customer-display/state?outlet_id=' . $outlet->id);
+        $enumResponse = $this->getJson('/pos/customer-display/state?outlet_id='.$outlet->id);
         $enumResponse->assertStatus(200);
         $enumResponse->assertJsonFragment(['items' => [], 'grandTotal' => 0]);
     }

@@ -16,7 +16,7 @@ class AdminPaymentSettingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mengatur rekening pembayaran SaaS.');
         }
 
@@ -34,7 +34,7 @@ class AdminPaymentSettingController extends Controller
                 'account_number' => SaaSSetting::get('bank_mandiri_number', '987-000-111-22'),
                 'account_name' => SaaSSetting::get('bank_mandiri_name', 'PT KasirSewa Indonesia'),
                 'is_active' => true,
-            ]
+            ],
         ];
 
         $bankAccountsRaw = SaaSSetting::get('bank_accounts', null);
@@ -60,7 +60,7 @@ class AdminPaymentSettingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mengubah rekening pembayaran SaaS.');
         }
 

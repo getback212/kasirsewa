@@ -4,24 +4,23 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\StoreProductRequest;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\Tenant;
 use App\Models\Unit;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-
-use App\Services\Audit\AuditLogService;
 
 class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
         $user = $request->user();
-        if (!$user->hasPermissionTo('view-products')) {
+        if (! $user->hasPermissionTo('view-products')) {
             abort(403, 'Anda tidak memiliki hak akses untuk melihat master data produk.');
         }
 
@@ -32,8 +31,8 @@ class ProductController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('sku', 'ilike', "%{$search}%")
-                  ->orWhere('barcode', 'ilike', "%{$search}%");
+                    ->orWhere('sku', 'ilike', "%{$search}%")
+                    ->orWhere('barcode', 'ilike', "%{$search}%");
             });
         }
 
@@ -57,11 +56,11 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request): RedirectResponse
     {
         $user = $request->user();
-        
+
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
         if ($tenantId) {
-            $tenant = \App\Models\Tenant::with('subscription.plan')->find($tenantId);
+            $tenant = Tenant::with('subscription.plan')->find($tenantId);
             if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
                 $maxProducts = $tenant->subscription->plan->max_products;
                 $currentProductCount = Product::where('tenant_id', $tenantId)->count();
@@ -102,7 +101,7 @@ class ProductController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasPermissionTo('edit-products')) {
+        if (! $user->hasPermissionTo('edit-products')) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengedit data produk.');
         }
 
@@ -151,7 +150,7 @@ class ProductController extends Controller
     public function destroy(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasPermissionTo('delete-products')) {
+        if (! $user->hasPermissionTo('delete-products')) {
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus produk.');
         }
 

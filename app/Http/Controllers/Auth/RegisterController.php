@@ -2,25 +2,25 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\Company;
-use App\Models\Outlet;
-use App\Models\User;
-use App\Models\Plan;
-use App\Models\Subscription;
 use App\Models\Category;
-use App\Models\Unit;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use App\Enums\UserRole;
+use App\Models\Outlet;
+use App\Models\Plan;
+use App\Models\Subscription;
+use App\Models\Tenant;
+use App\Models\Unit;
+use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Support\TenantDomain;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +29,7 @@ use Inertia\Response;
  * RegisterController — Handles NEW OWNER registration (form-based, plan selection).
  *
  * ONLY ENTRY POINT FOR NEW TENANT CREATION.
- * 
+ *
  * FLOW:
  * 1. Landing page: User selects plan (Starter/Pro/Enterprise)
  * 2. Clicks "Mulai Trial" → /register?plan=starter-basic (or other plan slug)
@@ -67,15 +67,15 @@ class RegisterController extends Controller
     {
         $plans = Plan::where('is_active', true)->get();
         $selectedPlanSlug = $request->query('plan', 'starter-basic');
-        
+
         // Map slug to plan object
-        $selectedPlan = $plans->firstWhere('slug', $selectedPlanSlug) 
+        $selectedPlan = $plans->firstWhere('slug', $selectedPlanSlug)
             ?? $plans->firstWhere('slug', 'starter-basic')
             ?? $plans->first();
-        
+
         return Inertia::render('Auth/Register', [
             'plans' => $plans,
-            'selected_plan_id' => $selectedPlan?->id ?? ($plans->first()?->id ?? 1)
+            'selected_plan_id' => $selectedPlan?->id ?? ($plans->first()?->id ?? 1),
         ]);
     }
 

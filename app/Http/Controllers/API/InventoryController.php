@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class InventoryController extends Controller
 {
@@ -55,7 +55,7 @@ class InventoryController extends Controller
             ->where('id', $productId)
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Produk tidak ditemukan.',

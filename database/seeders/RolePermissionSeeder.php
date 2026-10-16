@@ -2,32 +2,33 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use App\Models\Tenant;
-use App\Models\Plan;
-use App\Models\Subscription;
-use App\Models\Company;
-use App\Models\Outlet;
-use App\Models\Category;
-use App\Models\Unit;
-use App\Models\Product;
-use App\Models\Customer;
-use App\Models\Supplier;
-use App\Models\User;
-use App\Enums\UserRole;
-use App\Enums\StockMovementType;
 use App\Actions\Inventory\AdjustStockAction;
+use App\Enums\StockMovementType;
+use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\Company;
+use App\Models\Customer;
+use App\Models\Outlet;
+use App\Models\Plan;
+use App\Models\Product;
+use App\Models\Subscription;
+use App\Models\Supplier;
+use App\Models\Tenant;
+use App\Models\Unit;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // 1. Create Permissions & Roles
         $permissions = [
@@ -315,7 +316,7 @@ class RolePermissionSeeder extends Seeder
         );
 
         // Seed Initial Inventory Stocks
-        $adjustAction = new AdjustStockAction();
+        $adjustAction = new AdjustStockAction;
         $adjustAction->execute($outlet1->id, $p1->id, 50.00, StockMovementType::PURCHASE, $owner1->id, null, null, 'Stok awal saldo gudang');
         $adjustAction->execute($outlet1->id, $p2->id, 18.00, StockMovementType::PURCHASE, $owner1->id, null, null, 'Stok awal saldo gudang');
 
@@ -383,7 +384,8 @@ class RolePermissionSeeder extends Seeder
             foreach ($tables as $table) {
                 try {
                     DB::statement("SELECT setval('{$table}_id_seq', (SELECT COALESCE(MAX(id), 1) FROM {$table}));");
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             }
         }
     }

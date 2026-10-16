@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -59,7 +61,7 @@ class TenantBackupTest extends TestCase
         $content = Storage::disk('local')->get($files[0]);
         $filename = basename($files[0]);
 
-        $upload = \Illuminate\Http\UploadedFile::fake()->createWithContent($filename, $content);
+        $upload = UploadedFile::fake()->createWithContent($filename, $content);
         $response = $this->actingAs($owner)->post('/backups/upload', ['backup_file' => $upload]);
 
         $response->assertRedirect();
@@ -73,7 +75,7 @@ class TenantBackupTest extends TestCase
         $dir = "backups/tenants/tenant_{$owner->tenant_id}";
 
         // File racikan: pola nama benar tapi isi bukan backup tenant ini.
-        $upload = \Illuminate\Http\UploadedFile::fake()
+        $upload = UploadedFile::fake()
             ->createWithContent("tenant_{$owner->tenant_id}_backup_palsu.sql.gz", gzencode('isi palsu'));
 
         $response = $this->actingAs($owner)->post('/backups/upload', ['backup_file' => $upload]);
@@ -97,7 +99,7 @@ class TenantBackupTest extends TestCase
         $filename = basename($files[0]);
 
         // Hapus satu produk, lalu restore: produk harus kembali.
-        \App\Models\Product::where('sku', 'SKU-KOPI-001')->delete();
+        Product::where('sku', 'SKU-KOPI-001')->delete();
         $this->assertDatabaseMissing('products', ['sku' => 'SKU-KOPI-001']);
 
         $response = $this->actingAs($owner)->post("/backups/restore/{$filename}");

@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\Subscription;
 use App\Models\Invoice;
-use App\Models\SaaSPayment;
 use App\Models\Plan;
+use App\Models\SaaSPayment;
+use App\Models\Subscription;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use DB;
 
 class AdminDashboardController extends Controller
 {
@@ -19,7 +18,7 @@ class AdminDashboardController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('SUPER_ADMIN')) {
+        if (! $user->hasRole('SUPER_ADMIN')) {
             abort(403, 'Hanya Super Admin yang berwenang mengakses Super Admin SaaS Dashboard.');
         }
 
@@ -50,7 +49,7 @@ class AdminDashboardController extends Controller
             ->where('created_at', '>=', now()->subMonths(6))
             ->selectRaw("TO_CHAR(created_at, 'Mon YYYY') as month, SUM(amount) as revenue")
             ->groupBy('month')
-            ->orderByRaw("MIN(created_at) ASC")
+            ->orderByRaw('MIN(created_at) ASC')
             ->get();
 
         // 5. Recent Tenant Registrations & Invoices

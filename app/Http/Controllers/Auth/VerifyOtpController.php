@@ -24,7 +24,7 @@ class VerifyOtpController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'phone_verified_at' => $user->phone_verified_at ? $user->phone_verified_at->format('Y-m-d H:i:s') : null,
-                'is_verified' => !is_null($user->phone_verified_at),
+                'is_verified' => ! is_null($user->phone_verified_at),
             ],
         ]);
     }
@@ -41,7 +41,7 @@ class VerifyOtpController extends Controller
         $user = $request->user();
         $phone = preg_replace('/[^0-9]/', '', $request->phone);
         if (str_starts_with($phone, '0')) {
-            $phone = '62' . substr($phone, 1);
+            $phone = '62'.substr($phone, 1);
         }
 
         $otp = (string) rand(100000, 999999);
@@ -74,7 +74,7 @@ class VerifyOtpController extends Controller
             ]);
 
             if ($res->successful()) {
-                return redirect()->back()->with('success', "✅ Kode OTP 6-Digit berhasil dikirim ke nomor WhatsApp Anda! Silakan periksa pesan WA yang masuk.");
+                return redirect()->back()->with('success', '✅ Kode OTP 6-Digit berhasil dikirim ke nomor WhatsApp Anda! Silakan periksa pesan WA yang masuk.');
             }
 
             // The gateway answered but rejected the message (wrong key, session

@@ -1,39 +1,46 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminNotificationSettingController;
+use App\Http\Controllers\Admin\AdminPaymentSettingController;
+use App\Http\Controllers\Admin\AdminProfileController;
+use App\Http\Controllers\Admin\EnterpriseRegistrationController;
+use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\VerifyOtpController;
+use App\Http\Controllers\Backup\BackupController;
 use App\Http\Controllers\Dashboard\DashboardController;
-use App\Http\Controllers\Outlet\OutletController;
-use App\Http\Controllers\Master\ProductController;
-use App\Http\Controllers\Master\CategoryController;
-use App\Http\Controllers\Master\SupplierController;
-use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\Expense\ExpenseController;
 use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Inventory\StockOpnameController;
 use App\Http\Controllers\Inventory\StockTransferController;
-use App\Http\Controllers\POS\POSController;
+use App\Http\Controllers\Invoice\InvoiceController;
+use App\Http\Controllers\Master\CategoryController;
+use App\Http\Controllers\Master\CustomerController;
+use App\Http\Controllers\Master\DiscountController;
+use App\Http\Controllers\Master\ProductController;
+use App\Http\Controllers\Master\SupplierController;
+use App\Http\Controllers\Master\UnitController;
+use App\Http\Controllers\Outlet\OutletController;
 use App\Http\Controllers\POS\PaymentController;
+use App\Http\Controllers\POS\POSController;
 use App\Http\Controllers\POS\ReceiptController;
-use App\Http\Controllers\Shift\ShiftController;
 use App\Http\Controllers\Purchase\PurchaseController;
-use App\Http\Controllers\Sales\SalesReturnController;
 use App\Http\Controllers\Report\ReportController;
-use App\Http\Controllers\Expense\ExpenseController;
-use App\Http\Controllers\Audit\AuditLogController;
-use App\Http\Controllers\Backup\BackupController;
-use App\Http\Controllers\Tenant\TenantController;
+use App\Http\Controllers\Sales\SalesReturnController;
+use App\Http\Controllers\Shift\ShiftController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Subscription\SubscriptionExpiredController;
-use App\Http\Controllers\Admin\PlanController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminPaymentSettingController;
-use App\Http\Controllers\Admin\AdminNotificationSettingController;
-use App\Http\Controllers\Admin\AdminProfileController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Master\CustomerController;
-use App\Http\Controllers\Master\UnitController;
-use App\Http\Controllers\Master\DiscountController;
-use App\Http\Controllers\Invoice\InvoiceController;
+use App\Http\Controllers\Tenant\TenantController;
+use App\Http\Controllers\User\UserController;
+use App\Models\Plan;
+use App\Models\SaaSSetting;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // PUBLIC LANDING PAGE & GUEST ROUTES
 Route::get('/', function () {
@@ -48,19 +55,21 @@ Route::get('/', function () {
         if ($user->hasRole('WAREHOUSE')) {
             return redirect()->route('inventory.index');
         }
+
         return redirect()->route('dashboard');
     }
 
     $host = strtolower(request()->getHost());
     $isMainDomain = in_array($host, ['superbackend.my.id', 'saas.superbackend.my.id', '127.0.0.1', 'localhost', '172.17.0.1']);
 
-    if (!$isMainDomain) {
+    if (! $isMainDomain) {
         return redirect()->route('login');
     }
-    
-    $plans = \App\Models\Plan::where('is_active', true)->get();
-    $waCsNumber = \App\Models\SaaSSetting::get('wa_cs_number', '6281234567890');
-    return \Inertia\Inertia::render('Welcome', [
+
+    $plans = Plan::where('is_active', true)->get();
+    $waCsNumber = SaaSSetting::get('wa_cs_number', '6281234567890');
+
+    return Inertia::render('Welcome', [
         'plans' => $plans,
         'waCsNumber' => $waCsNumber,
     ]);
@@ -68,10 +77,11 @@ Route::get('/', function () {
 
 Route::get('/wa-qr', function () {
     try {
-        $res = \Illuminate\Support\Facades\Http::get('http://kasirsewa_whatsapp:3001/qr');
+        $res = Http::get('http://kasirsewa_whatsapp:3001/qr');
+
         return response($res->body(), 200)->header('Content-Type', 'text/html');
-    } catch (\Exception $e) {
-        return response("Gagal mengambil QR Code: " . $e->getMessage(), 500);
+    } catch (Exception $e) {
+        return response('Gagal mengambil QR Code: '.$e->getMessage(), 500);
     }
 });
 
@@ -84,8 +94,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:login');
 
     // Google SSO Routes
-    Route::get('/auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
-    Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+    Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 // Public Customer Display (Layar Pembeli Tanpa Login di Perangkat Kedua - Accessible to Guest & Auth)
@@ -99,9 +109,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     // WhatsApp OTP Verification Routes
-    Route::get('/verify-otp', [\App\Http\Controllers\Auth\VerifyOtpController::class, 'show'])->name('verify.otp');
-    Route::post('/verify-otp/send', [\App\Http\Controllers\Auth\VerifyOtpController::class, 'sendOtp'])->name('verify.otp.send');
-    Route::post('/verify-otp/verify', [\App\Http\Controllers\Auth\VerifyOtpController::class, 'verifyOtp'])->name('verify.otp.verify');
+    Route::get('/verify-otp', [VerifyOtpController::class, 'show'])->name('verify.otp');
+    Route::post('/verify-otp/send', [VerifyOtpController::class, 'sendOtp'])->name('verify.otp.send');
+    Route::post('/verify-otp/verify', [VerifyOtpController::class, 'verifyOtp'])->name('verify.otp.verify');
 
     // Super Admin Tenant, Plan & Dashboard Routes
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
@@ -113,9 +123,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/tenants/stop-impersonate', [TenantController::class, 'stopImpersonate'])->name('admin.tenants.stop_impersonate');
 
     // Super Admin Enterprise Registration Routes
-    Route::get('/admin/enterprise/create', [\App\Http\Controllers\Admin\EnterpriseRegistrationController::class, 'create'])->name('admin.enterprise.create');
-    Route::post('/admin/enterprise/store', [\App\Http\Controllers\Admin\EnterpriseRegistrationController::class, 'store'])->name('admin.enterprise.store');
-    Route::get('/admin/enterprise/{tenant}', [\App\Http\Controllers\Admin\EnterpriseRegistrationController::class, 'show'])->name('admin.enterprise.show');
+    Route::get('/admin/enterprise/create', [EnterpriseRegistrationController::class, 'create'])->name('admin.enterprise.create');
+    Route::post('/admin/enterprise/store', [EnterpriseRegistrationController::class, 'store'])->name('admin.enterprise.store');
+    Route::get('/admin/enterprise/{tenant}', [EnterpriseRegistrationController::class, 'show'])->name('admin.enterprise.show');
 
     Route::get('/admin/plans', [PlanController::class, 'index'])->name('admin.plans.index');
     Route::post('/admin/plans', [PlanController::class, 'store'])->name('admin.plans.store');

@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Subscription;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\Plan;
-use App\Models\Subscription;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Plan;
+use App\Models\Subscription;
+use App\Models\Tenant;
 use App\Services\Audit\AuditLogService;
+use DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use DB;
 
 class SubscriptionController extends Controller
 {
@@ -36,7 +36,7 @@ class SubscriptionController extends Controller
     public function renew(Request $request): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
+        if (! $user->hasRole(['SUPER_ADMIN', 'OWNER'])) {
             abort(403, 'Hanya Pemilik Toko (Owner) yang berwenang melakukan perpanjangan paket.');
         }
 
@@ -55,7 +55,7 @@ class SubscriptionController extends Controller
         DB::transaction(function () use ($tenant, $plan, $validated, $price, $invoiceNumber) {
             $subscription = Subscription::where('tenant_id', $tenant->id)->first();
 
-            if (!$subscription) {
+            if (! $subscription) {
                 $subscription = Subscription::create([
                     'tenant_id' => $tenant->id,
                     'plan_id' => $plan->id,
@@ -87,7 +87,7 @@ class SubscriptionController extends Controller
 
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'description' => "Perpanjangan Paket SaaS '{$plan->name}' (" . strtoupper($validated['billing_cycle']) . ")",
+                'description' => "Perpanjangan Paket SaaS '{$plan->name}' (".strtoupper($validated['billing_cycle']).')',
                 'amount' => $price,
             ]);
         });
@@ -99,6 +99,6 @@ class SubscriptionController extends Controller
             newValues: ['plan' => $plan->name, 'cycle' => $validated['billing_cycle'], 'total' => $price]
         );
 
-        return redirect('/invoices')->with('success', "Tagihan invoice berlangganan paket '{$plan->name}' (Rp " . number_format($price, 0, ',', '.') . ") berhasil dibuat! Silakan lakukan pembayaran via QRIS atau Transfer Bank.");
+        return redirect('/invoices')->with('success', "Tagihan invoice berlangganan paket '{$plan->name}' (Rp ".number_format($price, 0, ',', '.').') berhasil dibuat! Silakan lakukan pembayaran via QRIS atau Transfer Bank.');
     }
 }

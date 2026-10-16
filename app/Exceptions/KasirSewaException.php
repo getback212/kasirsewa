@@ -4,8 +4,6 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 
 /**
  * Base exception for KasirSewa domain errors
@@ -14,6 +12,7 @@ use Illuminate\Http\Response;
 class KasirSewaException extends Exception
 {
     protected string $userMessage;
+
     protected bool $shouldLog = true;
 
     public function __construct(
@@ -23,7 +22,7 @@ class KasirSewaException extends Exception
         ?\Throwable $previous = null
     ) {
         $this->userMessage = $userMessage;
-        
+
         parent::__construct(
             $internalMessage ?: $userMessage,
             $code,

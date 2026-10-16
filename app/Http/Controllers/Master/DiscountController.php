@@ -24,7 +24,7 @@ class DiscountController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('code', 'ILIKE', "%{$search}%");
+                    ->orWhere('code', 'ILIKE', "%{$search}%");
             });
         }
 

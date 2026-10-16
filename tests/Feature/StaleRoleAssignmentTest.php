@@ -24,7 +24,7 @@ class StaleRoleAssignmentTest extends TestCase
     {
         // ✅ NEW: Unregistered users are rejected and redirected to /register
         // (Security fix: prevents auto-tenant creation for unauthorized emails)
-        
+
         // The id the next INSERT will receive; a deleted user's role rows are
         // still parked on it.
         $staleId = (int) User::max('id') + 1;
@@ -33,7 +33,7 @@ class StaleRoleAssignmentTest extends TestCase
         // Pre-populate stale role assignment
         DB::table('model_has_roles')->insert([
             'role_id' => $cashierRoleId,
-            'model_type' => (new User())->getMorphClass(),
+            'model_type' => (new User)->getMorphClass(),
             'model_id' => $staleId,
         ]);
 

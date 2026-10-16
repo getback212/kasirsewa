@@ -9,7 +9,7 @@ class CreditLimitExceededException extends KasirSewaException
         $limitStr = number_format($limit, 0, ',', '.');
         $balanceStr = number_format($balance, 0, ',', '.');
         $amountStr = number_format($transactionAmount, 0, ',', '.');
-        
+
         parent::__construct(
             userMessage: "Batas limit kredit pelanggan '{$customerName}' telah terlampaui. Limit: Rp {$limitStr}, Saldo: Rp {$balanceStr}, Transaksi: Rp {$amountStr}.",
             internalMessage: "Credit limit exceeded for {$customerName}: limit={$limit}, balance={$balance}, transaction={$transactionAmount}",

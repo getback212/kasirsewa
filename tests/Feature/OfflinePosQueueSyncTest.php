@@ -2,26 +2,30 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\Outlet;
-use App\Models\User;
+use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Sale;
-use App\Enums\UserRole;
+use App\Models\Stock;
+use App\Models\Subscription;
+use App\Models\Tenant;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Tests\TestCase;
 
 class OfflinePosQueueSyncTest extends TestCase
 {
     public function test_offline_buffered_transactions_can_be_synced_to_server_on_reconnection()
     {
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
-        $plan = \App\Models\Plan::firstOrCreate(['slug' => 'starter-basic'], ['name' => 'Starter Basic', 'monthly_price' => 99000, 'yearly_price' => 990000, 'max_stores' => 1, 'max_users' => 3, 'max_products' => 500, 'max_transactions' => 3000, 'is_active' => true]);
+        $plan = Plan::firstOrCreate(['slug' => 'starter-basic'], ['name' => 'Starter Basic', 'monthly_price' => 99000, 'yearly_price' => 990000, 'max_stores' => 1, 'max_users' => 3, 'max_products' => 500, 'max_transactions' => 3000, 'is_active' => true]);
         $tenant = Tenant::create(['name' => 'Toko Offline Sync Test', 'slug' => 'toko-offline-sync-test', 'status' => 'active']);
         $company = Company::create(['tenant_id' => $tenant->id, 'name' => 'Toko Offline Sync Test']);
         $outlet = Outlet::create(['company_id' => $company->id, 'tenant_id' => $tenant->id, 'code' => 'OUT-88', 'name' => 'Outlet Offline Test', 'is_active' => true]);
-        \App\Models\Subscription::create(['tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'status' => 'trial', 'billing_cycle' => 'monthly', 'starts_at' => now(), 'expires_at' => now()->addDays(7)]);
+        Subscription::create(['tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'status' => 'trial', 'billing_cycle' => 'monthly', 'starts_at' => now(), 'expires_at' => now()->addDays(7)]);
 
         $owner = User::factory()->create([
             'company_id' => $company->id,
@@ -42,7 +46,7 @@ class OfflinePosQueueSyncTest extends TestCase
             'is_active' => true,
         ]);
 
-        \App\Models\Stock::create([
+        Stock::create([
             'tenant_id' => $tenant->id,
             'outlet_id' => $outlet->id,
             'product_id' => $product->id,
@@ -66,7 +70,7 @@ class OfflinePosQueueSyncTest extends TestCase
                     'price' => 15000,
                     'discount_amount' => 0,
                     'subtotal' => 30000,
-                ]
+                ],
             ],
         ];
 

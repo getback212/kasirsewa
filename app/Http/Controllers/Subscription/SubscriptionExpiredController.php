@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Subscription;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class SubscriptionExpiredController extends Controller
 {
@@ -17,15 +18,15 @@ class SubscriptionExpiredController extends Controller
     public function show(Request $request)
     {
         $user = $request->user();
-        
+
         // Only authenticated users can see this page
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
         $subscription = $user->tenant?->subscription;
-        
-        return \Inertia\Inertia::render('Subscription/SubscriptionExpired', [
+
+        return Inertia::render('Subscription/SubscriptionExpired', [
             'subscription' => $subscription ? [
                 'status' => $subscription->status,
                 'expires_at' => $subscription->expires_at?->format('Y-m-d H:i:s'),

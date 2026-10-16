@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +14,7 @@ use Laravel\Socialite\Facades\Socialite;
  * GoogleAuthController — Handles Google SSO for EXISTING users only.
  *
  * FLOW DIAGRAM:
- * 
+ *
  * 1. NEW OWNER (registration):
  *    Landing Page (plan selector) → /register?plan=X (RegisterController)
  *    → Form (email, password, store name) → New Tenant created
@@ -40,7 +40,7 @@ class GoogleAuthController extends Controller
 {
     /**
      * Step 1: Redirect to Google OAuth consent screen.
-     * 
+     *
      * Query params (if from /register flow):
      * - plan_id: Selected plan ID (to preserve selection after Google callback)
      * - billing_cycle: Monthly/yearly choice
@@ -60,7 +60,7 @@ class GoogleAuthController extends Controller
 
     /**
      * Step 2: Google callback handler.
-     * 
+     *
      * Decision tree:
      * - User exists (by google_id): Link + Login ✓
      * - User exists (by email, no google_id): Link google_id + Login ✓
@@ -77,16 +77,16 @@ class GoogleAuthController extends Controller
                 ->first();
 
             // ❌ NO USER FOUND: Reject auto-registration, redirect to /register
-            if (!$user) {
+            if (! $user) {
                 // Preserve plan selection if coming from /register flow
                 $planId = session()->pull('google_plan_id');
                 $billingCycle = session()->pull('google_billing_cycle', 'monthly');
-                
+
                 $redirectUrl = '/register';
                 if ($planId) {
-                    $redirectUrl .= '?plan_id=' . $planId;
+                    $redirectUrl .= '?plan_id='.$planId;
                     if ($billingCycle) {
-                        $redirectUrl .= '&billing_cycle=' . $billingCycle;
+                        $redirectUrl .= '&billing_cycle='.$billingCycle;
                     }
                 }
 
@@ -97,7 +97,7 @@ class GoogleAuthController extends Controller
             }
 
             // ✓ USER EXISTS: Update Google ID (if new) and login
-            if (!$user->google_id || $user->google_id !== $googleUser->getId()) {
+            if (! $user->google_id || $user->google_id !== $googleUser->getId()) {
                 $user->update([
                     'google_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar() ?? $user->avatar,

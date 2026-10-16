@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
@@ -22,8 +22,8 @@ class ProductController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('sku', 'ILIKE', "%{$search}%")
-                  ->orWhere('barcode', 'ILIKE', "%{$search}%");
+                    ->orWhere('sku', 'ILIKE', "%{$search}%")
+                    ->orWhere('barcode', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -62,7 +62,7 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Produk tidak ditemukan.',
@@ -107,8 +107,8 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'ILIKE', "%{$query}%")
-                  ->orWhere('sku', 'ILIKE', "%{$query}%")
-                  ->orWhere('barcode', 'ILIKE', "%{$query}%");
+                    ->orWhere('sku', 'ILIKE', "%{$query}%")
+                    ->orWhere('barcode', 'ILIKE', "%{$query}%");
             })
             ->limit(20)
             ->get(['id', 'sku', 'barcode', 'name', 'selling_price', 'stock_quantity']);

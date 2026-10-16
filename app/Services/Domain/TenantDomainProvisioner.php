@@ -169,19 +169,19 @@ final class TenantDomainProvisioner
 
     private function updateCustomHostname(string $id, string $domain): ?array
     {
-        return $this->request('patch', $this->customHostnamesPath() . '/' . $id, [
+        return $this->request('patch', $this->customHostnamesPath().'/'.$id, [
             'hostname' => $domain,
         ]);
     }
 
     private function fetchCustomHostname(string $id): ?array
     {
-        return $this->request('get', $this->customHostnamesPath() . '/' . $id);
+        return $this->request('get', $this->customHostnamesPath().'/'.$id);
     }
 
     private function customHostnamesPath(): string
     {
-        return '/zones/' . config('services.cloudflare.zone_id') . '/custom_hostnames';
+        return '/zones/'.config('services.cloudflare.zone_id').'/custom_hostnames';
     }
 
     /**
@@ -225,6 +225,6 @@ final class TenantDomainProvisioner
 
     private function endpoint(string $path): string
     {
-        return rtrim((string) config('services.cloudflare.api_base', 'https://api.cloudflare.com/client/v4'), '/') . $path;
+        return rtrim((string) config('services.cloudflare.api_base', 'https://api.cloudflare.com/client/v4'), '/').$path;
     }
 }

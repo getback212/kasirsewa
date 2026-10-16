@@ -88,7 +88,7 @@ final class PostgresSequenceHealer
             return 0;
         }
 
-        $userMorph = (new User())->getMorphClass();
+        $userMorph = (new User)->getMorphClass();
         $purged = 0;
 
         foreach (['model_has_roles', 'model_has_permissions'] as $table) {

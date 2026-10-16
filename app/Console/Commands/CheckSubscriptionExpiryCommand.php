@@ -2,16 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Subscription;
 use App\Models\Tenant;
-use App\Services\Notification\NotificationDispatcherService;
 use App\Services\Audit\AuditLogService;
+use App\Services\Notification\NotificationDispatcherService;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class CheckSubscriptionExpiryCommand extends Command
 {
     protected $signature = 'app:check-subscription-expiry';
+
     protected $description = 'Otomatisasi pengecekan kadaluarsa subskripsi & trial SaaS, pengiriman pengingat billing multi-channel (WA & Email H-7, H-3, H-1/Trial), dan eksekusi status trial/suspended.';
 
     public function handle(): int
@@ -99,6 +100,7 @@ class CheckSubscriptionExpiryCommand extends Command
         }
 
         $this->info('Pemeriksaan subskripsi SaaS & pengiriman notifikasi billing multi-channel selesai dilaksanakan.');
+
         return Command::SUCCESS;
     }
 }

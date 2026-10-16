@@ -2,12 +2,14 @@
 
 namespace App\Actions\POS;
 
+use App\Actions\Inventory\AdjustStockAction;
+use App\Enums\StockMovementType;
+use App\Models\Outlet;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalesReturn;
 use App\Models\SalesReturnItem;
-use App\Actions\Inventory\AdjustStockAction;
-use App\Enums\StockMovementType;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -31,12 +33,12 @@ class ProcessSalesReturnAction
             $returnItems,
             $reason
         ) {
-            $companyId = \App\Models\User::findOrFail($cashierId)->company_id;
-            if (!$companyId) {
+            $companyId = User::findOrFail($cashierId)->company_id;
+            if (! $companyId) {
                 throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
             }
 
-            $outlet = \App\Models\Outlet::whereKey($outletId)
+            $outlet = Outlet::whereKey($outletId)
                 ->where('company_id', $companyId)
                 ->firstOrFail();
 

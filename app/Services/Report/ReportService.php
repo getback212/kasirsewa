@@ -2,12 +2,13 @@
 
 namespace App\Services\Report;
 
+use App\Models\Expense;
+use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\Payment;
-use App\Models\Stock;
-use Illuminate\Support\Facades\DB;
+use App\Models\Shift;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
@@ -28,15 +29,15 @@ class ReportService
         // 2. COGS (Modal HPP) & Profit Calculation
         $cogs = (float) SaleItem::whereHas('sale', function ($q) use ($outletId, $start, $end) {
             $q->where('outlet_id', $outletId)
-              ->where('transaction_status', 'completed')
-              ->whereBetween('sale_date', [$start, $end]);
+                ->where('transaction_status', 'completed')
+                ->whereBetween('sale_date', [$start, $end]);
         })->sum(DB::raw('quantity * COALESCE(cost_price_snapshot, 0)'));
 
         $grossProfit = $totalRevenue - $cogs;
         $profitMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0.00;
 
         // 2b. Operational Expenses & Net Profit Calculation
-        $totalExpenses = (float) \App\Models\Expense::where('outlet_id', $outletId)
+        $totalExpenses = (float) Expense::where('outlet_id', $outletId)
             ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
             ->sum('amount');
 
@@ -58,9 +59,10 @@ class ReportService
             ->map(function ($p) use ($totalRevenue) {
                 $totalAmount = (float) $p->total_amount;
                 $percentage = $totalRevenue > 0 ? ($totalAmount / $totalRevenue) * 100 : 0.0;
+
                 return [
                     'payment_method' => $p->payment_method,
-                    'label' => match($p->payment_method) {
+                    'label' => match ($p->payment_method) {
                         'cash' => 'Tunai (Cash)',
                         'qris' => 'QRIS Instant',
                         'debit' => 'EDC Debit',
@@ -77,14 +79,14 @@ class ReportService
         // 4. Top 5 Best Selling Products
         $topProducts = SaleItem::whereHas('sale', function ($q) use ($outletId, $start, $end) {
             $q->where('outlet_id', $outletId)
-              ->where('transaction_status', 'completed')
-              ->whereBetween('sale_date', [$start, $end]);
+                ->where('transaction_status', 'completed')
+                ->whereBetween('sale_date', [$start, $end]);
         })
-        ->select('product_name_snapshot', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(subtotal) as total_sales'))
-        ->groupBy('product_name_snapshot')
-        ->orderByDesc('total_qty')
-        ->limit(5)
-        ->get();
+            ->select('product_name_snapshot', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(subtotal) as total_sales'))
+            ->groupBy('product_name_snapshot')
+            ->orderByDesc('total_qty')
+            ->limit(5)
+            ->get();
 
         // 5. Daily Sales Trend Chart Data
         $dailyTrend = Sale::where('outlet_id', $outletId)
@@ -106,29 +108,29 @@ class ReportService
         // 7. Product Sales & Profitability Breakdown
         $productSales = SaleItem::whereHas('sale', function ($q) use ($outletId, $start, $end) {
             $q->where('outlet_id', $outletId)
-              ->where('transaction_status', 'completed')
-              ->whereBetween('sale_date', [$start, $end]);
+                ->where('transaction_status', 'completed')
+                ->whereBetween('sale_date', [$start, $end]);
         })
-        ->select(
-            'product_name_snapshot',
-            DB::raw('SUM(quantity) as qty_sold'),
-            DB::raw('SUM(subtotal) as total_sales'),
-            DB::raw('SUM(quantity * COALESCE(cost_price_snapshot, 0)) as total_cogs'),
-            DB::raw('SUM(subtotal - (quantity * COALESCE(cost_price_snapshot, 0))) as item_profit')
-        )
-        ->groupBy('product_name_snapshot')
-        ->orderByDesc('total_sales')
-        ->get();
+            ->select(
+                'product_name_snapshot',
+                DB::raw('SUM(quantity) as qty_sold'),
+                DB::raw('SUM(subtotal) as total_sales'),
+                DB::raw('SUM(quantity * COALESCE(cost_price_snapshot, 0)) as total_cogs'),
+                DB::raw('SUM(subtotal - (quantity * COALESCE(cost_price_snapshot, 0))) as item_profit')
+            )
+            ->groupBy('product_name_snapshot')
+            ->orderByDesc('total_sales')
+            ->get();
 
         // 8. Shift Cashier Audit Records
-        $shifts = \App\Models\Shift::with(['user:id,name', 'cashier:id,name'])
+        $shifts = Shift::with(['user:id,name', 'cashier:id,name'])
             ->where('outlet_id', $outletId)
             ->whereBetween('opened_at', [$start, $end])
             ->latest('opened_at')
             ->get();
 
         // 9. Expenses Category Breakdown for Income Statement
-        $expensesCategory = \App\Models\Expense::where('outlet_id', $outletId)
+        $expensesCategory = Expense::where('outlet_id', $outletId)
             ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
             ->select('category', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as count'))
             ->groupBy('category')

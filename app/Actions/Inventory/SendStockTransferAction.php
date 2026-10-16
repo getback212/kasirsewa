@@ -2,9 +2,9 @@
 
 namespace App\Actions\Inventory;
 
-use App\Models\StockTransfer;
-use App\Actions\Inventory\AdjustStockAction;
 use App\Enums\StockMovementType;
+use App\Models\StockTransfer;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -17,8 +17,8 @@ class SendStockTransferAction
     public function execute(int $transferId, int $userId): StockTransfer
     {
         return DB::transaction(function () use ($transferId, $userId) {
-            $companyId = \App\Models\User::findOrFail($userId)->company_id;
-            if (!$companyId) {
+            $companyId = User::findOrFail($userId)->company_id;
+            if (! $companyId) {
                 throw new InvalidArgumentException('Pengguna tidak memiliki company aktif.');
             }
 

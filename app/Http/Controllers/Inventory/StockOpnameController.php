@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Actions\Inventory\ProcessStockOpnameAction;
+use App\Exceptions\InventoryTransactionException;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Stock;
@@ -77,12 +78,13 @@ class StockOpnameController extends Controller
             );
 
             return redirect()->back()->with('success', 'Audit Stock Opname berhasil disimpan & stok gudang otomatis disesuaikan!');
-        } catch (\App\Exceptions\InventoryTransactionException $e) {
+        } catch (InventoryTransactionException $e) {
             return redirect()->back()->with('error', $e->getUserMessage())->withInput();
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()->with('error', $e->getMessage())->withInput();
         } catch (Exception $e) {
-            Log::error('StockOpname store error: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('StockOpname store error: '.$e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses audit stok. Hubungi admin jika masalah berlanjut.')->withInput();
         }
     }

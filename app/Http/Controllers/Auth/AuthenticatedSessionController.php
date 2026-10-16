@@ -59,6 +59,7 @@ class AuthenticatedSessionController extends Controller
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
             return redirect('/super-admin/login')->withErrors([
                 'email' => '🔒 Akun Super Admin SaaS wajib masuk melalui Portal Login Khusus Super Admin (/super-admin/login).',
             ]);
@@ -97,10 +98,11 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        if ($user && !$user->hasRole('SUPER_ADMIN')) {
+        if ($user && ! $user->hasRole('SUPER_ADMIN')) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
             return redirect('/login')->withErrors([
                 'email' => '🔒 Portal ini khusus untuk Super Admin SaaS. Untuk akun Toko/Kasir, silahkan login di sini.',
             ]);
