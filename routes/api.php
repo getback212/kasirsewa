@@ -6,6 +6,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\InventoryController;
 use App\Http\Controllers\API\SalesController;
+use App\Http\Controllers\POS\BarcodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,10 @@ Route::prefix('v1')->group(function () {
     Route::middleware('api.authenticate')->group(function () {
         // Auth
         Route::get('/auth/me', [AuthController::class, 'me']);
+
+        // Barcode scanning
+        Route::post('/barcode/lookup', [BarcodeController::class, 'lookup'])->middleware('throttle:api');
+        Route::post('/barcode/validate', [BarcodeController::class, 'validate'])->middleware('throttle:api');
 
         // Products
         Route::get('/products', [ProductController::class, 'index'])->middleware('throttle:api');
