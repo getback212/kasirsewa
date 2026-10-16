@@ -16,7 +16,7 @@ use Inertia\Response;
 
 class InvoiceController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response | \Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         $isSuperAdmin = $user->hasRole('SUPER_ADMIN');
