@@ -65,7 +65,10 @@ class RegisterController extends Controller
      */
     public function create(Request $request): Response
     {
-        $plans = Plan::where('is_active', true)->get();
+        // Only show Starter Basic and Business Pro at registration
+        $plans = Plan::where('is_active', true)
+            ->whereIn('id', [1, 2])  // 1=Starter Basic, 2=Business Pro
+            ->get();
         
         // Accept both plan_id (numeric) and plan (slug) parameters
         $planIdFromQuery = $request->query('plan_id');
