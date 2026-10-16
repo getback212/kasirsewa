@@ -8,6 +8,17 @@ use Inertia\Response;
 
 class AdminPaymentProofController extends Controller
 {
+    public function __construct()
+    {
+        // Only SUPER_ADMIN can access payment proof verification
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()?->hasRole('SUPER_ADMIN')) {
+                abort(403, 'Unauthorized: Only Super Admin can access this page.');
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Show payment proofs pending verification for Super Admin
      */
