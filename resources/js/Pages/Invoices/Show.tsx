@@ -20,10 +20,11 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
     const senderName = latestPayment?.payload?.sender_name;
 
     const paymentForm = useForm({
+        invoice_id: invoice?.id || null,
         payment_method: 'manual_transfer',
         sender_bank: 'Bank BCA',
         sender_name: '',
-        proof_file: null as File | null,
+        payment_proof: null as File | null,
     });
 
     const handleConfirmPaymentSuperAdmin = () => {
@@ -39,7 +40,8 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
         e.preventDefault();
         if (!invoice?.id) return;
 
-        paymentForm.post(`/invoices/${invoice.id}/submit-payment`, {
+        // Submit to payment-proof/upload endpoint
+        paymentForm.post(`/payment-proof/upload`, {
             onSuccess: () => {
                 setShowPaymentModal(false);
                 paymentForm.reset();
@@ -308,11 +310,12 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
                                 </div>
 
                                 <div>
-                                    <label className="block text-slate-400 font-semibold mb-1">Upload Foto / File Bukti Transfer (Opsional)</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Upload Foto / File Bukti Transfer</label>
                                     <input
                                         type="file"
+                                        required
                                         accept="image/*,.pdf"
-                                        onChange={(e) => paymentForm.setData('proof_file', e.target.files ? e.target.files[0] : null)}
+                                        onChange={(e) => paymentForm.setData('payment_proof', e.target.files ? e.target.files[0] : null)}
                                         className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs cursor-pointer"
                                     />
                                 </div>
