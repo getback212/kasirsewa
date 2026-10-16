@@ -21,18 +21,21 @@ class InvoiceController extends Controller
         $user = $request->user();
         $isSuperAdmin = $user->hasRole('SUPER_ADMIN');
 
+        // SUPER_ADMIN redirected to payment proofs dashboard
+        if ($isSuperAdmin) {
+            return redirect()->route('admin.payment_proofs.index');
+        }
+
         $query = Invoice::with(['tenant', 'subscription.plan', 'plan', 'items', 'payments']);
 
-        if (! $isSuperAdmin) {
-            $tenantId = session('active_tenant_id', $user->tenant_id);
-            $query->where('tenant_id', $tenantId);
-        }
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $query->where('tenant_id', $tenantId);
 
         $invoices = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
-            'isSuperAdmin' => $isSuperAdmin,
+            'isSuperAdmin' => false,
         ]);
     }
 
