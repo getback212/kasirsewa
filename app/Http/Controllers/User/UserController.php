@@ -157,11 +157,16 @@ class UserController extends Controller
                 default => 'Staf Toko',
             };
 
-            // 1. WhatsApp Invitation via Baileys Gateway
+            // Generate invite token + QR code
+            $inviteToken = \App\Services\User\InviteTokenService::generate($user);
+            $inviteLink = \App\Services\User\InviteTokenService::generateLink($user, $inviteToken);
+            $qrCode = \App\Services\User\InviteTokenService::generateQrCode($user, $inviteToken, true);
+
+            // 1. WhatsApp Invitation via Baileys Gateway (with QR code)
             if (! empty($cleanPhone)) {
                 $waGatewayUrl = SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
                 $waApiKey = SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
-                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\\\\n\\\\nHalo *{$user->name}*,\\\\n\\\\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\\\\n\\\\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\\\\nhttps://superbackend.my.id/login";
+                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\\\\n\\\\nHalo *{$user->name}*,\\\\n\\\\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\\\\n\\\\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\\\\nhttps://superbackend.my.id/login\\\\n\\\\n🔗 Atau scan QR code di atas untuk accept invite.";
 
                 try {
                     Http::withHeaders([
@@ -176,9 +181,9 @@ class UserController extends Controller
                 }
             }
 
-            // 2. Email Invitation
+            // 2. Email Invitation (with QR code)
             try {
-                Mail::raw("Halo {$user->name},\\\\n\\\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\\\n\\\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\\\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
+                Mail::raw("Halo {$user->name},\\\\n\\\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\\\n\\\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\\\nhttps://superbackend.my.id/login\\\\n\\\\nAtau gunakan link invite (berlaku 7 hari):\\\\n{$inviteLink}", function ($mail) use ($user) {
                     $mail->to($user->email)->subject('✉️ Undangan Bergabung Staf Toko - KasirSewa POS');
                 });
             } catch (\Throwable $e) {

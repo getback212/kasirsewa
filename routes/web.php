@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyOtpController;
+use App\Http\Controllers\Auth\AcceptInviteController;
 use App\Http\Controllers\Backup\BackupController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Expense\ExpenseController;
@@ -96,6 +97,10 @@ Route::middleware('guest')->group(function () {
     // Google SSO Routes
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+    // Invite Accept Routes
+    Route::get('/accept-invite', [AcceptInviteController::class, 'show'])->name('accept-invite.show');
+    Route::post('/accept-invite', [AcceptInviteController::class, 'accept'])->name('accept-invite.accept');
 });
 
 // Public Customer Display (Layar Pembeli Tanpa Login di Perangkat Kedua - Accessible to Guest & Auth)
