@@ -112,8 +112,8 @@ class PaymentProofController extends Controller
                 
                 $subscription->update([
                     'status' => 'active',
-                    'started_at' => now(),
-                    'ends_at' => now()->addDays($billingCycleDays),
+                    'starts_at' => now(),
+                    'expires_at' => now()->addDays($billingCycleDays),
                     'trial_ends_at' => null, // Clear trial end date
                 ]);
             }
