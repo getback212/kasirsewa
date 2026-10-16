@@ -52,6 +52,7 @@ export default function PaymentProofsIndex({ payments = [], summary = { total: 0
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'pending_upload' | 'pending_verification' | 'approved' | 'rejected'>('pending_verification');
+    const [imageZoom, setImageZoom] = useState(100);
 
     const rejectForm = useForm({
         rejection_reason: '',
@@ -462,12 +463,41 @@ export default function PaymentProofsIndex({ payments = [], summary = { total: 0
 
                             {/* Payment Proof Image */}
                             <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl space-y-3">
-                                <h4 className="font-bold text-white">Bukti Transfer</h4>
-                                <img
-                                    src={previewImage}
-                                    alt="Payment Proof"
-                                    className="w-full max-h-96 object-contain rounded-lg border border-slate-700"
-                                />
+                                <div className="flex justify-between items-center mb-3">
+                                    <h4 className="font-bold text-white">Bukti Transfer</h4>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setImageZoom(prev => Math.max(prev - 10, 50))}
+                                            className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded transition"
+                                        >
+                                            − Zoom Out
+                                        </button>
+                                        <span className="text-xs text-slate-400 w-12 text-center">{imageZoom}%</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setImageZoom(prev => Math.min(prev + 10, 200))}
+                                            className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded transition"
+                                        >
+                                            Zoom In +
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setImageZoom(100)}
+                                            className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded transition"
+                                        >
+                                            Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-auto max-h-96 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center p-4">
+                                    <img
+                                        src={previewImage}
+                                        alt="Payment Proof"
+                                        style={{ width: `${imageZoom}%` }}
+                                        className="object-contain transition-all duration-200"
+                                    />
+                                </div>
                             </div>
 
                             {/* Rejection Reason (if applicable) */}
