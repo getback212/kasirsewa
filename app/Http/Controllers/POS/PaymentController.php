@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
@@ -110,11 +111,37 @@ class PaymentController extends Controller
                     'sale_date' => $sale->sale_date->format('Y-m-d H:i:s'),
                 ],
             ]);
-        } catch (Exception $e) {
+        } catch (\App\Exceptions\CreditLimitExceededException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getUserMessage(),
+                'error_type' => 'credit_limit_exceeded',
+            ], 422);
+        } catch (\App\Exceptions\InsufficientStockException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getUserMessage(),
+                'error_type' => 'insufficient_stock',
+            ], 422);
+        } catch (\App\Exceptions\KasirSewaException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getUserMessage(),
+                'error_type' => 'kasir_sewa_error',
+            ], 422);
+        } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage(),
+                'error_type' => 'validation_error',
             ], 422);
+        } catch (Exception $e) {
+            Log::error('POS checkout error: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat memproses transaksi. Hubungi admin jika masalah berlanjut.',
+                'error_type' => 'internal_error',
+            ], 500);
         }
     }
 }

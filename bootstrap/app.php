@@ -9,6 +9,7 @@ use App\Http\Middleware\TenantContextMiddleware;
 use App\Http\Middleware\TenantDomainResolver;
 use App\Http\Middleware\SubscriptionAccessMiddleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -42,4 +43,59 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Handle KasirSewaException: render user-friendly message, log internal details
+        $exceptions->render(function (\App\Exceptions\KasirSewaException $e, Request $request) {
+            Log::error('KasirSewaException: ' . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return $e->render();
+            }
+
+            return back()->withError($e->getUserMessage())->withInput();
+        });
+
+        // Handle InvalidArgumentException: generic validation errors
+        $exceptions->render(function (\InvalidArgumentException $e, Request $request) {
+            Log::warning('InvalidArgumentException: ' . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage(), 'error' => true], 400);
+            }
+
+            return back()->withError($e->getMessage())->withInput();
+        });
+
+        // Handle PDOException: database errors (generic message to user)
+        $exceptions->render(function (\PDOException $e, Request $request) {
+            Log::error('Database error: ' . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Database error. Please contact support.', 'error' => true], 500);
+            }
+
+            return back()->withError('Terjadi kesalahan database. Hubungi admin jika masalah berlanjut.')->withInput();
+        });
+
+        // Handle QueryException: Eloquent errors
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, Request $request) {
+            Log::error('Query exception: ' . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Database error. Please contact support.', 'error' => true], 500);
+            }
+
+            return back()->withError('Terjadi kesalahan database. Hubungi admin jika masalah berlanjut.')->withInput();
+        });
+
+        // Handle ModelNotFoundException: resource not found
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, Request $request) {
+            Log::warning('Model not found: ' . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Resource not found.', 'error' => true], 404);
+            }
+
+            return back()->withError('Data tidak ditemukan.')->withInput();
+        });
     })->create();

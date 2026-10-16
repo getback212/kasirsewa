@@ -90,12 +90,11 @@ class CreateSaleAction
                 $creditLimit = (float) $customer->credit_limit;
 
                 if ($projectedCredit > $creditLimit) {
-                    $limitStr = number_format($creditLimit, 0, ',', '.');
-                    $balanceStr = number_format((float) $customer->credit_balance, 0, ',', '.');
-                    $addStr = number_format($unpaidAmount, 0, ',', '.');
-                    throw new InvalidArgumentException(
-                        "Batas limit kredit pelanggan {$customer->name} telah terlampaui! " .
-                        "Limit: Rp {$limitStr}, Saldo: Rp {$balanceStr}, Tambahan: Rp {$addStr}."
+                    throw new \App\Exceptions\CreditLimitExceededException(
+                        $customer->name,
+                        $creditLimit,
+                        (float) $customer->credit_balance,
+                        $unpaidAmount
                     );
                 }
 
