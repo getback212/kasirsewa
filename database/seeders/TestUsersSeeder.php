@@ -124,10 +124,10 @@ class TestUsersSeeder extends Seeder
         ]);
         $warehouse->syncRoles([UserRole::WAREHOUSE->value]);
 
-        // 7. Create Plan + Subscription
-        $plan = Plan::firstOrCreate(
-            ['slug' => 'starter-basic'],
+        // 7. Create Plans + Subscription
+        $plans = [
             [
+                'slug' => 'starter-basic',
                 'name' => 'Starter Basic',
                 'description' => 'Paket dasar untuk toko kecil',
                 'monthly_price' => 99000,
@@ -135,9 +135,39 @@ class TestUsersSeeder extends Seeder
                 'max_users' => 5,
                 'max_stores' => 1,
                 'max_products' => 100,
-                'is_active' => true,
-            ]
-        );
+                'max_transactions' => 5000,
+            ],
+            [
+                'slug' => 'professional',
+                'name' => 'Professional',
+                'description' => 'Paket untuk bisnis menengah',
+                'monthly_price' => 499000,
+                'yearly_price' => 4990000,
+                'max_users' => 20,
+                'max_stores' => 3,
+                'max_products' => 5000,
+                'max_transactions' => 50000,
+            ],
+            [
+                'slug' => 'enterprise',
+                'name' => 'Enterprise',
+                'description' => 'Paket unlimited untuk enterprise',
+                'monthly_price' => 1999000,
+                'yearly_price' => 19990000,
+                'max_users' => 999,
+                'max_stores' => 999,
+                'max_products' => 999999,
+                'max_transactions' => 999999,
+            ],
+        ];
+
+        $plan = null;
+        foreach ($plans as $planData) {
+            $plan = Plan::firstOrCreate(
+                ['slug' => $planData['slug']],
+                array_merge($planData, ['is_active' => true])
+            );
+        }
 
         Subscription::create([
             'tenant_id' => $tenant->id,
