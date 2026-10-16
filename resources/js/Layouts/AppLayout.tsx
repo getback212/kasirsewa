@@ -699,6 +699,41 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 </div>
             </header>
 
+            {/* DESKTOP SIDEBAR FOR SUPER_ADMIN */}
+            {roles.includes('SUPER_ADMIN') && !tenantSubscription && (
+                <aside className="hidden lg:block w-64 bg-slate-900/50 border-r border-slate-800 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
+                    <div className="p-4 space-y-6">
+                        {navigationGroups
+                            .filter(group => group.id === 'saas_admin')
+                            .map((group) => (
+                                <div key={group.id} className="space-y-2">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                                        {group.group}
+                                    </div>
+                                    {group.items.map((item) => {
+                                        const Icon = item.icon;
+                                        const active = isCurrentRoute(item.path);
+                                        return (
+                                            <Link
+                                                key={item.path}
+                                                href={item.path}
+                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition ${
+                                                    active
+                                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                }`}
+                                            >
+                                                <Icon className="w-4 h-4 shrink-0" />
+                                                <span>{item.name}</span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                    </div>
+                </aside>
+            )}
+
             {/* MOBILE DRAWER MENU */}
             {mobileMenuOpen && !roles.includes('SUPER_ADMIN') && (
                 <div className="lg:hidden border-b border-slate-800 bg-slate-900 px-4 pt-3 pb-6 space-y-4 text-xs animate-in slide-in-from-top-2 duration-200">
