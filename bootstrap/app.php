@@ -10,6 +10,7 @@ use App\Http\Middleware\TenantDomainResolver;
 use App\Http\Middleware\SubscriptionAccessMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Http\Middleware\ApiAuthenticate;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,13 +23,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: ['172.18.0.0/16']);
 
         $middleware->validateCsrfTokens(except: [
-            'api/qris/callback',
-            'api/qris/push-notification',
+            'api/*',
         ]);
 
         // Register middleware aliases
         $middleware->alias([
             'subscription' => SubscriptionAccessMiddleware::class,
+            'api.authenticate' => ApiAuthenticate::class,
         ]);
 
         $middleware->web(append: [
