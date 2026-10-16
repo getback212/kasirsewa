@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { CheckCircle2, AlertCircle, Eye, X, Send, Calendar, DollarSign, FileText } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Eye, X, Send, Calendar, DollarSign, FileText, Clock, Upload, RotateCcw } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface PaymentProof {
     id: number;
     invoice_id: number;
     payment_number: string;
-    amount: number;
+    amount: string;
     status: 'pending' | 'completed' | 'failed' | 'refunded';
+    verification_status: 'pending_upload' | 'pending_verification' | 'approved' | 'rejected';
     payment_proof: string | null;
     proof_verified_at: string | null;
     proof_rejection_reason: string | null;
     created_at: string;
     invoice?: {
         invoice_number: string;
-        total: number;
+        total: string;
         due_at: string;
         tenant?: {
+            id: number;
             name: string;
             owner?: {
+                id: number;
                 name: string;
                 email: string;
                 phone: string;
@@ -29,16 +32,26 @@ interface PaymentProof {
     };
 }
 
-interface PaymentProofsPageProps extends PageProps {
-    payments: PaymentProof[];
-    filters?: { status?: string };
+interface PaymentProofsSummary {
+    total: number;
+    pending_upload: number;
+    pending_verification: number;
+    approved: number;
+    rejected: number;
 }
 
-export default function PaymentProofsIndex({ payments = [], filters }: PaymentProofsPageProps) {
+interface PaymentProofsPageProps extends PageProps {
+    payments: PaymentProof[];
+    summary: PaymentProofsSummary;
+    filters?: { verification_status?: string };
+}
+
+export default function PaymentProofsIndex({ payments = [], summary = { total: 0, pending_upload: 0, pending_verification: 0, approved: 0, rejected: 0 }, filters }: PaymentProofsPageProps) {
     const { flash } = usePage<PaymentProofsPageProps>().props;
     const [selectedProof, setSelectedProof] = useState<PaymentProof | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'pending_upload' | 'pending_verification' | 'approved' | 'rejected'>('pending_verification');
 
     const rejectForm = useForm({
         rejection_reason: '',
@@ -79,8 +92,10 @@ export default function PaymentProofsIndex({ payments = [], filters }: PaymentPr
         });
     };
 
-    const pendingProofs = payments.filter(p => p.status === 'pending' && p.payment_proof);
-    const completedProofs = payments.filter(p => p.status === 'completed' && p.proof_verified_at);
+    const pendingUpload = payments.filter(p => p.verification_status === 'pending_upload');
+    const pendingVerification = payments.filter(p => p.verification_status === 'pending_verification');
+    const approved = payments.filter(p => p.verification_status === 'approved');
+    const rejected = payments.filter(p => p.verification_status === 'rejected');
 
     return (
         <AppLayout title="Verifikasi Bukti Pembayaran SaaS">
@@ -91,10 +106,10 @@ export default function PaymentProofsIndex({ payments = [], filters }: PaymentPr
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl">
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                         <FileText className="w-6 h-6 text-blue-400" />
-                        Verifikasi Bukti Pembayaran SaaS
+                        Dashboard Verifikasi Bukti Pembayaran
                     </h1>
                     <p className="text-xs text-slate-400 mt-2">
-                        Review dan verifikasi bukti transfer bank dari owner toko sebelum menandai invoice sebagai lunas.
+                        Monitor semua pembayaran dari owner toko: yang belum upload, pending review, yang sudah disetujui, dan yang ditolak.
                     </p>
                 </div>
 
@@ -112,120 +127,283 @@ export default function PaymentProofsIndex({ payments = [], filters }: PaymentPr
                     </div>
                 )}
 
-                {/* PENDING PROOFS SECTION */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-amber-400" />
-                        <h2 className="text-lg font-bold text-white">
-                            Menunggu Verifikasi ({pendingProofs.length})
-                        </h2>
+                {/* SUMMARY CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {/* Total */}
+                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Pembayaran</div>
+                        <div className="text-2xl font-black text-white mt-1">{summary.total}</div>
                     </div>
 
-                    {pendingProofs.length === 0 ? (
-                        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center">
-                            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3 opacity-50" />
-                            <p className="text-slate-400 text-sm">Semua bukti pembayaran sudah diverifikasi ✓</p>
+                    {/* Pending Upload */}
+                    <div 
+                        onClick={() => setActiveTab('pending_upload')}
+                        className={`bg-slate-900 border-2 p-4 rounded-2xl cursor-pointer transition ${activeTab === 'pending_upload' ? 'border-blue-500 bg-blue-500/5' : 'border-blue-500/30 hover:border-blue-500/50'}`}
+                    >
+                        <div className="text-[10px] text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <Upload className="w-3 h-3" /> Belum Upload
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                            {pendingProofs.map((payment) => (
-                                <div
-                                    key={payment.id}
-                                    className="bg-slate-900 border-2 border-amber-500/50 p-4 rounded-2xl hover:border-amber-500 transition"
-                                >
-                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                                        {/* Invoice Info */}
-                                        <div className="space-y-1">
-                                            <div className="text-[11px] text-slate-400 font-bold uppercase">Invoice</div>
-                                            <div className="text-sm font-mono text-white">{payment.invoice?.invoice_number}</div>
-                                            <div className="text-xs text-slate-500">{payment.invoice?.tenant?.name}</div>
-                                        </div>
+                        <div className="text-2xl font-black text-blue-400 mt-1">{summary.pending_upload}</div>
+                    </div>
 
-                                        {/* Owner Info */}
-                                        <div className="space-y-1">
-                                            <div className="text-[11px] text-slate-400 font-bold uppercase">Owner</div>
-                                            <div className="text-sm font-bold text-white">{payment.invoice?.tenant?.owner?.name}</div>
-                                            <div className="text-xs text-slate-500">{payment.invoice?.tenant?.owner?.email}</div>
-                                        </div>
-
-                                        {/* Amount */}
-                                        <div className="space-y-1">
-                                            <div className="text-[11px] text-slate-400 font-bold uppercase">Jumlah</div>
-                                            <div className="text-base font-black text-emerald-400">
-                                                Rp {Number(payment.amount).toLocaleString('id-ID')}
-                                            </div>
-                                            <div className="text-xs text-slate-500">Tanggal: {new Date(payment.created_at).toLocaleDateString('id-ID')}</div>
-                                        </div>
-
-                                        {/* Status Badge */}
-                                        <div className="flex flex-col gap-2 items-center">
-                                            <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-xl text-[10px] font-bold text-amber-300 uppercase">
-                                                ⏳ Menunggu
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedProof(payment);
-                                                    if (payment.payment_proof) {
-                                                        setPreviewImage(`/storage/${payment.payment_proof}`);
-                                                    }
-                                                }}
-                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-xl transition"
-                                            >
-                                                <Eye className="w-3 h-3 inline mr-1" />
-                                                Lihat Bukti
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                    {/* Pending Verification */}
+                    <div 
+                        onClick={() => setActiveTab('pending_verification')}
+                        className={`bg-slate-900 border-2 p-4 rounded-2xl cursor-pointer transition ${activeTab === 'pending_verification' ? 'border-amber-500 bg-amber-500/5' : 'border-amber-500/30 hover:border-amber-500/50'}`}
+                    >
+                        <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Pending Review
                         </div>
-                    )}
+                        <div className="text-2xl font-black text-amber-400 mt-1">{summary.pending_verification}</div>
+                    </div>
+
+                    {/* Approved */}
+                    <div 
+                        onClick={() => setActiveTab('approved')}
+                        className={`bg-slate-900 border-2 p-4 rounded-2xl cursor-pointer transition ${activeTab === 'approved' ? 'border-emerald-500 bg-emerald-500/5' : 'border-emerald-500/30 hover:border-emerald-500/50'}`}
+                    >
+                        <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Disetujui
+                        </div>
+                        <div className="text-2xl font-black text-emerald-400 mt-1">{summary.approved}</div>
+                    </div>
+
+                    {/* Rejected */}
+                    <div 
+                        onClick={() => setActiveTab('rejected')}
+                        className={`bg-slate-900 border-2 p-4 rounded-2xl cursor-pointer transition ${activeTab === 'rejected' ? 'border-rose-500 bg-rose-500/5' : 'border-rose-500/30 hover:border-rose-500/50'}`}
+                    >
+                        <div className="text-[10px] text-rose-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <X className="w-3 h-3" /> Ditolak
+                        </div>
+                        <div className="text-2xl font-black text-rose-400 mt-1">{summary.rejected}</div>
+                    </div>
                 </div>
 
-                {/* COMPLETED PROOFS SECTION */}
-                {completedProofs.length > 0 && (
+                {/* PENDING UPLOAD SECTION */}
+                {activeTab === 'pending_upload' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Upload className="w-5 h-5 text-blue-400" />
+                            <h2 className="text-lg font-bold text-white">
+                                Menunggu Upload Bukti ({pendingUpload.length})
+                            </h2>
+                        </div>
+
+                        {pendingUpload.length === 0 ? (
+                            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center">
+                                <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3 opacity-50" />
+                                <p className="text-slate-400 text-sm">Semua owner sudah upload bukti pembayaran ✓</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                {pendingUpload.map((payment) => (
+                                    <div key={payment.id} className="bg-slate-900 border-2 border-blue-500/50 p-4 rounded-2xl hover:border-blue-500 transition">
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Invoice</div>
+                                                <div className="text-sm font-mono text-white">{payment.invoice?.invoice_number}</div>
+                                                <div className="text-xs text-slate-500">{payment.invoice?.tenant?.name}</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Owner</div>
+                                                <div className="text-sm font-bold text-white">{payment.invoice?.tenant?.owner?.name}</div>
+                                                <div className="text-xs text-slate-500">{payment.invoice?.tenant?.owner?.email}</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Jumlah</div>
+                                                <div className="text-base font-black text-blue-400">
+                                                    Rp {Number(payment.amount).toLocaleString('id-ID')}
+                                                </div>
+                                                <div className="text-xs text-slate-500">Dibuat: {new Date(payment.created_at).toLocaleDateString('id-ID')}</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Status</div>
+                                                <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/50 rounded-xl text-[10px] font-bold text-blue-300 uppercase text-center">
+                                                    ⏳ Belum Upload
+                                                </div>
+                                            </div>
+
+                                            <div className="text-center">
+                                                <p className="text-xs text-slate-400 mb-2">Reminder sudah dikirim ke owner</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* PENDING VERIFICATION SECTION */}
+                {activeTab === 'pending_verification' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-amber-400" />
+                            <h2 className="text-lg font-bold text-white">
+                                Menunggu Verifikasi ({pendingVerification.length})
+                            </h2>
+                        </div>
+
+                        {pendingVerification.length === 0 ? (
+                            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center">
+                                <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3 opacity-50" />
+                                <p className="text-slate-400 text-sm">Tidak ada bukti menunggu verifikasi ✓</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                {pendingVerification.map((payment) => (
+                                    <div key={payment.id} className="bg-slate-900 border-2 border-amber-500/50 p-4 rounded-2xl hover:border-amber-500 transition">
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Invoice</div>
+                                                <div className="text-sm font-mono text-white">{payment.invoice?.invoice_number}</div>
+                                                <div className="text-xs text-slate-500">{payment.invoice?.tenant?.name}</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Owner</div>
+                                                <div className="text-sm font-bold text-white">{payment.invoice?.tenant?.owner?.name}</div>
+                                                <div className="text-xs text-slate-500">{payment.invoice?.tenant?.owner?.email}</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Jumlah</div>
+                                                <div className="text-base font-black text-emerald-400">
+                                                    Rp {Number(payment.amount).toLocaleString('id-ID')}
+                                                </div>
+                                                <div className="text-xs text-slate-500">Upload: {new Date(payment.created_at).toLocaleDateString('id-ID')}</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-[11px] text-slate-400 font-bold uppercase">Status</div>
+                                                <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-xl text-[10px] font-bold text-amber-300 uppercase text-center">
+                                                    ⏳ Pending
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2 items-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedProof(payment);
+                                                        if (payment.payment_proof) {
+                                                            setPreviewImage(`/storage/${payment.payment_proof}`);
+                                                        }
+                                                    }}
+                                                    className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition flex items-center justify-center gap-1"
+                                                >
+                                                    <Eye className="w-3 h-3" />
+                                                    Lihat & Verifikasi
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* APPROVED SECTION */}
+                {activeTab === 'approved' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                             <h2 className="text-lg font-bold text-white">
-                                Sudah Diverifikasi ({completedProofs.length})
+                                Sudah Disetujui ({approved.length})
                             </h2>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3">
-                            {completedProofs.map((payment) => (
-                                <div key={payment.id} className="bg-slate-900/50 border border-emerald-500/30 p-3 rounded-xl">
-                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center text-sm">
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 uppercase">Invoice</div>
-                                            <div className="text-xs font-mono text-white">{payment.invoice?.invoice_number}</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 uppercase">Owner</div>
-                                            <div className="text-xs font-bold text-white">{payment.invoice?.tenant?.owner?.name}</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 uppercase">Jumlah</div>
-                                            <div className="text-xs font-bold text-emerald-400">
-                                                Rp {Number(payment.amount).toLocaleString('id-ID')}
+                        {approved.length === 0 ? (
+                            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center">
+                                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-3 opacity-50" />
+                                <p className="text-slate-400 text-sm">Belum ada pembayaran yang disetujui</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {approved.map((payment) => (
+                                    <div key={payment.id} className="bg-slate-900/50 border border-emerald-500/30 p-3 rounded-xl">
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center text-sm">
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Invoice</div>
+                                                <div className="text-xs font-mono text-white">{payment.invoice?.invoice_number}</div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <div className="text-[10px] text-slate-400 uppercase">Diverifikasi</div>
-                                            <div className="text-xs text-emerald-300">
-                                                {payment.proof_verified_at ? new Date(payment.proof_verified_at).toLocaleDateString('id-ID') : '-'}
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Owner</div>
+                                                <div className="text-xs font-bold text-white">{payment.invoice?.tenant?.owner?.name}</div>
                                             </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-[10px] font-bold text-emerald-300 uppercase">
-                                                ✓ Lunas
-                                            </span>
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Jumlah</div>
+                                                <div className="text-xs font-bold text-emerald-400">
+                                                    Rp {Number(payment.amount).toLocaleString('id-ID')}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Disetujui</div>
+                                                <div className="text-xs text-emerald-300">
+                                                    {payment.proof_verified_at ? new Date(payment.proof_verified_at).toLocaleDateString('id-ID') : '-'}
+                                                </div>
+                                            </div>
+                                            <div className="text-center">
+                                                <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-[10px] font-bold text-emerald-300 uppercase">
+                                                    ✓ Lunas
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* REJECTED SECTION */}
+                {activeTab === 'rejected' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <X className="w-5 h-5 text-rose-400" />
+                            <h2 className="text-lg font-bold text-white">
+                                Ditolak ({rejected.length})
+                            </h2>
                         </div>
+
+                        {rejected.length === 0 ? (
+                            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center">
+                                <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3 opacity-50" />
+                                <p className="text-slate-400 text-sm">Tidak ada bukti yang ditolak ✓</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {rejected.map((payment) => (
+                                    <div key={payment.id} className="bg-rose-500/5 border border-rose-500/30 p-3 rounded-xl">
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center text-sm">
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Invoice</div>
+                                                <div className="text-xs font-mono text-white">{payment.invoice?.invoice_number}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Owner</div>
+                                                <div className="text-xs font-bold text-white">{payment.invoice?.tenant?.owner?.name}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 uppercase">Jumlah</div>
+                                                <div className="text-xs font-bold text-rose-400">
+                                                    Rp {Number(payment.amount).toLocaleString('id-ID')}
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <div className="text-[10px] text-slate-400 uppercase">Alasan Penolakan</div>
+                                                <div className="text-xs text-rose-300">{payment.proof_rejection_reason || '-'}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -336,7 +514,7 @@ export default function PaymentProofsIndex({ payments = [], filters }: PaymentPr
                             ) : null}
 
                             {/* Action Buttons */}
-                            {!showRejectModal && selectedProof.status === 'pending' && !selectedProof.proof_rejection_reason && (
+                            {!showRejectModal && selectedProof.verification_status === 'pending_verification' && !selectedProof.proof_rejection_reason && (
                                 <div className="flex gap-3">
                                     <button
                                         type="button"
