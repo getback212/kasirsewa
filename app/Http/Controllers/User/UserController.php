@@ -108,6 +108,22 @@ class UserController extends Controller
 
         $validated = $request->validated();
 
+        // Limit 1 OWNER per tenant (prevent multiple owners)
+        if ($validated['role'] === 'OWNER') {
+            $existingOwner = User::where('tenant_id', $tenantId)
+                ->whereHas('roles', fn ($q) => $q->where('name', 'OWNER'))
+                ->first();
+            
+            if ($existingOwner) {
+                return back()->with(
+                    'error',
+                    "Tenant ini sudah memiliki 1 Owner utama ({$existingOwner->name}). "
+                    .'Hanya 1 Owner yang diperbolehkan per tenant. '
+                    .'Ubah role pengguna lain ke MANAGER jika perlu delegasi.'
+                );
+            }
+        }
+
         $cleanPhone = null;
         if (! empty($validated['phone'])) {
             $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
@@ -136,6 +152,7 @@ class UserController extends Controller
                 'MANAGER' => 'Manager Toko',
                 'CASHIER' => 'Kasir',
                 'WAREHOUSE' => 'Staf Gudang',
+                'OWNER' => 'Owner / Pemilik Toko',
                 default => 'Staf Toko',
             };
 
@@ -143,7 +160,7 @@ class UserController extends Controller
             if (! empty($cleanPhone)) {
                 $waGatewayUrl = SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
                 $waApiKey = SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
-                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\\n\\nHalo *{$user->name}*,\\n\\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\\n\\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\\nhttps://superbackend.my.id/login";
+                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\\\\n\\\\nHalo *{$user->name}*,\\\\n\\\\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\\\\n\\\\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\\\\nhttps://superbackend.my.id/login";
 
                 try {
                     Http::withHeaders([
@@ -160,7 +177,7 @@ class UserController extends Controller
 
             // 2. Email Invitation
             try {
-                Mail::raw("Halo {$user->name},\\n\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\n\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
+                Mail::raw("Halo {$user->name},\\\\n\\\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\\\n\\\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\\\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
                     $mail->to($user->email)->subject('✉️ Undangan Bergabung Staf Toko - KasirSewa POS');
                 });
             } catch (\Throwable $e) {

@@ -8,6 +8,11 @@ class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        // Only SUPER_ADMIN can create users with OWNER role
+        if ($this->input('role') === 'OWNER') {
+            return $this->user()->hasRole('SUPER_ADMIN');
+        }
+        
         return $this->user()->hasPermissionTo('create-users');
     }
 
@@ -18,7 +23,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:6'],
-            'role' => ['required', 'string'],
+            'role' => ['required', 'string', 'in:OWNER,MANAGER,CASHIER,WAREHOUSE'],
             'outlet_id' => ['required', 'exists:outlets,id'],
             'send_invite' => ['boolean'],
         ];
