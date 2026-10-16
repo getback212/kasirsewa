@@ -366,9 +366,60 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                                 {/* CATEGORY DROPDOWN BUTTONS ON TOPBAR */}
                                 {navigationGroups.map((group) => {
-                                    // Hide saas_admin from topbar (shown in sidebar instead for SUPER_ADMIN)
+                                    // Show saas_admin dropdown for SUPER_ADMIN at top nav
                                     if (group.id === 'saas_admin') {
-                                        return null;
+                                        if (!roles.includes('SUPER_ADMIN') || tenantSubscription) {
+                                            return null;
+                                        }
+                                        // Show saas_admin items in top nav for global SUPER_ADMIN
+                                        let filteredItems = group.items.filter(item => hasPermission(item.permission));
+                                        if (filteredItems.length === 0) return null;
+
+                                        const isCategoryActive = group.items.some(item => isCurrentRoute(item.path));
+                                        const isOpen = activeTopCategory === group.id;
+                                        const GroupIcon = group.icon;
+
+                                        return (
+                                            <div key={group.id} className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleTopCategory(group.id)}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                                                        isCategoryActive
+                                                            ? 'bg-slate-800 text-blue-400 border border-slate-700'
+                                                            : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                                                    }`}
+                                                >
+                                                    <GroupIcon className={`w-3.5 h-3.5 ${isCategoryActive ? 'text-blue-400' : 'text-slate-400'}`} />
+                                                    <span>{group.group}</span>
+                                                    <ChevronDown className={`w-3 h-3 text-slate-500 transition transform ${isOpen ? 'rotate-180 text-blue-400' : ''}`} />
+                                                </button>
+
+                                                {/* DROPDOWN MENU */}
+                                                {isOpen && (
+                                                    <div className="absolute top-full left-0 mt-1 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 min-w-max animate-in fade-in zoom-in-95 duration-150">
+                                                        {filteredItems.map((item) => {
+                                                            const Icon = item.icon;
+                                                            return (
+                                                                <Link
+                                                                    key={item.path}
+                                                                    href={item.path}
+                                                                    onClick={() => setActiveTopCategory(null)}
+                                                                    className={`flex items-center gap-2.5 px-4 py-2 text-xs font-bold transition ${
+                                                                        isCurrentRoute(item.path)
+                                                                            ? 'bg-blue-600/20 text-blue-400 border-l-2 border-blue-400'
+                                                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                                    }`}
+                                                                >
+                                                                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                                                                    <span>{item.name}</span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
                                     }
 
                                     // Hide store operational menus from Super Admin when NOT impersonating a tenant
@@ -701,39 +752,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             </header>
 
             {/* DESKTOP SIDEBAR FOR SUPER_ADMIN */}
-            {roles.includes('SUPER_ADMIN') && !tenantSubscription && (
-                <aside className="hidden lg:block w-64 bg-slate-900/50 border-r border-slate-800 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
-                    <div className="p-4 space-y-6">
-                        {navigationGroups
-                            .filter(group => group.id === 'saas_admin')
-                            .map((group) => (
-                                <div key={group.id} className="space-y-2">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
-                                        {group.group}
-                                    </div>
-                                    {group.items.map((item) => {
-                                        const Icon = item.icon;
-                                        const active = isCurrentRoute(item.path);
-                                        return (
-                                            <Link
-                                                key={item.path}
-                                                href={item.path}
-                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition ${
-                                                    active
-                                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                }`}
-                                            >
-                                                <Icon className="w-4 h-4 shrink-0" />
-                                                <span>{item.name}</span>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            ))}
-                    </div>
-                </aside>
-            )}
+            {/* REMOVED - Menu moved to top nav */}
 
             {/* MOBILE DRAWER MENU */}
             {mobileMenuOpen && !roles.includes('SUPER_ADMIN') && (
