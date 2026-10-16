@@ -161,17 +161,19 @@ class TestUsersSeeder extends Seeder
             ],
         ];
 
-        $plan = null;
         foreach ($plans as $planData) {
-            $plan = Plan::firstOrCreate(
+            Plan::firstOrCreate(
                 ['slug' => $planData['slug']],
                 array_merge($planData, ['is_active' => true])
             );
         }
 
+        // Get first plan (Starter Basic) for trial subscription
+        $starterPlan = Plan::where('slug', 'starter-basic')->first();
+        
         Subscription::create([
             'tenant_id' => $tenant->id,
-            'plan_id' => $plan->id,
+            'plan_id' => $starterPlan->id,
             'status' => 'trial',
             'billing_cycle' => 'monthly',
             'starts_at' => now(),
