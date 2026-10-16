@@ -32,16 +32,22 @@ class SubscriptionAccessMiddleware
                     return $next($request);
                 }
 
-                // If suspended or expired past grace period, block new transactions & feature access
-                if (in_array($sub->status, ['suspended', 'expired', 'cancelled'])) {
+                // Check if expires_at has passed (even if status is still 'active' or 'trial')
+                $isExpired = $sub->expires_at && now()->greaterThan($sub->expires_at);
+                $isSuspended = in_array($sub->status, ['suspended', 'cancelled']);
+                $isStatusExpired = $sub->status === 'expired';
+
+                // If suspended, cancelled, or expired past grace period, block new transactions & feature access
+                if ($isSuspended || $isStatusExpired || $isExpired) {
                     if ($request->wantsJson()) {
                         return response()->json([
                             'message' => 'Masa berlangganan SaaS Anda telah berakhir atau ditangguhkan. Silakan lakukan perpanjangan paket.',
                             'subscription_status' => $sub->status,
+                            'expires_at' => $sub->expires_at,
                         ], 402);
                     }
 
-                    return redirect()->route('subscription.index')->with('error', 'Masa berlangganan SaaS toko Anda telah berakhir. Silakan lakukan perpanjangan paket berlangganan.');
+                    return redirect()->route('subscription.expired')->with('error', 'Masa berlangganan SaaS toko Anda telah berakhir atau ditangguhkan.');
                 }
             }
         }

@@ -23,6 +23,7 @@ use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Backup\BackupController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Subscription\SubscriptionController;
+use App\Http\Controllers\Subscription\SubscriptionExpiredController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminPaymentSettingController;
@@ -133,6 +134,7 @@ Route::middleware('auth')->group(function () {
 
     // Tenant SaaS Subscription & Billing Routes
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::get('/subscription/expired', [SubscriptionExpiredController::class, 'show'])->name('subscription.expired');
     Route::post('/subscription/renew', [SubscriptionController::class, 'renew'])->name('subscription.renew');
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
@@ -141,108 +143,110 @@ Route::middleware('auth')->group(function () {
     Route::post('/invoices/{id}/confirm-payment', [InvoiceController::class, 'confirmPayment'])->name('invoices.confirm_payment');
     Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
 
-    // Dashboard & Executive Summary
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard & Executive Summary (Protected by subscription middleware)
+    Route::middleware('subscription')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Master Customers / Member Database Routes
-    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
-    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
-    Route::post('/customers/{id}/pay-credit', [CustomerController::class, 'payCredit'])->name('customers.pay_credit');
-    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+        // Master Customers / Member Database Routes
+        Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+        Route::post('/customers/{id}/pay-credit', [CustomerController::class, 'payCredit'])->name('customers.pay_credit');
+        Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
-    // Multi-Outlet Configuration Routes
-    Route::get('/outlets', [OutletController::class, 'index'])->name('outlets.index');
-    Route::post('/outlets', [OutletController::class, 'store'])->name('outlets.store');
-    Route::put('/outlets/{id}', [OutletController::class, 'update'])->name('outlets.update');
-    Route::post('/outlets/domain', [OutletController::class, 'updateDomain'])->name('outlets.update_domain');
-    Route::post('/outlets/domain/refresh', [OutletController::class, 'refreshDomain'])->name('outlets.refresh_domain');
-    Route::post('/outlets/{id}/switch', [OutletController::class, 'switchOutlet'])->name('outlets.switch');
+        // Multi-Outlet Configuration Routes
+        Route::get('/outlets', [OutletController::class, 'index'])->name('outlets.index');
+        Route::post('/outlets', [OutletController::class, 'store'])->name('outlets.store');
+        Route::put('/outlets/{id}', [OutletController::class, 'update'])->name('outlets.update');
+        Route::post('/outlets/domain', [OutletController::class, 'updateDomain'])->name('outlets.update_domain');
+        Route::post('/outlets/domain/refresh', [OutletController::class, 'refreshDomain'])->name('outlets.refresh_domain');
+        Route::post('/outlets/{id}/switch', [OutletController::class, 'switchOutlet'])->name('outlets.switch');
 
-    // Product & Master Data Management
-    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
-    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
-    Route::post('/products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle_status');
+        // Product & Master Data Management
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+        Route::post('/products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle_status');
 
-    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
 
-    Route::get('/units', [UnitController::class, 'index'])->name('units.index');
-    Route::post('/units', [UnitController::class, 'store'])->name('units.store');
-    Route::put('/units/{id}', [UnitController::class, 'update'])->name('units.update');
-    Route::delete('/units/{id}', [UnitController::class, 'destroy'])->name('units.destroy');
+        Route::get('/units', [UnitController::class, 'index'])->name('units.index');
+        Route::post('/units', [UnitController::class, 'store'])->name('units.store');
+        Route::put('/units/{id}', [UnitController::class, 'update'])->name('units.update');
+        Route::delete('/units/{id}', [UnitController::class, 'destroy'])->name('units.destroy');
 
-    Route::get('/discounts', [DiscountController::class, 'index'])->name('discounts.index');
-    Route::post('/discounts', [DiscountController::class, 'store'])->name('discounts.store');
-    Route::put('/discounts/{id}', [DiscountController::class, 'update'])->name('discounts.update');
-    Route::delete('/discounts/{id}', [DiscountController::class, 'destroy'])->name('discounts.destroy');
+        Route::get('/discounts', [DiscountController::class, 'index'])->name('discounts.index');
+        Route::post('/discounts', [DiscountController::class, 'store'])->name('discounts.store');
+        Route::put('/discounts/{id}', [DiscountController::class, 'update'])->name('discounts.update');
+        Route::delete('/discounts/{id}', [DiscountController::class, 'destroy'])->name('discounts.destroy');
 
-    Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
-    Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
-    Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 
-    // Staff User Management Routes
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
-    Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle_status');
-    Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+        // Staff User Management Routes
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle_status');
+        Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Inventory & Stock Management Routes
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
-    Route::get('/inventory/export/excel', [InventoryController::class, 'exportExcel'])->name('inventory.export_excel');
-    Route::get('/inventory/export/pdf', [InventoryController::class, 'exportPdf'])->name('inventory.export_pdf');
+        // Inventory & Stock Management Routes
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+        Route::get('/inventory/export/excel', [InventoryController::class, 'exportExcel'])->name('inventory.export_excel');
+        Route::get('/inventory/export/pdf', [InventoryController::class, 'exportPdf'])->name('inventory.export_pdf');
 
-    Route::get('/stock-opname', [StockOpnameController::class, 'index'])->name('stock_opname.index');
-    Route::post('/stock-opname', [StockOpnameController::class, 'store'])->name('stock_opname.store');
+        Route::get('/stock-opname', [StockOpnameController::class, 'index'])->name('stock_opname.index');
+        Route::post('/stock-opname', [StockOpnameController::class, 'store'])->name('stock_opname.store');
 
-    Route::get('/stock-transfers', [StockTransferController::class, 'index'])->name('stock_transfers.index');
-    Route::post('/stock-transfers', [StockTransferController::class, 'store'])->name('stock_transfers.store');
+        Route::get('/stock-transfers', [StockTransferController::class, 'index'])->name('stock_transfers.index');
+        Route::post('/stock-transfers', [StockTransferController::class, 'store'])->name('stock_transfers.store');
 
-    // Procurement / Purchase Routes
-    Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
-    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+        // Procurement / Purchase Routes
+        Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
 
-    // POS Cashier Routes
-    Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
-    Route::post('/pos/checkout', [PaymentController::class, 'checkout'])->name('pos.checkout');
-    Route::post('/pos/hold-cart', [POSController::class, 'holdCart'])->name('pos.hold_cart');
-    Route::delete('/pos/hold-cart/{id}', [POSController::class, 'destroyHold'])->name('pos.destroy_hold');
-    Route::get('/pos/receipt/{id}', [ReceiptController::class, 'show'])->name('pos.receipt');
-    Route::get('/pos/receipt/{id}/print', [ReceiptController::class, 'printHtml'])->name('pos.receipt_print');
-    Route::get('/receipt/{id}', [ReceiptController::class, 'show']);
+        // POS Cashier Routes
+        Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+        Route::post('/pos/checkout', [PaymentController::class, 'checkout'])->name('pos.checkout');
+        Route::post('/pos/hold-cart', [POSController::class, 'holdCart'])->name('pos.hold_cart');
+        Route::delete('/pos/hold-cart/{id}', [POSController::class, 'destroyHold'])->name('pos.destroy_hold');
+        Route::get('/pos/receipt/{id}', [ReceiptController::class, 'show'])->name('pos.receipt');
+        Route::get('/pos/receipt/{id}/print', [ReceiptController::class, 'printHtml'])->name('pos.receipt_print');
+        Route::get('/receipt/{id}', [ReceiptController::class, 'show']);
 
-    // Sales Return Routes
-    Route::get('/sales-returns', [SalesReturnController::class, 'index'])->name('sales_returns.index');
-    Route::post('/sales-returns', [SalesReturnController::class, 'store'])->name('sales_returns.store');
+        // Sales Return Routes
+        Route::get('/sales-returns', [SalesReturnController::class, 'index'])->name('sales_returns.index');
+        Route::post('/sales-returns', [SalesReturnController::class, 'store'])->name('sales_returns.store');
 
-    // Cash Shift & Laci Cash Control
-    Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
-    Route::post('/shifts/open', [ShiftController::class, 'open'])->name('shifts.open');
-    Route::post('/shifts/close', [ShiftController::class, 'close'])->name('shifts.close');
-    Route::post('/shifts/force-close', [ShiftController::class, 'forceClose'])->name('shifts.force_close');
-    Route::post('/shifts/cash-movement', [ShiftController::class, 'cashMovement'])->name('shifts.cash_movement');
+        // Cash Shift & Laci Cash Control
+        Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
+        Route::post('/shifts/open', [ShiftController::class, 'open'])->name('shifts.open');
+        Route::post('/shifts/close', [ShiftController::class, 'close'])->name('shifts.close');
+        Route::post('/shifts/force-close', [ShiftController::class, 'forceClose'])->name('shifts.force_close');
+        Route::post('/shifts/cash-movement', [ShiftController::class, 'cashMovement'])->name('shifts.cash_movement');
 
-    // Expense Management
-    Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
-    Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        // Expense Management
+        Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
 
-    // Reports & Financial Insights
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export_excel');
-    Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export_pdf');
+        // Reports & Financial Insights
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export_excel');
+        Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export_pdf');
 
-    // System Audit Logs & Backup/Restore
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit_logs.index');
-    Route::delete('/audit-logs/clear', [AuditLogController::class, 'clear'])->name('audit_logs.clear');
-    Route::delete('/audit-logs/{id}', [AuditLogController::class, 'destroy'])->name('audit_logs.destroy');
-    Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
-    Route::post('/backups/run', [BackupController::class, 'runBackup'])->name('backups.run');
-    Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
-    Route::post('/backups/restore/{filename}', [BackupController::class, 'restore'])->name('backups.restore');
-    Route::get('/backups/download/{filename}', [BackupController::class, 'download'])->name('backups.download');
-    Route::delete('/backups/delete/{filename}', [BackupController::class, 'delete'])->name('backups.delete');
+        // System Audit Logs & Backup/Restore
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit_logs.index');
+        Route::delete('/audit-logs/clear', [AuditLogController::class, 'clear'])->name('audit_logs.clear');
+        Route::delete('/audit-logs/{id}', [AuditLogController::class, 'destroy'])->name('audit_logs.destroy');
+        Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups/run', [BackupController::class, 'runBackup'])->name('backups.run');
+        Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
+        Route::post('/backups/restore/{filename}', [BackupController::class, 'restore'])->name('backups.restore');
+        Route::get('/backups/download/{filename}', [BackupController::class, 'download'])->name('backups.download');
+        Route::delete('/backups/delete/{filename}', [BackupController::class, 'delete'])->name('backups.delete');
+    });
 });
