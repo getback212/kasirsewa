@@ -81,6 +81,21 @@ class GoogleAuthController extends Controller
                 // Preserve plan selection if coming from /register flow
                 $planId = session()->pull('google_plan_id');
                 $billingCycle = session()->pull('google_billing_cycle', 'monthly');
+                $googleEmail = $googleUser->getEmail();
+
+                Log::info('Google OAuth: New email, redirecting to register', [
+                    'email' => $googleEmail,
+                    'plan_id' => $planId,
+                    'billing_cycle' => $billingCycle,
+                ]);
+
+                // Store Google user data in session for auto-fill in registration form
+                session([
+                    'google_email' => $googleEmail,
+                    'google_name' => $googleUser->getName(),
+                    'google_id_oauth' => $googleUser->getId(),
+                    'google_avatar' => $googleUser->getAvatar(),
+                ]);
 
                 $redirectUrl = '/register';
                 if ($planId) {
@@ -92,7 +107,7 @@ class GoogleAuthController extends Controller
 
                 return redirect($redirectUrl)->with(
                     'info',
-                    '📧 Email Anda belum terdaftar. Silakan daftar terlebih dahulu untuk membuat toko baru.'
+                    '📧 Email Anda belum terdaftar. Silakan selesaikan pendaftaran toko dengan Google email: '.$googleEmail
                 );
             }
 

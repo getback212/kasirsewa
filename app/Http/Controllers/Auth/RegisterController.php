@@ -73,9 +73,17 @@ class RegisterController extends Controller
             ?? $plans->firstWhere('slug', 'starter-basic')
             ?? $plans->first();
 
+        // Check if redirected from Google OAuth (new email)
+        $googleEmail = session('google_email');
+        $googleName = session('google_name');
+        $googleIdOauth = session('google_id_oauth');
+
         return Inertia::render('Auth/Register', [
             'plans' => $plans,
             'selected_plan_id' => $selectedPlan?->id ?? ($plans->first()?->id ?? 1),
+            'google_email' => $googleEmail,
+            'google_name' => $googleName,
+            'google_id' => $googleIdOauth,
         ]);
     }
 
@@ -97,6 +105,7 @@ class RegisterController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'plan_id' => 'required|exists:plans,id',
             'billing_cycle' => 'required|in:monthly,yearly',
+            'google_id' => 'nullable|string',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -144,7 +153,8 @@ class RegisterController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
-                'email_verified_at' => null,
+                'google_id' => $request->google_id, // Link Google ID if from OAuth
+                'email_verified_at' => now(),
                 'is_active' => true,
             ]);
 

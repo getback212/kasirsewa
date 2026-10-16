@@ -16,18 +16,22 @@ interface Plan {
 interface RegisterProps {
     plans: Plan[];
     selected_plan_id?: number;
+    google_email?: string;
+    google_name?: string;
+    google_id?: string;
 }
 
-export default function Register({ plans = [], selected_plan_id }: RegisterProps) {
+export default function Register({ plans = [], selected_plan_id, google_email, google_name, google_id }: RegisterProps) {
     const { data, setData, post, processing, errors } = useForm({
         store_name: '',
-        owner_name: '',
-        email: '',
+        owner_name: google_name || '',
+        email: google_email || '',
         phone: '',
-        password: '',
-        password_confirmation: '',
+        password: google_id ? 'google-oauth-linked' : '',
+        password_confirmation: google_id ? 'google-oauth-linked' : '',
         plan_id: selected_plan_id || plans[0]?.id || 1,
         billing_cycle: 'monthly',
+        google_id: google_id || null,
     });
 
     const selectedPlan = plans.find(p => p.id === data.plan_id);
