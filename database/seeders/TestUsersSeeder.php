@@ -186,16 +186,18 @@ class TestUsersSeeder extends Seeder
         // Get first plan (Starter Basic) for trial subscription
         $starterPlan = Plan::where('slug', 'starter-basic')->first();
         
-        Subscription::create([
-            'tenant_id' => $tenant->id,
-            'plan_id' => $starterPlan->id,
-            'status' => 'trial',
-            'billing_cycle' => 'monthly',
-            'starts_at' => now(),
-            'expires_at' => now()->addDays(7),
-            'trial_ends_at' => now()->addDays(7),
-            'auto_renew' => true,
-        ]);
+        Subscription::firstOrCreate(
+            ['tenant_id' => $tenant->id],
+            [
+                'plan_id' => $starterPlan->id,
+                'status' => 'trial',
+                'billing_cycle' => 'monthly',
+                'starts_at' => now(),
+                'expires_at' => now()->addDays(7),
+                'trial_ends_at' => now()->addDays(7),
+                'auto_renew' => true,
+            ]
+        );
 
         echo "\n✅ Data seeder complete:\n";
         echo "  Super Admin: superadmin@kasirsewa.com / superadmin123\n";
