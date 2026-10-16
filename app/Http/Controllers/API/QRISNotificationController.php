@@ -68,12 +68,26 @@ class QRISNotificationController extends Controller
                 );
             }
 
-            $sale = Sale::where('invoice_number', $invoiceNumber)->first();
+            $sale = Sale::where('invoice_number', $invoiceNumber)
+                ->whereHas('outlet', fn ($q) => $q->where('company_id', '!=', null))
+                ->first();
 
             if (!$sale) {
                 throw new QRISPaymentException(
                     'Invoice Not Found',
                     "Transaksi invoice {$invoiceNumber} tidak ditemukan di database."
+                );
+            }
+
+            // Verify sale belongs to a valid company (prevent cross-company access)
+            if (!$sale->outlet->company_id) {
+                Log::warning('QRIS webhook rejected: sale has no company context', [
+                    'invoice_number' => $invoiceNumber,
+                    'sale_id' => $sale->id,
+                ]);
+                throw new QRISPaymentException(
+                    'Invalid Sale Context',
+                    'Transaksi tidak memiliki konteks company yang valid.'
                 );
             }
 

@@ -18,6 +18,19 @@ class SalesController extends Controller
         $dateFrom = $request->date('date_from');
         $dateTo = $request->date('date_to');
 
+        // Validate outlet belongs to user's company
+        $outletExists = \App\Models\Outlet::where('id', $outletId)
+            ->where('company_id', $user->company_id)
+            ->exists();
+
+        if (!$outletExists) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Outlet tidak ditemukan atau tidak sesuai dengan perusahaan Anda.',
+                'data' => null,
+            ], 403);
+        }
+
         $query = Sale::where('company_id', $user->company_id)
             ->where('outlet_id', $outletId);
 
@@ -66,6 +79,7 @@ class SalesController extends Controller
         $user = $request->user();
         $sale = Sale::where('company_id', $user->company_id)
             ->where('id', $id)
+            ->whereHas('outlet', fn ($q) => $q->where('company_id', $user->company_id))
             ->first();
 
         if (!$sale) {
@@ -108,6 +122,19 @@ class SalesController extends Controller
         $outletId = $request->integer('outlet_id', $user->outlet_id);
         $dateFrom = $request->date('date_from');
         $dateTo = $request->date('date_to');
+
+        // Validate outlet belongs to user's company
+        $outletExists = \App\Models\Outlet::where('id', $outletId)
+            ->where('company_id', $user->company_id)
+            ->exists();
+
+        if (!$outletExists) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Outlet tidak ditemukan atau tidak sesuai dengan perusahaan Anda.',
+                'data' => null,
+            ], 403);
+        }
 
         $query = Sale::where('company_id', $user->company_id)
             ->where('outlet_id', $outletId)
