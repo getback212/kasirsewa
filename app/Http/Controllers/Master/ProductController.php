@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Product\StoreProductRequest;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Unit;
@@ -53,13 +54,10 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreProductRequest $request): RedirectResponse
     {
         $user = $request->user();
-        if (!$user->hasPermissionTo('create-products')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menambah produk.');
-        }
-
+        
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
         if ($tenantId) {
@@ -74,17 +72,7 @@ class ProductController extends Controller
             }
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:100', \Illuminate\Validation\Rule::unique('products', 'sku')->where('tenant_id', $tenantId)],
-            'barcode' => ['nullable', 'string', 'max:100', \Illuminate\Validation\Rule::unique('products', 'barcode')->where('tenant_id', $tenantId)],
-            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('company_id', $user->company_id)],
-            'unit_id' => ['nullable', Rule::exists('units', 'id')->where('company_id', $user->company_id)],
-            'purchase_price' => ['required', 'numeric', 'min:0'],
-            'selling_price' => ['required', 'numeric', 'min:0'],
-            'minimum_stock' => ['required', 'numeric', 'min:0'],
-            'description' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $product = Product::create([
             'company_id' => $user->company_id,
@@ -96,7 +84,7 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'purchase_price' => $validated['purchase_price'],
             'selling_price' => $validated['selling_price'],
-            'minimum_stock' => $validated['minimum_stock'],
+            'min_stock' => $validated['min_stock'] ?? 0,
             'description' => $validated['description'] ?? null,
             'is_active' => true,
         ]);

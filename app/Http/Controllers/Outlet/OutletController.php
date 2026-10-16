@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Outlet;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Outlet\StoreOutletRequest;
+use App\Http\Requests\Outlet\UpdateOutletRequest;
 use App\Models\Company;
 use App\Models\Outlet;
 use App\Models\Tenant;
@@ -43,13 +45,9 @@ class OutletController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreOutletRequest $request): RedirectResponse
     {
         $user = $request->user();
-
-        if (! $user->hasPermissionTo('create-outlets')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menambah outlet toko.');
-        }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
@@ -66,21 +64,7 @@ class OutletController extends Controller
             }
         }
 
-        $validated = $request->validate([
-            'code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('outlets', 'code')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
-            ],
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'address' => ['nullable', 'string'],
-            'tax_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
-            'enable_ppn' => ['required', 'boolean'],
-            'qris_payload' => ['nullable', 'string'],
-            'qris_image_url' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $outlet = Outlet::create([
             'company_id' => $user->company_id,
@@ -89,8 +73,8 @@ class OutletController extends Controller
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
-            'tax_percentage' => $validated['tax_percentage'],
-            'enable_ppn' => $validated['enable_ppn'],
+            'email' => $validated['email'] ?? null,
+            'city' => $validated['city'] ?? null,
             'qris_payload' => $validated['qris_payload'] ?? null,
             'qris_image_url' => $validated['qris_image_url'] ?? null,
             'is_active' => true,
@@ -98,49 +82,29 @@ class OutletController extends Controller
 
         AuditLogService::log('OUTLET_CREATE', 'Outlet', $outlet->id, ['name' => $outlet->name, 'code' => $outlet->code]);
 
-        return redirect()->back()->with('success', 'Outlet toko cabang baru berhasil ditambahkan!');
+        return redirect()->back()->with('success', "Outlet cabang {$outlet->name} ({$outlet->code}) berhasil ditambahkan!");
     }
 
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateOutletRequest $request, int $id): RedirectResponse
     {
         $user = $request->user();
-
-        if (! $user->hasPermissionTo('edit-outlets')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk mengubah konfigurasi outlet toko.');
-        }
-
+        
         $tenantId = session('active_tenant_id', $user->tenant_id);
         $outlet = Outlet::where('company_id', $user->company_id)
             ->where('tenant_id', $tenantId)
             ->findOrFail($id);
 
-        $validated = $request->validate([
-            'code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('outlets', 'code')->ignore($outlet->id)->where(fn ($query) => $query->where('tenant_id', $tenantId)),
-            ],
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'address' => ['nullable', 'string'],
-            'tax_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
-            'enable_ppn' => ['required', 'boolean'],
-            'qris_payload' => ['nullable', 'string'],
-            'qris_image_url' => ['nullable', 'string'],
-            'is_active' => ['required', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $outlet->update([
             'code' => strtoupper($validated['code']),
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
-            'tax_percentage' => $validated['tax_percentage'],
-            'enable_ppn' => $validated['enable_ppn'],
+            'email' => $validated['email'] ?? null,
+            'city' => $validated['city'] ?? null,
             'qris_payload' => $validated['qris_payload'] ?? null,
             'qris_image_url' => $validated['qris_image_url'] ?? null,
-            'is_active' => $validated['is_active'],
         ]);
 
         // Sync main outlet name update with Tenant & Company models for Super Admin UI

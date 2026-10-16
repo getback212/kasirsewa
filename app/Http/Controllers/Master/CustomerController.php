@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\StoreCustomerRequest;
+use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Models\Tenant;
 use App\Models\Company;
@@ -50,36 +52,31 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCustomerRequest $request): RedirectResponse
     {
-        $user = $request->user();
+        $validated = $request->validated();
 
-        if (!$user->hasPermissionTo('create-customers')) {
-            abort(403, 'Anda tidak memiliki hak akses menambah pelanggan member.');
-        }
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
-        ]);
-
-        $tenantId = session('active_tenant_id', $user->tenant_id);
-        if (!$tenantId && $user->hasRole('SUPER_ADMIN')) {
+        $tenantId = session('active_tenant_id', $request->user()->tenant_id);
+        if (!$tenantId && $request->user()->hasRole('SUPER_ADMIN')) {
             $firstTenant = Tenant::first();
             $tenantId = $firstTenant?->id ?? 1;
         }
 
-        $companyId = $user->company_id ?? Company::first()?->id ?? 1;
+        $companyId = $request->user()->company_id ?? Company::first()?->id ?? 1;
         $code = 'CUST-'.mt_rand(1000, 9999);
 
         $customer = Customer::create([
             'company_id' => $companyId,
             'tenant_id' => $tenantId,
             'code' => $code,
-            'name' => $request->name,
-            'phone' => $request->phone,
-            'address' => $request->address,
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'email' => $validated['email'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'credit_limit' => $validated['credit_limit'] ?? 0,
+            'notes' => $validated['notes'] ?? null,
+            'customer_type' => $validated['customer_type'] ?? 'retail',
         ]);
 
         AuditLogService::log('CUSTOMER_CREATE', 'Customer', $customer->id, ['name' => $customer->name]);
@@ -119,6 +116,11 @@ class CustomerController extends Controller
             'amount' => ['required', 'numeric', 'min:1'],
             'note' => ['nullable', 'string'],
         ]);
+
+        // Sanitize note field
+        if (isset($validated['note'])) {
+            $validated['note'] = strip_tags(trim($validated['note']));
+        }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
         $customer = Customer::where('tenant_id', $tenantId)->findOrFail($id);
