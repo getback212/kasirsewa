@@ -22,11 +22,15 @@ class StaleRoleAssignmentTest extends TestCase
 {
     public function test_new_google_owner_does_not_inherit_role_of_a_reused_id(): void
     {
+        // ✅ NEW: Unregistered users are rejected and redirected to /register
+        // (Security fix: prevents auto-tenant creation for unauthorized emails)
+        
         // The id the next INSERT will receive; a deleted user's role rows are
         // still parked on it.
         $staleId = (int) User::max('id') + 1;
         $cashierRoleId = (int) DB::table('roles')->where('name', UserRole::CASHIER->value)->value('id');
 
+        // Pre-populate stale role assignment
         DB::table('model_has_roles')->insert([
             'role_id' => $cashierRoleId,
             'model_type' => (new User())->getMorphClass(),
@@ -45,14 +49,16 @@ class StaleRoleAssignmentTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $this->get('/auth/google/callback')->assertRedirect('/dashboard');
+        // ✅ FIXED: Unregistered users redirect to /register (not auto-create)
+        $response = $this->get('/auth/google/callback');
+        $response->assertRedirect('/register');
 
-        $owner = User::where('email', 'arigetback212@gmail.com')->firstOrFail();
+        // ✅ Verify user NOT created
+        $user = User::where('email', 'arigetback212@gmail.com')->first();
+        $this->assertNull($user);
 
-        $this->assertSame($staleId, $owner->id, 'The registrant was expected to land on the id holding the orphaned role row.');
-        $this->assertSame([UserRole::OWNER->value], $owner->getRoleNames()->all());
-        $this->assertFalse($owner->hasRole(UserRole::CASHIER->value), 'A brand-new owner must never be a cashier.');
-        $this->assertFalse($owner->hasRole(UserRole::WAREHOUSE->value));
+        // ✅ Verify stale role still exists (not assigned yet)
+        $this->assertDatabaseHas('model_has_roles', ['model_id' => $staleId]);
     }
 
     public function test_orphaned_role_assignments_are_purged(): void

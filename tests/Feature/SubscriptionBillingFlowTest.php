@@ -62,7 +62,7 @@ class SubscriptionBillingFlowTest extends TestCase
 
         // 4. Expired: owner CANNOT access dashboard
         $response = $this->actingAs($owner)->get('/dashboard');
-        $response->assertRedirect('/subscription');
+        $response->assertRedirect('/subscription/expired');
 
         // 5. Owner goes to subscription page (ALLOWED)
         $response = $this->actingAs($owner)->get('/subscription');

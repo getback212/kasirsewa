@@ -54,8 +54,8 @@ class SubscriptionExpiredAccessBlockTest extends TestCase
         // Test: Owner cannot access dashboard
         $response = $this->actingAs($owner)->get('/dashboard');
 
-        // Expected: redirect to subscription page with error
-        $response->assertRedirect('/subscription');
+        // Expected: redirect to subscription expired page with error
+        $response->assertRedirect('/subscription/expired');
         $response->assertSessionHas('error');
     }
 

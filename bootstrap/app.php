@@ -25,6 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/qris/push-notification',
         ]);
 
+        // Register middleware aliases
+        $middleware->alias([
+            'subscription' => SubscriptionAccessMiddleware::class,
+        ]);
+
         $middleware->web(append: [
             SecurityHeadersMiddleware::class,
             TenantDomainResolver::class,
