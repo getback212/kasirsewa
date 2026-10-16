@@ -18,6 +18,7 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
     const proofUrl = latestPayment?.payload?.proof_url;
     const senderBank = latestPayment?.payload?.sender_bank;
     const senderName = latestPayment?.payload?.sender_name;
+    const rejectionReason = latestPayment?.proof_rejection_reason;
 
     const paymentForm = useForm({
         invoice_id: invoice?.id || null,
@@ -213,6 +214,29 @@ export default function InvoiceShow({ invoice = {}, isSuperAdmin = false, paymen
                                 </div>
                             ) : (
                                 <p className="text-xs text-slate-500 italic pt-2">Tenant tidak mengunggah file foto (Konfirmasi transfer manual via bank pengirim & nama rekening).</p>
+                            )}
+
+                            {/* REJECTION REASON ALERT */}
+                            {rejectionReason && (
+                                <div className="space-y-4 pt-4 border-t border-slate-800">
+                                    <div className="bg-rose-500/10 border-2 border-rose-500/40 p-6 rounded-3xl shadow-xl space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <AlertCircle className="w-5 h-5 text-rose-400" />
+                                            <h3 className="font-extrabold text-sm text-rose-400">Bukti Pembayaran Ditolak</h3>
+                                        </div>
+                                        <div className="bg-rose-500/5 border border-rose-500/30 p-4 rounded-2xl">
+                                            <p className="text-xs text-rose-300 leading-relaxed">{rejectionReason}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPaymentModal(true)}
+                                            className="w-full px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            Upload Ulang Bukti Pembayaran
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}
