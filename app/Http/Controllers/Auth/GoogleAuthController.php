@@ -3,30 +3,51 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\Outlet;
-use App\Models\Plan;
-use App\Models\Subscription;
-use App\Models\Tenant;
 use App\Models\User;
 use App\Enums\UserRole;
-use App\Models\Category;
-use App\Models\Unit;
-use App\Support\TenantDomain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
+/**
+ * GoogleAuthController — Handles Google SSO for EXISTING users only.
+ *
+ * FLOW DIAGRAM:
+ * 
+ * 1. NEW OWNER (registration):
+ *    Landing Page (plan selector) → /register?plan=X (RegisterController)
+ *    → Form (email, password, store name) → New Tenant created
+ *
+ * 2. EXISTING USER (linking Google / SSO):
+ *    Login Page (Google button) → redirectToGoogle() → Google OAuth
+ *    → handleGoogleCallback() → Check by google_id OR email
+ *    → If exists: Link google_id + Login
+ *    → If NOT exists: Redirect to /register with message
+ *
+ * 3. EMPLOYEE (added by owner):
+ *    Owner invites employee in admin panel
+ *    → User created in DB (email, no password set yet)
+ *    → Employee logs in with email+password (or reset password link)
+ *    → Later: Can link Google account if desired
+ *
+ * SECURITY RULES:
+ * - Auto-create tenant ONLY via RegisterController (form-based, plan choice)
+ * - Google callback MUST NOT create tenant (SSO only for existing users)
+ * - All unregistered emails → redirect to /register with instructions
+ */
 class GoogleAuthController extends Controller
 {
+    /**
+     * Step 1: Redirect to Google OAuth consent screen.
+     * 
+     * Query params (if from /register flow):
+     * - plan_id: Selected plan ID (to preserve selection after Google callback)
+     * - billing_cycle: Monthly/yearly choice
+     */
     public function redirectToGoogle(Request $request)
     {
+        // Store plan selection in session so it survives OAuth redirect
         if ($request->has('plan_id')) {
             session(['google_plan_id' => $request->input('plan_id')]);
         }
@@ -37,138 +58,46 @@ class GoogleAuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
+    /**
+     * Step 2: Google callback handler.
+     * 
+     * Decision tree:
+     * - User exists (by google_id): Link + Login ✓
+     * - User exists (by email, no google_id): Link google_id + Login ✓
+     * - User NOT exists: Reject, redirect to /register with message ✓
+     */
     public function handleGoogleCallback()
     {
         try {
-            // Keep the OAuth state check enabled for this browser session.
             $googleUser = Socialite::driver('google')->user();
 
+            // LOOKUP: Check if user exists by google_id (primary) or email (fallback)
             $user = User::where('google_id', $googleUser->getId())
                 ->orWhere('email', $googleUser->getEmail())
                 ->first();
 
+            // ❌ NO USER FOUND: Reject auto-registration, redirect to /register
             if (!$user) {
-                // Self-register new Tenant via Google SSO
-                DB::transaction(function () use ($googleUser, &$user) {
-                    $googleName = $googleUser->getName() ?? $googleUser->getNickname() ?? 'Pengguna Google';
-                    $storeName = 'Toko ' . $googleName;
-                    $slug = Str::slug($storeName) . '-' . rand(100, 999);
-
-                    $tenant = Tenant::create([
-                        'name' => $storeName,
-                        'slug' => $slug,
-                        'domain' => $slug . '.superbackend.my.id',
-                        'status' => 'active',
-                    ]);
-
-                    $company = Company::create([
-                        'tenant_id' => $tenant->id,
-                        'name' => $storeName,
-                        'registration_number' => 'REG-' . strtoupper(Str::random(6)),
-                        'is_active' => true,
-                    ]);
-
-                    $outlet = Outlet::create([
-                        'company_id' => $company->id,
-                        'tenant_id' => $tenant->id,
-                        'name' => 'Outlet Pusat ' . $storeName,
-                        'code' => 'OUT-' . mt_rand(1000, 9999),
-                        'phone' => '0812' . rand(10000000, 99999999),
-                        'address' => 'Alamat Outlet Pusat',
-                        'is_active' => true,
-                    ]);
-
-                    $user = User::create([
-                        'company_id' => $company->id,
-                        'tenant_id' => $tenant->id,
-                        'outlet_id' => $outlet->id,
-                        'name' => $googleName,
-                        'email' => $googleUser->getEmail(),
-                        'password' => Hash::make(Str::random(16)),
-                        'google_id' => $googleUser->getId(),
-                        'avatar' => $googleUser->getAvatar(),
-                        'is_active' => true,
-                    ]);
-
-                    // syncRoles, not assignRole: a new owner must own exactly
-                    // the OWNER role. If a leftover pivot row from a deleted
-                    // user already sits on this id, assignRole would keep it
-                    // and the owner would land in the cashier UI.
-                    $user->syncRoles([UserRole::OWNER->value]);
-                    $tenant->update(['owner_id' => $user->id]);
-
-                    $planId = session()->pull('google_plan_id');
-                    $billingCycle = session()->pull('google_billing_cycle', 'monthly');
-
-                    $plan = $planId ? Plan::find($planId) : null;
-                    if (!$plan) {
-                        $plan = Plan::where('slug', 'starter-basic')->first() ?? Plan::first();
+                // Preserve plan selection if coming from /register flow
+                $planId = session()->pull('google_plan_id');
+                $billingCycle = session()->pull('google_billing_cycle', 'monthly');
+                
+                $redirectUrl = '/register';
+                if ($planId) {
+                    $redirectUrl .= '?plan_id=' . $planId;
+                    if ($billingCycle) {
+                        $redirectUrl .= '&billing_cycle=' . $billingCycle;
                     }
+                }
 
-                    // Semua paket mendapat trial gratis 7 hari
-                    $trialEndsAt = now()->addDays(7);
-                    $status = 'trial';
-                    $expiresAt = $trialEndsAt;
+                return redirect($redirectUrl)->with(
+                    'info',
+                    '📧 Email Anda belum terdaftar. Silakan daftar terlebih dahulu untuk membuat toko baru.'
+                );
+            }
 
-                    $subscription = Subscription::create([
-                        'tenant_id' => $tenant->id,
-                        'plan_id' => $plan->id,
-                        'status' => $status,
-                        'billing_cycle' => $billingCycle,
-                        'starts_at' => now(),
-                        'expires_at' => $expiresAt,
-                        'trial_ends_at' => $trialEndsAt,
-                        'auto_renew' => true,
-                    ]);
-
-                    // Initial registration invoice (Rp 0 / Lunas during 7-Day Free Trial)
-                    $price = 0.00;
-                    $invoiceNumber = 'INV/SAAS/'.now()->format('Ymd').'/'.str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
-
-                    $invoice = Invoice::create([
-                        'tenant_id' => $tenant->id,
-                        'subscription_id' => $subscription->id,
-                        'invoice_number' => $invoiceNumber,
-                        'subtotal' => $price,
-                        'discount' => 0,
-                        'tax' => 0,
-                        'total' => $price,
-                        'status' => 'paid',
-                        'due_at' => $trialEndsAt,
-                    ]);
-
-                    $desc = "🎁 MASA UJI COBA GRATIS 7 HARI (Paket {$plan->name})";
-
-                    InvoiceItem::create([
-                        'invoice_id' => $invoice->id,
-                        'description' => $desc,
-                        'amount' => $price,
-                    ]);
-
-                    Category::create([
-                        'company_id' => $company->id,
-                        'tenant_id' => $tenant->id,
-                        'name' => 'Umum / Lainnya',
-                        'slug' => 'umum',
-                        'is_active' => true,
-                    ]);
-
-                    Unit::create([
-                        'company_id' => $company->id,
-                        'tenant_id' => $tenant->id,
-                        'name' => 'Pcs',
-                        'short_name' => 'pcs',
-                    ]);
-
-                    Customer::create([
-                        'company_id' => $company->id,
-                        'tenant_id' => $tenant->id,
-                        'code' => 'CUST-UMUM-' . $tenant->id,
-                        'name' => 'Pelanggan Umum',
-                        'phone' => '-',
-                    ]);
-                });
-            } else {
+            // ✓ USER EXISTS: Update Google ID (if new) and login
+            if (!$user->google_id || $user->google_id !== $googleUser->getId()) {
                 $user->update([
                     'google_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar() ?? $user->avatar,
@@ -177,22 +106,20 @@ class GoogleAuthController extends Controller
 
             Auth::login($user, true);
 
+            // Set active tenant/outlet in session for multi-tenant context
             session([
                 'active_tenant_id' => $user->tenant_id,
                 'active_outlet_id' => $user->outlet_id,
             ]);
 
-            \App\Services\Audit\AuditLogService::log(
-                action: 'USER_LOGIN',
-                modelType: 'User',
-                modelId: $user->id,
-                newValues: [
-                    'email' => $user->email,
-                    'name' => $user->name,
-                    'login_method' => 'Google SSO',
-                ]
-            );
+            // Audit log
+            Log::info('User Google Login', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'method' => 'Google SSO',
+            ]);
 
+            // Route to appropriate dashboard based on role
             $targetRoute = '/dashboard';
             if ($user->hasRole(UserRole::CASHIER->value)) {
                 $targetRoute = '/pos';
@@ -202,12 +129,13 @@ class GoogleAuthController extends Controller
 
             return redirect($targetRoute)->with('success', "✅ Selamat datang kembali, {$user->name}!");
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Google Auth Failed', [
+            Log::warning('Google Auth Callback Failed', [
                 'exception' => $e::class,
                 'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            return redirect('/login')->with('error', 'Gagal masuk menggunakan Google. Silakan coba lagi.');
+            return redirect('/login')->with('error', '❌ Gagal masuk menggunakan Google. Silakan coba lagi.');
         }
     }
 }

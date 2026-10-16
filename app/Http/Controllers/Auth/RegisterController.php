@@ -25,16 +25,52 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * RegisterController — Handles NEW OWNER registration (form-based, plan selection).
+ *
+ * ONLY ENTRY POINT FOR NEW TENANT CREATION.
+ * 
+ * FLOW:
+ * 1. Landing page: User selects plan (Starter/Pro/Enterprise)
+ * 2. Clicks "Mulai Trial" → /register?plan=starter-basic (or other plan slug)
+ * 3. RegisterController::create() reads query param, pre-selects plan in form
+ * 4. Form shows: store name, owner name, email, password, billing cycle
+ * 5. User submits → RegisterController::store() validates and creates:
+ *    - New Tenant (auto domain + slug)
+ *    - New Company
+ *    - New Outlet
+ *    - New Owner User (OWNER role, this password)
+ *    - New Subscription (trial 7 days for ALL plans)
+ *    - Initial Invoice (Rp 0 for trial)
+ *    - Default Category, Unit, Customer
+ * 6. Owner auto-logged in → Dashboard
+ * 7. Audit logged: SAAS_TENANT_SELF_REGISTER
+ *
+ * SECURITY RULES:
+ * - Email must be unique (no re-registration)
+ * - Only ONE entry point to create new tenant
+ * - Owner role assigned via syncRoles (not assignRole) to prevent stale pivot issues
+ * - All tenants start with 7-day trial regardless of plan selection
+ */
 class RegisterController extends Controller
 {
+    /**
+     * Show registration form with plan pre-selection (if from landing page).
+     *
+     * Query params:
+     * - plan: plan slug (starter-basic, business-pro, enterprise-unlimited)
+     *        If missing or invalid, defaults to starter-basic
+     *
+     * @return Response Inertia component with plans list + selected_plan_id
+     */
     public function create(Request $request): Response
     {
         $plans = Plan::where('is_active', true)->get();
-        $selectedPlanSlug = $request->query('plan', 'starter');
+        $selectedPlanSlug = $request->query('plan', 'starter-basic');
         
-        // Map slug to plan: starter, pro, enterprise
+        // Map slug to plan object
         $selectedPlan = $plans->firstWhere('slug', $selectedPlanSlug) 
-            ?? $plans->firstWhere('slug', 'starter')
+            ?? $plans->firstWhere('slug', 'starter-basic')
             ?? $plans->first();
         
         return Inertia::render('Auth/Register', [
@@ -43,6 +79,14 @@ class RegisterController extends Controller
         ]);
     }
 
+    /**
+     * Process registration form submission.
+     *
+     * Validates input, creates tenant+company+outlet+owner+subscription+invoice in transaction.
+     * Auto-logs in owner and redirects to dashboard.
+     *
+     * @return RedirectResponse to /dashboard on success, or back with validation errors
+     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
