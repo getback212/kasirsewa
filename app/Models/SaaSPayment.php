@@ -23,11 +23,15 @@ class SaaSPayment extends Model
         'status',
         'paid_at',
         'payload',
+        'payment_proof',
+        'proof_verified_at',
+        'proof_rejection_reason',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'proof_verified_at' => 'datetime',
         'payload' => 'array',
     ];
 

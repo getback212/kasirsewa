@@ -35,6 +35,7 @@ use App\Http\Controllers\Sales\SalesReturnController;
 use App\Http\Controllers\Shift\ShiftController;
 use App\Http\Controllers\Subscription\SubscriptionController;
 use App\Http\Controllers\Subscription\SubscriptionExpiredController;
+use App\Http\Controllers\Subscription\PaymentProofController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\User\UserController;
 use App\Models\Plan;
@@ -157,6 +158,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/invoices/{id}/submit-payment', [InvoiceController::class, 'submitPayment'])->name('invoices.submit_payment');
     Route::post('/invoices/{id}/confirm-payment', [InvoiceController::class, 'confirmPayment'])->name('invoices.confirm_payment');
     Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+
+    // Payment Proof Routes
+    Route::post('/payment-proof/upload', [PaymentProofController::class, 'upload'])->name('payment_proof.upload');
+    Route::post('/payment-proof/{payment}/verify', [PaymentProofController::class, 'verify'])->name('payment_proof.verify');
+    Route::post('/payment-proof/{payment}/reject', [PaymentProofController::class, 'reject'])->name('payment_proof.reject');
 
     // Dashboard & Executive Summary (Protected by subscription middleware)
     Route::middleware('subscription')->group(function () {
