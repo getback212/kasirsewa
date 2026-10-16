@@ -33,95 +33,110 @@ class TestUsersSeeder extends Seeder
         }
 
         // 1. SUPER ADMIN (global, no tenant)
-        $superAdmin = User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@kasirsewa.com',
-            'password' => Hash::make('superadmin123'),
-            'phone' => '081234567890',
-            'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+        $superAdmin = User::firstOrCreate(
+            ['email' => 'superadmin@kasirsewa.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('superadmin123'),
+                'phone' => '081234567890',
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]
+        );
         $superAdmin->syncRoles([UserRole::SUPER_ADMIN->value]);
 
         // 2. Create Tenant + Company + Outlet
-        $tenant = Tenant::create([
-            'name' => 'Toko Berkah',
-            'slug' => 'toko-berkah-001',
-            'domain' => 'toko-berkah-001.superbackend.my.id',
-            'status' => 'active',
-        ]);
+        $company = Company::firstOrCreate(
+            ['name' => 'Toko Berkah'],
+            [
+                'registration_number' => 'REG-' . strtoupper(Str::random(6)),
+                'is_active' => true,
+            ]
+        );
 
-        $company = Company::create([
-            'name' => 'Toko Berkah',
-            'registration_number' => 'REG-' . strtoupper(Str::random(6)),
-            'is_active' => true,
-        ]);
+        $tenant = Tenant::firstOrCreate(
+            ['slug' => 'toko-berkah-001'],
+            [
+                'name' => 'Toko Berkah',
+                'domain' => 'toko-berkah-001.superbackend.my.id',
+                'status' => 'active',
+            ]
+        );
 
-        $outlet = Outlet::create([
-            'company_id' => $company->id,
-            'tenant_id' => $tenant->id,
-            'code' => 'OUT-0001',
-            'name' => 'Outlet Utama',
-            'phone' => '081234567890',
-            'address' => 'Jl. Raya Utama No. 1',
-            'is_active' => true,
-        ]);
+        $outlet = Outlet::firstOrCreate(
+            ['company_id' => $company->id, 'code' => 'OUT-0001'],
+            [
+                'tenant_id' => $tenant->id,
+                'name' => 'Outlet Utama',
+                'phone' => '081234567890',
+                'address' => 'Jl. Raya Utama No. 1',
+                'is_active' => true,
+            ]
+        );
 
         // 3. OWNER
-        $owner = User::create([
-            'company_id' => $company->id,
-            'tenant_id' => $tenant->id,
-            'outlet_id' => $outlet->id,
-            'name' => 'Ari Getback',
-            'email' => 'owner@tokobekah.com',
-            'password' => Hash::make('owner123'),
-            'phone' => '081234567891',
-            'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+        $owner = User::firstOrCreate(
+            ['email' => 'owner@tokobekah.com'],
+            [
+                'company_id' => $company->id,
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $outlet->id,
+                'name' => 'Ari Getback',
+                'password' => Hash::make('owner123'),
+                'phone' => '081234567891',
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]
+        );
         $owner->syncRoles([UserRole::OWNER->value]);
         $tenant->update(['owner_id' => $owner->id]);
 
         // 4. MANAGER
-        $manager = User::create([
-            'company_id' => $company->id,
-            'tenant_id' => $tenant->id,
-            'outlet_id' => $outlet->id,
-            'name' => 'Manager Toko',
-            'email' => 'manager@tokobekah.com',
-            'password' => Hash::make('manager123'),
-            'phone' => '081234567892',
-            'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+        $manager = User::firstOrCreate(
+            ['email' => 'manager@tokobekah.com'],
+            [
+                'company_id' => $company->id,
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $outlet->id,
+                'name' => 'Manager Toko',
+                'password' => Hash::make('manager123'),
+                'phone' => '081234567892',
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]
+        );
         $manager->syncRoles([UserRole::MANAGER->value]);
 
         // 5. CASHIER
-        $cashier = User::create([
-            'company_id' => $company->id,
-            'tenant_id' => $tenant->id,
-            'outlet_id' => $outlet->id,
-            'name' => 'Kasir Utama',
-            'email' => 'cashier@tokobekah.com',
-            'password' => Hash::make('cashier123'),
-            'phone' => '081234567893',
-            'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+        $cashier = User::firstOrCreate(
+            ['email' => 'cashier@tokobekah.com'],
+            [
+                'company_id' => $company->id,
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $outlet->id,
+                'name' => 'Kasir Utama',
+                'password' => Hash::make('cashier123'),
+                'phone' => '081234567893',
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]
+        );
         $cashier->syncRoles([UserRole::CASHIER->value]);
 
         // 6. WAREHOUSE STAFF
-        $warehouse = User::create([
-            'company_id' => $company->id,
-            'tenant_id' => $tenant->id,
-            'outlet_id' => $outlet->id,
-            'name' => 'Staf Gudang',
-            'email' => 'warehouse@tokobekah.com',
-            'password' => Hash::make('warehouse123'),
-            'phone' => '081234567894',
-            'email_verified_at' => now(),
-            'is_active' => true,
-        ]);
+        $warehouse = User::firstOrCreate(
+            ['email' => 'warehouse@tokobekah.com'],
+            [
+                'company_id' => $company->id,
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $outlet->id,
+                'name' => 'Staf Gudang',
+                'password' => Hash::make('warehouse123'),
+                'phone' => '081234567894',
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]
+        );
         $warehouse->syncRoles([UserRole::WAREHOUSE->value]);
 
         // 7. Create Plans + Subscription
