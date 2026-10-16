@@ -176,8 +176,8 @@ export default function Register({ plans = [], selected_plan_id, google_email, g
                             </div>
                         </div>
 
-                        {/* PLAN SELECTOR - Only show for Enterprise or if no plan selected */}
-                        {(selected_plan_id === 3 || !selected_plan_id) && (
+                        {/* PLAN SELECTOR - Show for all plans */}
+                        {!google_id && (
                             <div>
                                 <label className="block font-bold text-slate-300 mb-1.5">Pilih Paket SaaS Berlangganan</label>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
