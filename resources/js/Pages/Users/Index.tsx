@@ -405,6 +405,21 @@ export default function UsersIndex({ users, outlets, roles, filters }: UsersPage
                                 </div>
                             </div>
 
+                            <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={createForm.data.send_invite}
+                                        onChange={(e) => createForm.setData('send_invite', e.target.checked)}
+                                        className="w-4 h-4 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+                                    />
+                                    <span className="text-slate-300 font-medium">✉️ Kirim Undangan via Email & WhatsApp</span>
+                                </label>
+                                <p className="text-[10px] text-slate-500 mt-2">
+                                    Jika diaktifkan, staff akan menerima undangan login melalui email dan WhatsApp dengan instruksi login.
+                                </p>
+                            </div>
+
                             <div className="flex gap-2.5 pt-2">
                                 <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl cursor-pointer">Batal</button>
                                 <button type="submit" disabled={createForm.processing} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg cursor-pointer">
