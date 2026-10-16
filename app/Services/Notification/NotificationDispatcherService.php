@@ -5,6 +5,7 @@ namespace App\Services\Notification;
 use App\Models\Notification;
 use App\Models\SaaSSetting;
 use App\Models\Subscription;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -62,6 +63,74 @@ class NotificationDispatcherService
         $message = "Halo {$owner->name}, masa tenggang berlangganan toko {$tenant->name} telah berakhir. Akses kasir di-suspend sementara. Data Anda tersimpan aman dan akan aktif kembali setelah konfirmasi pembayaran.";
 
         static::dispatch($sub->tenant_id, $owner->id, 'SUBSCRIPTION_SUSPENDED', $title, $message, $owner);
+    }
+
+    public static function sendLowStockAlert(int $tenantId, string $productName, int $currentStock, int $minStock): void
+    {
+        $tenant = Tenant::find($tenantId);
+        $owner = $tenant->owner ?? User::where('tenant_id', $tenantId)->where('is_active', true)->first();
+        if (!$owner) return;
+
+        $title = "Stok Produk Menipis: {$productName}";
+        $message = "Halo {$owner->name}, stok produk '{$productName}' di toko {$tenant->name} menipis. Stok tersisa: {$currentStock} unit (minimum: {$minStock} unit). Segera lakukan pemesanan kembali.";
+
+        static::dispatch($tenantId, $owner->id, 'LOW_STOCK', $title, $message, $owner);
+    }
+
+    public static function sendPaymentFailureAlert(int $tenantId, string $reason, float $amount): void
+    {
+        $tenant = Tenant::find($tenantId);
+        $owner = $tenant->owner ?? User::where('tenant_id', $tenantId)->where('is_active', true)->first();
+        if (!$owner) return;
+
+        $title = 'Pembayaran Gagal';
+        $message = "Halo {$owner->name}, transaksi pembayaran sebesar Rp " . number_format($amount, 0, ',', '.') . " di toko {$tenant->name} gagal diproses. Alasan: {$reason}. Silakan coba lagi atau hubungi tim support.";
+
+        static::dispatch($tenantId, $owner->id, 'PAYMENT_FAILURE', $title, $message, $owner);
+    }
+
+    public static function sendDailyClosingReport(int $tenantId, int $outletId, array $summary): void
+    {
+        $tenant = Tenant::find($tenantId);
+        $owner = $tenant->owner ?? User::where('tenant_id', $tenantId)->where('is_active', true)->first();
+        if (!$owner) return;
+
+        $totalSales = number_format($summary['total_sales'] ?? 0, 0, ',', '.');
+        $totalTransactions = $summary['total_transactions'] ?? 0;
+        $totalExpenses = number_format($summary['total_expenses'] ?? 0, 0, ',', '.');
+        $profit = number_format(($summary['total_sales'] ?? 0) - ($summary['total_expenses'] ?? 0), 0, ',', '.');
+
+        $title = 'Laporan Penutupan Harian Toko';
+        $message = "Halo {$owner->name}, berikut ringkasan penjualan toko {$tenant->name} hari ini:\n\n"
+            . "Total Penjualan: Rp {$totalSales}\n"
+            . "Jumlah Transaksi: {$totalTransactions}\n"
+            . "Total Biaya: Rp {$totalExpenses}\n"
+            . "Keuntungan: Rp {$profit}\n\n"
+            . "Lihat laporan lengkap di portal: https://saas.superbackend.my.id/reports";
+
+        static::dispatch($tenantId, $owner->id, 'DAILY_REPORT', $title, $message, $owner);
+    }
+
+    public static function sendEmployeeInvitationAlert(int $tenantId, int $userId, string $employeeName): void
+    {
+        $user = User::find($userId);
+        if (!$user) return;
+
+        $title = 'Karyawan Baru Ditambahkan';
+        $message = "Halo {$user->name}, karyawan baru '{$employeeName}' telah ditambahkan ke sistem. Mereka akan menerima email dengan kredensial login.";
+
+        static::dispatch($tenantId, $userId, 'EMPLOYEE_ADDED', $title, $message);
+    }
+
+    public static function sendEmployeeActivationAlert(int $tenantId, int $employeeUserId, string $activatedBy): void
+    {
+        $employee = User::find($employeeUserId);
+        if (!$employee) return;
+
+        $title = 'Akun Anda Diaktifkan';
+        $message = "Halo {$employee->name}, akun Anda telah diaktifkan oleh {$activatedBy}. Anda sekarang dapat login dan menggunakan sistem.";
+
+        static::dispatch($tenantId, $employeeUserId, 'EMPLOYEE_ACTIVATED', $title, $message);
     }
 
     public static function dispatch(int $tenantId, int $userId, string $type, string $title, string $message, ?User $owner = null): array
