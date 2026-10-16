@@ -71,6 +71,17 @@ class RegisterController extends Controller
         $planIdFromQuery = $request->query('plan_id');
         $planSlugFromQuery = $request->query('plan');
 
+        // Map legacy slugs to current slugs
+        $slugMap = [
+            'business-pro' => 'professional',
+            'starter' => 'starter-basic',
+            'pro' => 'professional',
+        ];
+        
+        if ($planSlugFromQuery && isset($slugMap[$planSlugFromQuery])) {
+            $planSlugFromQuery = $slugMap[$planSlugFromQuery];
+        }
+
         $selectedPlan = null;
         
         // Try by numeric ID first
