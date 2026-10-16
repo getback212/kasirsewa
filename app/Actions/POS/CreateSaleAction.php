@@ -7,6 +7,7 @@ use App\Models\SaleItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Actions\Inventory\AdjustStockAction;
+use App\Actions\Inventory\ValidateStockAvailabilityAction;
 use App\Enums\StockMovementType;
 use App\Enums\SaleStatus;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,8 @@ use InvalidArgumentException;
 class CreateSaleAction
 {
     public function __construct(
-        protected AdjustStockAction $adjustStockAction
+        protected AdjustStockAction $adjustStockAction,
+        protected ValidateStockAvailabilityAction $validateStockAction
     ) {}
 
     public function execute(
@@ -59,6 +61,10 @@ class CreateSaleAction
                 ->where('company_id', $companyId)
                 ->firstOrFail();
             $tenantId = $outlet->tenant_id ?? session('active_tenant_id');
+
+            // ✅ NEW: Validate stock BEFORE processing sale
+            // Prevents overselling; blocks transaction if insufficient stock
+            $this->validateStockAction->execute($outletId, $items);
 
             $hasKasbonPayment = false;
             foreach ($payments as $p) {
