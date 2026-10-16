@@ -176,19 +176,13 @@ export default function Register({ plans = [], selected_plan_id, google_email, g
                             </div>
                         </div>
 
-                        {/* PLAN INFO - Display only (selected from landing page) */}
-                        <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
-                            <div className="text-[11px] font-bold text-slate-400 mb-2">Paket yang dipilih:</div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="font-bold text-white">{selectedPlan?.name}</div>
-                                    <div className="text-[11px] text-slate-400 mt-0.5">{selectedPlan?.description}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="font-bold text-emerald-400">Rp {Number(selectedPlan?.monthly_price || 0).toLocaleString('id-ID')}/bln</div>
-                                    <div className="text-[10px] text-slate-500 mt-1">{selectedPlan?.max_stores} Store • {selectedPlan?.max_users} Staff</div>
-                                </div>
-                            </div>
+                        {/* PLAN INFO - Auto-selected Starter Basic, not shown */}
+                        <input type="hidden" name="plan_id" value={data.plan_id} />
+                        <input type="hidden" name="billing_cycle" value={data.billing_cycle} />
+
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center">
+                            <div className="text-xs text-emerald-400 font-bold">✨ Paket Starter Basic - Trial Gratis 7 Hari (Tanpa Kartu Kredit)</div>
+                            <div className="text-[11px] text-emerald-300 mt-1">Akses penuh semua fitur selama masa trial. Upgrade kapan saja.</div>
                         </div>
 
                         <button
