@@ -13,40 +13,46 @@ class AdminPaymentProofController extends Controller
      */
     public function index(): Response
     {
-        $payments = SaaSPayment::with([
-            'invoice.tenant.owner',
-        ])
+        // Fetch payments with eager loading to avoid N+1 queries
+        $payments = SaaSPayment::query()
+            ->with('invoice.tenant.owner')
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($payment) {
-                return [
-                    'id' => $payment->id,
-                    'invoice_id' => $payment->invoice_id,
-                    'payment_number' => $payment->payment_number,
-                    'amount' => $payment->amount,
-                    'status' => $payment->status,
-                    'payment_proof' => $payment->payment_proof,
-                    'proof_verified_at' => $payment->proof_verified_at,
-                    'proof_rejection_reason' => $payment->proof_rejection_reason,
-                    'created_at' => $payment->created_at,
-                    'invoice' => $payment->invoice ? [
-                        'invoice_number' => $payment->invoice->invoice_number,
-                        'total' => $payment->invoice->total,
-                        'due_at' => $payment->invoice->due_at,
-                        'tenant' => $payment->invoice->tenant ? [
-                            'name' => $payment->invoice->tenant->name,
-                            'owner' => $payment->invoice->tenant->owner ? [
-                                'name' => $payment->invoice->tenant->owner->name,
-                                'email' => $payment->invoice->tenant->owner->email,
-                                'phone' => $payment->invoice->tenant->owner->phone,
-                            ] : null,
+            ->get();
+
+        // Transform to array safely
+        $paymentsArray = $payments->map(function ($payment) {
+            $invoice = $payment->invoice;
+            $tenant = $invoice?->tenant;
+            $owner = $tenant?->owner;
+
+            return [
+                'id' => $payment->id,
+                'invoice_id' => $payment->invoice_id,
+                'payment_number' => $payment->payment_number,
+                'amount' => (string)$payment->amount, // Cast to string for safe JSON
+                'status' => $payment->status,
+                'payment_proof' => $payment->payment_proof,
+                'proof_verified_at' => $payment->proof_verified_at?->toIso8601String(),
+                'proof_rejection_reason' => $payment->proof_rejection_reason,
+                'created_at' => $payment->created_at?->toIso8601String(),
+                'invoice' => $invoice ? [
+                    'invoice_number' => $invoice->invoice_number,
+                    'total' => (string)$invoice->total,
+                    'due_at' => $invoice->due_at?->toIso8601String(),
+                    'tenant' => $tenant ? [
+                        'name' => $tenant->name,
+                        'owner' => $owner ? [
+                            'name' => $owner->name,
+                            'email' => $owner->email,
+                            'phone' => $owner->phone,
                         ] : null,
                     ] : null,
-                ];
-            });
+                ] : null,
+            ];
+        })->toArray();
 
         return inertia('Admin/PaymentProofsIndex', [
-            'payments' => $payments,
+            'payments' => $paymentsArray,
             'filters' => request()->only('status'),
         ]);
     }
