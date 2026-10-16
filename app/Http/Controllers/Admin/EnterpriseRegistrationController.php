@@ -185,6 +185,18 @@ class EnterpriseRegistrationController extends Controller
                 ];
             });
 
+            // Generate password reset token
+            $resetToken = Str::random(64);
+            DB::table('password_reset_tokens')->insert([
+                'email' => $tenantData['owner_email'],
+                'token' => hash('sha256', $resetToken),
+                'created_at' => now(),
+            ]);
+
+            $resetLink = route('password.reset', ['token' => $resetToken, 'email' => $tenantData['owner_email']]);
+            
+            $tenantData['reset_link'] = $resetLink;
+
             // Log audit
             \App\Services\Audit\AuditLogService::log(
                 action: 'ENTERPRISE_REGISTRATION_CREATED',
@@ -200,7 +212,9 @@ class EnterpriseRegistrationController extends Controller
             );
 
             return redirect()->route('admin.enterprise.show', $tenantData['tenant']->id)
-                ->with('success', "✅ Enterprise '{$tenantData['store_name']}' berhasil didaftarkan untuk {$tenantData['owner_name']}. Password sementara: {$tenantData['temp_password']}");
+                ->with('success', "✅ Enterprise '{$tenantData['store_name']}' berhasil didaftarkan untuk {$tenantData['owner_name']}. Password sementara: {$tenantData['temp_password']}")
+                ->with('reset_link', $tenantData['reset_link'])
+                ->with('owner_email', $tenantData['owner_email']);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Enterprise Registration Failed', [
                 'exception' => $e::class,

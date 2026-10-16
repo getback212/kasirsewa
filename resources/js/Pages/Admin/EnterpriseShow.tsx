@@ -37,9 +37,11 @@ interface Tenant {
 interface EnterpriseShowProps {
     tenant: Tenant;
     dashboardRoute: string;
+    reset_link?: string;
+    owner_email?: string;
 }
 
-export default function EnterpriseShow({ tenant, dashboardRoute }: EnterpriseShowProps) {
+export default function EnterpriseShow({ tenant, dashboardRoute, reset_link, owner_email }: EnterpriseShowProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [copied, setCopied] = useState<string | null>(null);
 
@@ -273,6 +275,32 @@ export default function EnterpriseShow({ tenant, dashboardRoute }: EnterpriseSho
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* PASSWORD RESET LINK */}
+                                {reset_link && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-400 block">Link Reset Password (Lebih Aman)</label>
+                                        <div className="flex gap-1.5">
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value={reset_link}
+                                                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-blue-400 truncate"
+                                            />
+                                            <button
+                                                onClick={() => copyToClipboard(reset_link, 'reset_link')}
+                                                className={`px-3 py-2 rounded-lg transition font-bold text-xs whitespace-nowrap ${
+                                                    copied === 'reset_link'
+                                                        ? 'bg-emerald-500 text-white'
+                                                        : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                                                }`}
+                                            >
+                                                {copied === 'reset_link' ? '✓' : 'Salin'}
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 italic">Kirim link ini ke owner untuk set password sendiri</p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* INFO */}
