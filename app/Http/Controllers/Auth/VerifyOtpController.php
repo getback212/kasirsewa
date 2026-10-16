@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\SaaSSetting;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -123,6 +124,14 @@ class VerifyOtpController extends Controller
             'phone_otp' => null,
             'phone_otp_expires_at' => null,
         ]);
+
+        // Audit log
+        AuditLogService::log(
+            action: 'USER_PHONE_VERIFIED',
+            modelType: 'User',
+            modelId: $user->id,
+            newValues: ['phone' => $user->phone, 'phone_verified_at' => now()->toDateTimeString()]
+        );
 
         $targetRoute = '/dashboard';
         if ($user->hasRole('CASHIER')) {

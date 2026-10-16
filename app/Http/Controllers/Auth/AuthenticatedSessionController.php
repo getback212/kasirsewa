@@ -11,6 +11,32 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * AuthenticatedSessionController — Email+Password authentication for all user types.
+ *
+ * FLOW:
+ * 1. /login (form) → Store credentials via LoginRequest
+ * 2. Validation: email + password (LoginRequest checks credentials)
+ * 3. Role-based routing after successful auth:
+ *    - SUPER_ADMIN: Redirect to /admin/dashboard (must use /super-admin/login instead, rejected here)
+ *    - OWNER: Redirect to /dashboard (store dashboard)
+ *    - CASHIER: Redirect to /pos (POS system)
+ *    - WAREHOUSE: Redirect to /stock (inventory system)
+ *    - Default: /dashboard
+ * 4. Session setup: active_tenant_id + active_outlet_id
+ * 5. Audit log: USER_LOGIN
+ *
+ * SECURITY RULES:
+ * - Super Admin MUST use /super-admin/login (rejected here with clear message)
+ * - Non-Super-Admin users rejected from /super-admin/login
+ * - Session regeneration on login (CSRF protection)
+ * - Audit logging for all logins
+ *
+ * COMPATIBLE WITH:
+ * - Email+Password registration (RegisterController)
+ * - Google SSO linking (GoogleAuthController)
+ * - Employee invitation (Owner adds users via admin panel)
+ */
 class AuthenticatedSessionController extends Controller
 {
     public function create(): Response
@@ -59,7 +85,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($user && $user->hasRole('WAREHOUSE')) {
-            return redirect()->intended('/inventory');
+            return redirect()->intended('/stock');
         }
 
         return redirect()->intended('/dashboard');
