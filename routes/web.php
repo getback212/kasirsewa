@@ -77,11 +77,11 @@ Route::get('/wa-qr', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:login');
     Route::get('/super-admin/login', [AuthenticatedSessionController::class, 'createSuperAdmin'])->name('superadmin.login');
-    Route::post('/super-admin/login', [AuthenticatedSessionController::class, 'storeSuperAdmin']);
+    Route::post('/super-admin/login', [AuthenticatedSessionController::class, 'storeSuperAdmin'])->middleware('throttle:superadmin-login');
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
-    Route::post('/register', [RegisterController::class, 'store']);
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:login');
 
     // Google SSO Routes
     Route::get('/auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
