@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Expense;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Expense\StoreExpenseRequest;
 use App\Models\Expense;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -49,23 +50,13 @@ class ExpenseController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreExpenseRequest $request): RedirectResponse
     {
         $user = $request->user();
         $activeOutletId = $this->resolveScopedOutletId($request);
         abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
-        if (! $user->hasPermissionTo('create-expenses') && ! $user->hasRole(['SUPER_ADMIN', 'OWNER', 'MANAGER'])) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menambah pengeluaran toko.');
-        }
-
-        $validated = $request->validate([
-            'category' => ['required', 'string'],
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'amount' => ['required', 'numeric', 'min:1'],
-            'expense_date' => ['required', 'date'],
-        ]);
+        $validated = $request->validated();
 
         Expense::create([
             'outlet_id' => $activeOutletId,

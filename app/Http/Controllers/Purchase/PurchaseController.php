@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Purchase;
 
 use App\Actions\Purchase\CreatePurchaseAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Purchase\StorePurchaseRequest;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
@@ -56,33 +57,14 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function store(Request $request, CreatePurchaseAction $createPurchaseAction): RedirectResponse
+    public function store(StorePurchaseRequest $request, CreatePurchaseAction $createPurchaseAction): RedirectResponse
     {
         $user = $request->user();
-
-        if (! $user->hasPermissionTo('create-purchases')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menambah transaksi restok.');
-        }
 
         $activeOutletId = $this->resolveScopedOutletId($request);
         abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
 
-        $validated = $request->validate([
-            'supplier_id' => ['required', Rule::exists('suppliers', 'id')->where(function ($query) use ($user) {
-                $query->where('company_id', $user->company_id);
-            })],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where(function ($query) use ($user) {
-                $query->where('company_id', $user->company_id);
-            })],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
-            'subtotal' => ['required', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'tax_amount' => ['nullable', 'numeric', 'min:0'],
-            'grand_total' => ['required', 'numeric', 'min:0'],
-            'note' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $purchase = $createPurchaseAction->execute(

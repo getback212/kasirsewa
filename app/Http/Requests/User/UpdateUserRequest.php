@@ -9,19 +9,21 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasPermissionTo('update-users');
+        return $this->user()->hasPermissionTo('edit-users');
     }
 
     public function rules(): array
     {
-        $userId = $this->route('user')?->id;
+        $userId = $this->route('id');
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'password' => ['sometimes', 'nullable', 'string', 'min:6'],
             'role' => ['sometimes', 'required', 'string'],
             'outlet_id' => ['sometimes', 'required', 'exists:outlets,id'],
+            'is_active' => ['sometimes', 'required', 'boolean'],
         ];
     }
 

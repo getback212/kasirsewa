@@ -18,6 +18,7 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'password' => ['required', 'string', 'min:6'],
             'role' => ['required', 'string'],
             'outlet_id' => ['required', 'exists:outlets,id'],
             'send_invite' => ['boolean'],

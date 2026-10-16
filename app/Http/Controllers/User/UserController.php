@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use App\Models\User;
 use App\Models\Outlet;
 use App\Enums\UserRole;
@@ -85,13 +87,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
         $currentUser = $request->user();
-
-        if (!$currentUser->hasPermissionTo('create-users')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menambah staff.');
-        }
 
         $tenantId = session('active_tenant_id', $currentUser->tenant_id);
         if ($tenantId) {
@@ -106,17 +104,7 @@ class UserController extends Controller
             }
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'password' => ['required', 'string', 'min:6'],
-            'role' => ['required', 'string', Rule::in([UserRole::OWNER->value, UserRole::MANAGER->value, UserRole::CASHIER->value, UserRole::WAREHOUSE->value])],
-            'outlet_id' => ['required', Rule::exists('outlets', 'id')->where(function ($query) use ($currentUser) {
-                $query->where('company_id', $currentUser->company_id);
-            })],
-            'send_invite' => ['nullable', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $cleanPhone = null;
         if (!empty($validated['phone'])) {
@@ -153,7 +141,7 @@ class UserController extends Controller
             if (!empty($cleanPhone)) {
                 $waGatewayUrl = \App\Models\SaaSSetting::get('wa_gateway_url', 'http://kasirsewa_whatsapp:3001/send');
                 $waApiKey = \App\Models\SaaSSetting::get('wa_api_key', 'baileys_free_gateway');
-                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\n\nHalo *{$user->name}*,\n\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\n\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\nhttps://superbackend.my.id/login";
+                $waMsg = "👋 *Undangan Bergabung Staf Toko KasirSewa*\\n\\nHalo *{$user->name}*,\\n\\nAnda telah diundang oleh *{$currentUser->name}* untuk bergabung sebagai *{$roleLabel}* di KasirSewa POS.\\n\\nSilakan klik link di bawah untuk langsung masuk menggunakan Google SSO (Gmail: {$user->email}) atau Password:\\nhttps://superbackend.my.id/login";
 
                 try {
                     \Illuminate\Support\Facades\Http::withHeaders([
@@ -170,7 +158,7 @@ class UserController extends Controller
 
             // 2. Email Invitation
             try {
-                \Illuminate\Support\Facades\Mail::raw("Halo {$user->name},\n\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\n\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
+                \Illuminate\Support\Facades\Mail::raw("Halo {$user->name},\\n\\nAnda telah diundang oleh {$currentUser->name} untuk bergabung sebagai staf {$roleLabel} di KasirSewa POS.\\n\\nSilakan masuk menggunakan akun Gmail ({$user->email}) via Google SSO di:\\nhttps://superbackend.my.id/login", function ($mail) use ($user) {
                     $mail->to($user->email)->subject("✉️ Undangan Bergabung Staf Toko - KasirSewa POS");
                 });
             } catch (\Throwable $e) {
@@ -188,33 +176,15 @@ class UserController extends Controller
         return back()->with('success', "Staff pengguna {$user->name} berhasil ditambahkan!");
     }
 
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(UpdateUserRequest $request, int $id): RedirectResponse
     {
         $currentUser = $request->user();
-
-        if (!$currentUser->hasPermissionTo('edit-users')) {
-            abort(403, 'Anda tidak memiliki hak akses untuk mengedit staff.');
-        }
 
         $tenantId = StaffScope::tenantIdFor($currentUser);
 
         $user = User::where(fn ($q) => StaffScope::apply($q, $tenantId))->findOrFail($id);
 
-        $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'role' => ['required', 'string', Rule::in([UserRole::OWNER->value, UserRole::MANAGER->value, UserRole::CASHIER->value, UserRole::WAREHOUSE->value])],
-            'outlet_id' => ['required', Rule::exists('outlets', 'id')->where(function ($query) use ($currentUser) {
-                $query->where('company_id', $currentUser->company_id);
-            })],
-            'is_active' => ['required', 'boolean'],
-        ];
-
-        if ($request->filled('password')) {
-            $rules['password'] = ['required', 'string', 'min:6'];
-        }
-
-        $validated = $request->validate($rules);
+        $validated = $request->validated();
 
         $dataToUpdate = [
             'name' => $validated['name'],
