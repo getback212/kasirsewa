@@ -366,6 +366,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                                 {/* CATEGORY DROPDOWN BUTTONS ON TOPBAR */}
                                 {navigationGroups.map((group) => {
+                                    // Hide saas_admin from topbar (shown in sidebar instead for SUPER_ADMIN)
                                     if (group.id === 'saas_admin') {
                                         return null;
                                     }
