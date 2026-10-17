@@ -33,17 +33,20 @@ class SupplierController extends Controller
             'address' => ['nullable', 'string'],
         ]);
 
-        // Auto-generate code if empty: SUP-{timestamp}-{random}
-        $supplierCode = $validated['code']
-            ? strtoupper($validated['code'])
-            : 'SUP-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
-
-        // Ensure code is unique per tenant
-        $counter = 0;
-        $originalCode = $supplierCode;
-        while (Supplier::where('tenant_id', $tenantId)->where('code', $supplierCode)->exists()) {
-            $counter++;
-            $supplierCode = $originalCode . '-' . $counter;
+        // Auto-generate code if empty: SUP-{YYYYMMDD}-{RANDOM4}
+        if (!$validated['code']) {
+            // Generate unique code with timestamp + random
+            $baseCode = 'SUP-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
+            $supplierCode = $baseCode;
+            
+            // If collision, append sequence: -01, -02, etc
+            $counter = 1;
+            while (Supplier::where('tenant_id', $tenantId)->where('code', $supplierCode)->exists()) {
+                $supplierCode = $baseCode . '-' . str_pad($counter, 2, '0', STR_PAD_LEFT);
+                $counter++;
+            }
+        } else {
+            $supplierCode = strtoupper($validated['code']);
         }
 
         Supplier::create([
