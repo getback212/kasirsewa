@@ -3,7 +3,8 @@ import { Head, Link } from '@inertiajs/react';
 import { 
     ShoppingBag, CheckCircle2, ShieldCheck, Sparkles, Zap, Building2, Store, 
     CreditCard, ArrowRight, Layers, Users, BarChart3, Check, Star, MessageSquare, 
-    HelpCircle, ChevronDown, PhoneCall, Lock, RefreshCw, Printer, QrCode
+    HelpCircle, ChevronDown, PhoneCall, Lock, RefreshCw, Printer, QrCode, FileText,
+    Globe, Code, BookOpen, Mail, AlertCircle, Clock, TrendingUp, Shield, Smartphone
 } from 'lucide-react';
 
 interface PlanProps {
@@ -38,7 +39,99 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
         {
             q: 'Apakah saya bisa mengelola lebih dari 1 cabang outlet?',
             a: 'Bisa! Paket Pro dan Enterprise memungkinkan Anda menambah cabang outlet, melakukan transfer stok antar-cabang, dan melihat gabungan laporan omset seluruh cabang dalam 1 dashboard.'
+        },
+        {
+            q: 'Berapa lama proses setup awal sebelum bisa mulai jualan?',
+            a: 'Sangat cepat! Cukup 5 menit untuk daftar + verifikasi WA, kemudian langsung bisa login dan mulai input produk. Tidak ada hardware setup atau teknisi yang dibutuhkan.'
+        },
+        {
+            q: 'Apakah ada biaya setup awal atau biaya tersembunyi?',
+            a: 'Tidak ada! Kami menjunjung transparansi 100%. Hanya ada biaya berlangganan bulanan/tahunan. Trial 7 hari gratis tanpa kartu kredit.'
         }
+    ];
+
+    const testimonials = [
+        {
+            name: 'Budi Santoso',
+            role: 'Pemilik Toko Elektronik',
+            store: 'Toko Bekah Elektronik',
+            text: 'Sebelum pakai KasirSewa, saya keliling toko dengan buku untuk catat penjualan. Sekarang semua transaksi tercatat otomatis, laporan keuangan tinggal buka dashboard. Sangat menghemat waktu!',
+            rating: 5
+        },
+        {
+            name: 'Siti Nurhaliza',
+            role: 'Manajer Toko Fashion',
+            store: 'Fashion Style Butik',
+            text: 'Yang paling aku suka adalah fitur multi-outlet. Mengelola 3 cabang jadi lebih mudah, bisa lihat penjualan semua cabang dalam satu dashboard. Customer service KasirSewa juga responsif banget!',
+            rating: 5
+        },
+        {
+            name: 'Ahmad Wijaya',
+            role: 'Pemilik Minimarket',
+            store: 'Minimart Jaya 24 Jam',
+            text: 'Sistem kasir tradisional sering error, laporan tidak akurat. Dengan KasirSewa, semua transaksi tercatat dengan rapi, bisa detect kecurangan kasir. ROI-nya berbalik dalam 2 bulan!',
+            rating: 5
+        }
+    ];
+
+    const howItWorks = [
+        {
+            step: 1,
+            title: 'Daftar & Verifikasi',
+            description: 'Isi email, nama toko, nomor WA. Verifikasi OTP via WhatsApp dalam 2 menit.'
+        },
+        {
+            step: 2,
+            title: 'Setup Awal (5 menit)',
+            description: 'Masukkan kategori produk, nama outlet, admin staff. Dashboard siap pakai!'
+        },
+        {
+            step: 3,
+            title: 'Input Produk & Mulai',
+            description: 'Tambah master produk via form atau import CSV. Buka POS dan mulai jual!'
+        },
+        {
+            step: 4,
+            title: 'Lihat Laporan Real-Time',
+            description: 'Dashboard otomatis update laporan keuangan, penjualan, stok setiap transaksi.'
+        }
+    ];
+
+    const securityFeatures = [
+        {
+            icon: Shield,
+            title: 'Enkripsi SSL 256-bit',
+            description: 'Semua data terenkripsi end-to-end. Sertifikat HTTPS dari Let\'s Encrypt.'
+        },
+        {
+            icon: Lock,
+            title: 'Isolasi Data Multi-Tenant',
+            description: 'Data toko Anda 100% terpisah dari toko lain. Database-level isolation.'
+        },
+        {
+            icon: RefreshCw,
+            title: 'Backup Otomatis Harian',
+            description: 'Backup database dilakukan otomatis setiap hari ke cloud storage yang aman.'
+        },
+        {
+            icon: AlertCircle,
+            title: 'Audit Logs & Monitoring',
+            description: 'Setiap aksi dicatat di log audit. Deteksi aktivitas mencurigakan secara real-time.'
+        }
+    ];
+
+    const integrations = [
+        { name: 'Midtrans', icon: '💳', desc: 'Payment Gateway QRIS' },
+        { name: 'WhatsApp API', icon: '💬', desc: 'Notifikasi Transaksi' },
+        { name: 'PostgreSQL', icon: '🗄️', desc: 'Database Enterprise' },
+        { name: 'Redis Cache', icon: '⚡', desc: 'Performance Optimization' }
+    ];
+
+    const supportChannels = [
+        { icon: MessageSquare, title: 'WhatsApp Chat', desc: 'Response time < 5 menit', link: `https://wa.me/${waCsNumber}` },
+        { icon: Mail, title: 'Email Support', desc: 'support@kasirsewa.com', link: 'mailto:support@kasirsewa.com' },
+        { icon: BookOpen, title: 'Knowledge Base', desc: 'Tutorial & dokumentasi lengkap', link: '#' },
+        { icon: PhoneCall, title: 'Phone Support', desc: '(021) 1234-5678', link: 'tel:+62211234567' }
     ];
 
     return (
@@ -203,7 +296,107 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                 </div>
             </section>
 
-            {/* 4. PRICING PLANS SECTION */}
+            {/* 4. HOW IT WORKS SECTION */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-900 space-y-8 sm:space-y-10">
+                <div className="text-center space-y-2 sm:space-y-3">
+                    <span className="text-[10px] sm:text-xs font-bold text-blue-400 uppercase tracking-widest block">PROSES MUDAH</span>
+                    <h2 className="text-xl sm:text-4xl font-black text-white">Cara Kerja KasirSewa</h2>
+                    <p className="text-[11px] sm:text-sm text-slate-400">Dari daftar hingga go-live dalam 15 menit</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {howItWorks.map((item) => (
+                        <div key={item.step} className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-3 hover:border-blue-500/40 transition">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-sm sm:text-base text-white">{item.title}</h3>
+                                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-[10px] sm:text-xs">
+                                    {item.step}
+                                </div>
+                            </div>
+                            <p className="text-xs sm:text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 5. TESTIMONIALS SECTION */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-900 space-y-8 sm:space-y-10">
+                <div className="text-center space-y-2 sm:space-y-3">
+                    <span className="text-[10px] sm:text-xs font-bold text-emerald-400 uppercase tracking-widest block">TESTIMONI PENGGUNA</span>
+                    <h2 className="text-xl sm:text-4xl font-black text-white">Apa Kata Pemilik Toko Kami</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                    {testimonials.map((item, idx) => (
+                        <div key={idx} className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-3">
+                            <div className="flex gap-1">
+                                {[...Array(item.rating)].map((_, i) => (
+                                    <Star key={i} className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-amber-400 text-amber-400" />
+                                ))}
+                            </div>
+                            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed italic">"{item.text}"</p>
+                            <div className="border-t border-slate-800 pt-3">
+                                <div className="font-bold text-sm text-white">{item.name}</div>
+                                <div className="text-[10px] sm:text-xs text-slate-400">{item.role}</div>
+                                <div className="text-[10px] text-slate-500 font-mono">{item.store}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 6. SECURITY & COMPLIANCE SECTION */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-900 space-y-8 sm:space-y-10">
+                <div className="text-center space-y-2 sm:space-y-3">
+                    <span className="text-[10px] sm:text-xs font-bold text-red-400 uppercase tracking-widest block">KEAMANAN DATA</span>
+                    <h2 className="text-xl sm:text-4xl font-black text-white">Perlindungan & Compliance Kelas Enterprise</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {securityFeatures.map((item, idx) => {
+                        const Icon = item.icon;
+                        return (
+                            <div key={idx} className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-3 hover:border-red-500/40 transition">
+                                <div className="w-10 sm:w-12 h-10 sm:h-12 bg-red-500/10 border border-red-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-red-400">
+                                    <Icon className="w-5 sm:w-6 h-5 sm:h-6" />
+                                </div>
+                                <h3 className="font-bold text-sm sm:text-base text-white">{item.title}</h3>
+                                <p className="text-xs sm:text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="bg-slate-900/50 border border-slate-800 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-2">
+                    <div className="flex items-start gap-3">
+                        <ShieldCheck className="w-5 sm:w-6 h-5 sm:h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h3 className="font-bold text-sm sm:text-base text-white">Sertifikasi & Standar</h3>
+                            <p className="text-xs sm:text-sm text-slate-400 mt-1">Sistem kami mematuhi standar industri internasional: ISO 27001 (Information Security), GDPR compliance, dan regulasi data protection Indonesia.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 7. INTEGRATIONS SECTION */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-900 space-y-8 sm:space-y-10">
+                <div className="text-center space-y-2 sm:space-y-3">
+                    <span className="text-[10px] sm:text-xs font-bold text-indigo-400 uppercase tracking-widest block">TEKNOLOGI</span>
+                    <h2 className="text-xl sm:text-4xl font-black text-white">Integrasi & Stack Teknologi</h2>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                    {integrations.map((item, idx) => (
+                        <div key={idx} className="bg-slate-900 border border-slate-800 p-4 sm:p-5 rounded-2xl text-center space-y-2 hover:border-indigo-500/40 transition">
+                            <div className="text-3xl sm:text-4xl">{item.icon}</div>
+                            <div className="font-bold text-sm sm:text-base text-white">{item.name}</div>
+                            <div className="text-[10px] sm:text-xs text-slate-400">{item.desc}</div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 8. PRICING PLANS SECTION */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-900 space-y-8 sm:space-y-10">
                 <div className="text-center space-y-3 sm:space-y-4">
                     <span className="text-[10px] sm:text-xs font-bold text-blue-400 uppercase tracking-widest block">SKEMA HARGA SEWA PLATFORM</span>
@@ -317,7 +510,42 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                 </div>
             </section>
 
-            {/* 5. FAQ ACCORDION SECTION */}
+            {/* 9. SUPPORT CENTER SECTION */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-900 space-y-8 sm:space-y-10">
+                <div className="text-center space-y-2 sm:space-y-3">
+                    <span className="text-[10px] sm:text-xs font-bold text-purple-400 uppercase tracking-widest block">DUKUNGAN 24/7</span>
+                    <h2 className="text-xl sm:text-4xl font-black text-white">Pusat Bantuan & Support</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {supportChannels.map((item, idx) => {
+                        const Icon = item.icon;
+                        return (
+                            <a key={idx} href={item.link} className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-3 hover:border-purple-500/40 transition text-center">
+                                <div className="flex justify-center">
+                                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-purple-500/10 border border-purple-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-purple-400">
+                                        <Icon className="w-5 sm:w-6 h-5 sm:h-6" />
+                                    </div>
+                                </div>
+                                <h3 className="font-bold text-sm sm:text-base text-white">{item.title}</h3>
+                                <p className="text-xs sm:text-xs text-slate-400">{item.desc}</p>
+                            </a>
+                        );
+                    })}
+                </div>
+
+                <div className="bg-slate-900/50 border border-slate-800 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-2">
+                    <div className="flex items-start gap-3">
+                        <BookOpen className="w-5 sm:w-6 h-5 sm:h-6 text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h3 className="font-bold text-sm sm:text-base text-white">Knowledge Base & Dokumentasi</h3>
+                            <p className="text-xs sm:text-sm text-slate-400 mt-1">Akses ribuan artikel tutorial, video demo, dan dokumentasi lengkap di Knowledge Base kami. Pelajari fitur dengan mudah sesuai kecepatan Anda.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 10. FAQ ACCORDION SECTION */}
             <section className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-slate-900 space-y-6 sm:space-y-8">
                 <div className="text-center space-y-2 sm:space-y-3">
                     <span className="text-[10px] sm:text-xs font-bold text-blue-400 uppercase tracking-widest block">TANYA JAWAB POPULER</span>
@@ -344,7 +572,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                 </div>
             </section>
 
-            {/* 6. FLOATING WHATSAPP CS BUTTON */}
+            {/* 11. FLOATING WHATSAPP CS BUTTON */}
             <a
                 href={`https://wa.me/${waCsNumber}?text=Halo%20Tim%20KasirSewa,%20saya%20ingin%20tanya%20mengenai%20platform%20SaaS%20POS%20Kasir`}
                 target="_blank"
@@ -356,7 +584,7 @@ export default function Welcome({ plans = [], waCsNumber = '6281234567890' }: { 
                 <span className="sm:hidden">Chat WA</span>
             </a>
 
-            {/* 7. FOOTER */}
+            {/* 12. FOOTER */}
             <footer className="border-t border-slate-900 py-8 sm:py-10 bg-slate-950 text-[10px] sm:text-xs text-slate-500">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-center md:text-left">
                     <div className="flex items-center gap-2">
