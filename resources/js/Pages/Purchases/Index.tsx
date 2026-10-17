@@ -485,15 +485,16 @@ export default function PurchasesIndex({ purchases, suppliers, products }: Purch
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-slate-500 font-semibold mb-1">Kode Supplier</label>
+                                <div>
+                                        <label className="block text-slate-500 font-semibold mb-1">Kode Supplier (Opsional - Auto Generate)</label>
                                         <input
                                             type="text"
-                                            required
+                                            placeholder="Kosongkan untuk auto-generate (SUP-20261017-XXXX)"
                                             value={supplierForm.data.code}
                                             onChange={(e) => supplierForm.setData('code', e.target.value)}
-                                            className="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono font-bold"
+                                            className="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono font-bold text-[11px]"
                                         />
+                                        <div className="text-[10px] text-slate-500 mt-1">💡 Biarkan kosong untuk kode otomatis. Atau input custom jika perlu.</div>
                                     </div>
                                     <div className="col-span-2">
                                         <label className="block text-slate-500 font-semibold mb-1">Nama Supplier / PT Distributor</label>
