@@ -12,3 +12,9 @@ Schedule::command('db:backup')->dailyAt('00:00');
 Schedule::command('app:check-subscription-expiry')
     ->dailyAt('07:00')
     ->withoutOverlapping();
+
+// Audit logs retention: purge logs older than 24 months (compliance)
+// Runs first day of month at 2 AM (non-peak hours)
+Schedule::command('audit-logs:purge')
+    ->monthlyOn(1, '02:00')
+    ->withoutOverlapping();
