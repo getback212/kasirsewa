@@ -264,7 +264,14 @@ class TenantController extends Controller
 
         // Catat atas nama Super Admin pelaksana (bukan owner yang
         // di-impersonate) agar entri ini tersembunyi dari Audit Logs tenant.
-        AuditLogService::log('SAAS_TENANT_IMPERSONATE', 'Tenant', $tenant->id, ['name' => $tenant->name], null, $user->id);
+        AuditLogService::log(
+            action: 'IMPERSONATE',
+            modelType: 'User',
+            modelId: $owner->id,
+            newValues: ['tenant_name' => $tenant->name],
+            tenantId: $tenant->id,
+            impersonatedBy: $user->id
+        );
 
         return redirect()->route('dashboard')->with('success', "Anda sekarang melihat sebagai Owner tenant '{$tenant->name}'.");
     }
@@ -290,7 +297,13 @@ class TenantController extends Controller
         $request->session()->forget(['impersonator_id', 'active_tenant_id']);
         $request->session()->regenerate();
 
-        AuditLogService::log('SAAS_TENANT_STOP_IMPERSONATE', 'Tenant', $tenantId);
+        AuditLogService::log(
+            action: 'STOP_IMPERSONATE',
+            modelType: 'User',
+            modelId: $superAdmin->id,
+            newValues: ['tenant_id' => $tenantId],
+            tenantId: $tenantId
+        );
 
         return redirect()->route('admin.dashboard')->with('success', 'Kembali ke akun Super Admin SaaS.');
     }

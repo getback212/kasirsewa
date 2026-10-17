@@ -253,9 +253,19 @@ class UserController extends Controller
         $tenantId = StaffScope::tenantIdFor($currentUser);
 
         $user = User::where(fn ($q) => StaffScope::apply($q, $tenantId))->findOrFail($id);
+        $oldStatus = $user->is_active;
         $user->update(['is_active' => ! $user->is_active]);
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        $action = $user->is_active ? 'USER_ACTIVATE' : 'USER_DEACTIVATE';
+
+        AuditLogService::log(
+            action: $action,
+            modelType: 'User',
+            modelId: $user->id,
+            oldValues: ['is_active' => $oldStatus],
+            newValues: ['is_active' => $user->is_active]
+        );
 
         return back()->with('success', "Akun staff {$user->name} berhasil {$statusText}.");
     }
@@ -311,6 +321,13 @@ class UserController extends Controller
             }
 
             $user->delete();
+
+            AuditLogService::log(
+                action: 'USER_DELETE',
+                modelType: 'User',
+                modelId: $id,
+                oldValues: $deletedUserData
+            );
 
             return back()->with('success', "Akun staff {$userName} telah dinonaktifkan dari sistem!");
         } catch (\RuntimeException $e) {
