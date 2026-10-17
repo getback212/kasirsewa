@@ -10,13 +10,22 @@ use Illuminate\Support\Facades\Request;
 
 class AuditLogService
 {
+    /**
+     * Log an audit event with tenant + impersonation support.
+     * 
+     * Super Admin action: tenant_id = NULL, visible_to = 'super_admin_only'
+     * Owner Tenant action: tenant_id = their_tenant_id, visible_to = 'tenant'
+     * Super Admin IMPERSONATE: impersonated_by = super_admin_id, visible_to = 'super_admin_only'
+     */
     public static function log(
         string $action,
         ?string $modelType = null,
         ?int $modelId = null,
         ?array $oldValues = null,
         ?array $newValues = null,
-        ?int $userId = null
+        ?int $userId = null,
+        ?int $tenantId = null,
+        ?int $impersonatedBy = null
     ): AuditLog {
         $user = $userId !== null
             ? User::findOrFail($userId)
@@ -27,6 +36,24 @@ class AuditLogService
         $companyId = null;
         if ($user?->company_id !== null) {
             $companyId = Company::whereKey($user->company_id)->value('id');
+        }
+
+        // Auto-detect tenant_id if not provided
+        if ($tenantId === null && $user?->tenant_id) {
+            $tenantId = $user->tenant_id;
+        }
+
+        // Determine visibility
+        $visibleTo = 'tenant'; // Default: visible to tenant
+        
+        // Super Admin logs (no tenant) = super_admin_only
+        if (!$tenantId && $user?->hasRole('SUPER_ADMIN')) {
+            $visibleTo = 'super_admin_only';
+        }
+        
+        // Impersonation logs = super_admin_only (don't show to tenant)
+        if ($impersonatedBy !== null) {
+            $visibleTo = 'super_admin_only';
         }
 
         // Strip passwords, tokens, and secrets from audit entries
@@ -43,6 +70,9 @@ class AuditLogService
             'new_values' => $sanitizedNew,
             'ip_address' => Request::ip() ?? '127.0.0.1',
             'user_agent' => Request::userAgent() ?? 'System',
+            'tenant_id' => $tenantId,
+            'impersonated_by' => $impersonatedBy,
+            'visible_to' => $visibleTo,
             'created_at' => now(),
         ]);
     }

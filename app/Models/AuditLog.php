@@ -22,6 +22,9 @@ class AuditLog extends Model
         'new_values',
         'ip_address',
         'user_agent',
+        'tenant_id',
+        'impersonated_by',
+        'visible_to',
         'created_at',
     ];
 
@@ -39,5 +42,15 @@ class AuditLog extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    public function impersonatedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'impersonated_by');
     }
 }

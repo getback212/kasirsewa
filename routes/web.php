@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\EnterpriseRegistrationController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\AuditLog\TenantAuditLogController;
+use App\Http\Controllers\AuditLog\SuperAdminAuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -269,6 +271,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit_logs.index');
         Route::delete('/audit-logs/clear', [AuditLogController::class, 'clear'])->name('audit_logs.clear');
         Route::delete('/audit-logs/{id}', [AuditLogController::class, 'destroy'])->name('audit_logs.destroy');
+        
+        // Tenant Audit Logs (Owner/Manager/Staff view their tenant's logs)
+        Route::get('/tenant-audit-logs', [TenantAuditLogController::class, 'index'])->name('tenant_audit_logs.index');
+        Route::get('/tenant-audit-logs/{auditLog}', [TenantAuditLogController::class, 'show'])->name('tenant_audit_logs.show');
+        
+        // Super Admin Audit Logs (view all tenants + impersonation logs)
+        Route::get('/admin/audit-logs', [SuperAdminAuditLogController::class, 'index'])
+            ->middleware('role:SUPER_ADMIN')
+            ->name('admin_audit_logs.index');
+        Route::get('/admin/audit-logs/{auditLog}', [SuperAdminAuditLogController::class, 'show'])
+            ->middleware('role:SUPER_ADMIN')
+            ->name('admin_audit_logs.show');
+        
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups/run', [BackupController::class, 'runBackup'])->name('backups.run');
         Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
