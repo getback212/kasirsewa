@@ -384,6 +384,44 @@ export default function ProductsIndex({ products, categories, units, filters }: 
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-slate-400 font-semibold mb-1">Batas Minimum Stok</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={data.minimum_stock}
+                                        onChange={(e) => setData('minimum_stock', e.target.value)}
+                                        placeholder="0"
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono font-bold"
+                                    />
+                                    {errors.minimum_stock && <span className="text-rose-400 text-[10px]">{errors.minimum_stock}</span>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-400 font-semibold mb-1">Status Produk</label>
+                                    <select
+                                        value={editingProduct?.is_active ? 'true' : 'false'}
+                                        onChange={(e) => setData('is_active', e.target.value === 'true')}
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-semibold"
+                                    >
+                                        <option value="true">✓ Aktif (Dijual)</option>
+                                        <option value="false">✕ Nonaktif (Tidak Dijual)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-400 font-semibold mb-1">Deskripsi Produk</label>
+                                <textarea
+                                    value={data.description}
+                                    onChange={(e) => setData('description', e.target.value)}
+                                    placeholder="Catatan detail produk..."
+                                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-normal resize-none"
+                                    rows={3}
+                                />
+                            </div>
+
                             <div className="flex gap-2.5 pt-2">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl cursor-pointer">Batal</button>
                                 <button type="submit" disabled={processing} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg cursor-pointer">
