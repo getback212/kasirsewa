@@ -127,9 +127,13 @@ class UserController extends Controller
 
         $cleanPhone = null;
         if (! empty($validated['phone'])) {
+            // Remove all non-numeric chars
             $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            // Standardize: always store as 62xxx format
             if (str_starts_with($cleanPhone, '0')) {
                 $cleanPhone = '62'.substr($cleanPhone, 1);
+            } elseif (!str_starts_with($cleanPhone, '62')) {
+                $cleanPhone = '62'.$cleanPhone; // Add 62 prefix if missing
             }
         }
 
