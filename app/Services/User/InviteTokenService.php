@@ -48,15 +48,15 @@ class InviteTokenService
 
     /**
      * Generate QR code image (base64 or file path)
-     * Link format: /accept-invite?token=XXX&email=user@...
+     * Link format: /accept-invite?token=XXX&email=user@..
      */
     public static function generateQrCode(User $user, string $token, bool $returnBase64 = true): string
     {
         $url = config('app.url')."/accept-invite?token={$token}&email=".urlencode($user->email);
 
-        $qrCode = QrCode::create($url)
-            ->setSize(300)
-            ->setMargin(10);
+        $qrCode = new QrCode($url);
+        $qrCode->setSize(300);
+        $qrCode->setMargin(10);
 
         $writer = new PngWriter();
         $result = $writer->write($qrCode);
