@@ -83,7 +83,7 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'purchase_price' => $validated['purchase_price'],
             'selling_price' => $validated['selling_price'],
-            'min_stock' => $validated['min_stock'] ?? 0,
+            'minimum_stock' => $validated['minimum_stock'] ?? 0,
             'description' => $validated['description'] ?? null,
             'is_active' => true,
         ]);
