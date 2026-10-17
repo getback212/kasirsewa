@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class SupplierController extends Controller
 {
@@ -19,26 +18,45 @@ class SupplierController extends Controller
         }
 
         $tenantId = session('active_tenant_id', $user->tenant_id);
+        $companyId = $user->company_id;
+
+        // Validate company_id exists (prevent owner tenant new without company_id)
+        if (!$companyId) {
+            abort(422, 'Data perusahaan Anda tidak ditemukan. Hubungi administrator.');
+        }
 
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', Rule::unique('suppliers', 'code')->where('tenant_id', $tenantId)],
+            'code' => ['nullable', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
         ]);
 
+        // Auto-generate code if empty: SUP-{timestamp}-{random}
+        $supplierCode = $validated['code']
+            ? strtoupper($validated['code'])
+            : 'SUP-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
+
+        // Ensure code is unique per tenant
+        $counter = 0;
+        $originalCode = $supplierCode;
+        while (Supplier::where('tenant_id', $tenantId)->where('code', $supplierCode)->exists()) {
+            $counter++;
+            $supplierCode = $originalCode . '-' . $counter;
+        }
+
         Supplier::create([
-            'company_id' => $user->company_id ?? 1,
+            'company_id' => $companyId,
             'tenant_id' => $tenantId,
-            'code' => strtoupper($validated['code']),
+            'code' => $supplierCode,
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
             'email' => $validated['email'] ?? null,
             'address' => $validated['address'] ?? null,
         ]);
 
-        return redirect()->back()->with('success', "Supplier resmi '{$validated['name']}' berhasil ditambahkan!");
+        return redirect()->back()->with('success', "Supplier resmi '{$validated['name']}' (Kode: {$supplierCode}) berhasil ditambahkan!");
     }
 
     public function update(Request $request, int $id): RedirectResponse
@@ -54,7 +72,7 @@ class SupplierController extends Controller
         $tenantId = session('active_tenant_id', $user->tenant_id);
 
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', Rule::unique('suppliers', 'code')->ignore($supplier->id)->where('tenant_id', $tenantId)],
+            'code' => ['required', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
