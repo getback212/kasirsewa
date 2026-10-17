@@ -64,6 +64,7 @@ export default function ProductsIndex({ products, categories, units, filters }: 
         selling_price: '',
         minimum_stock: '5',
         description: '',
+        is_active: true,
     });
 
     const categoryForm = useForm({
@@ -88,6 +89,7 @@ export default function ProductsIndex({ products, categories, units, filters }: 
             selling_price: '',
             minimum_stock: '5',
             description: '',
+            is_active: true,
         });
         setShowModal(true);
     };
@@ -104,6 +106,7 @@ export default function ProductsIndex({ products, categories, units, filters }: 
             selling_price: String(product.selling_price),
             minimum_stock: String(product.minimum_stock),
             description: product.description || '',
+            is_active: product.is_active,
         });
         setShowModal(true);
     };
