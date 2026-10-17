@@ -74,11 +74,12 @@ class RegisterController extends Controller
         $planIdFromQuery = $request->query('plan_id');
         $planSlugFromQuery = $request->query('plan');
 
-        // Map legacy slugs to current slugs
+        // Map legacy/alternate slugs to current slugs (for backward compatibility)
+        // Only map if the plan slug doesn't already exist in database
         $slugMap = [
-            'business-pro' => 'professional',
-            'starter' => 'starter-basic',
-            'pro' => 'professional',
+            'starter' => 'starter-basic',    // Legacy: 'starter' → 'starter-basic'
+            'pro' => 'business-pro',         // Legacy: 'pro' → 'business-pro'
+            'professional' => 'business-pro', // Legacy: 'professional' → 'business-pro'
         ];
         
         if ($planSlugFromQuery && isset($slugMap[$planSlugFromQuery])) {
