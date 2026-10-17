@@ -20,11 +20,13 @@ import {
     CheckCircle,
     Printer,
     Monitor,
-    History
+    History,
+    Camera
 } from 'lucide-react';
 import { useBarcodeScanner } from '@/Hooks/useBarcodeScanner';
 import { useKeyboardShortcuts } from '@/Hooks/useKeyboardShortcuts';
 import PaymentModal from '@/Features/POS/PaymentModal';
+import CameraScannerModal from '@/Components/POS/CameraScannerModal';
 import type { PageProps } from '@/Types';
 
 interface CategoryItem {
@@ -136,6 +138,7 @@ export default function POSPage({
     const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
     const [historySearchQuery, setHistorySearchQuery] = useState<string>('');
     const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
+    const [showCameraScanner, setShowCameraScanner] = useState<boolean>(false);
     const [completedSale, setCompletedSale] = useState<any | null>(null);
     const [holdingCart, setHoldingCart] = useState<boolean>(false);
 
@@ -296,14 +299,17 @@ export default function POSPage({
         printWindow.document.close();
     };
 
+    // Scan Handler (Hardware + Camera)
+    const handleBarcodeScan = (barcode: string) => {
+        const foundProduct = products.find((p) => p.barcode === barcode || p.sku === barcode);
+        if (foundProduct) {
+            addToCart(foundProduct);
+        }
+    };
+
     // Hardware Barcode Scanner Listener
     useBarcodeScanner({
-        onScan: (barcode) => {
-            const foundProduct = products.find((p) => p.barcode === barcode || p.sku === barcode);
-            if (foundProduct) {
-                addToCart(foundProduct);
-            }
-        },
+        onScan: handleBarcodeScan,
     });
 
     // POS Keyboard Shortcuts (F2: Search, F3: History, F8: Payment, F9: Hold, Esc: Clear)
@@ -603,6 +609,16 @@ export default function POSPage({
                             >
                                 <History className="w-4 h-4 text-blue-400" />
                                 <span className="hidden sm:inline">History (F3)</span>
+                            </button>
+
+                            {/* CAMERA BARCODE SCANNER BUTTON */}
+                            <button
+                                onClick={() => setShowCameraScanner(true)}
+                                className="px-4 py-3 bg-slate-900 hover:bg-slate-800 active:scale-95 border border-slate-800 text-slate-300 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer relative shrink-0"
+                                title="Scan Barcode/QR Code Menggunakan Kamera"
+                            >
+                                <Camera className="w-4 h-4 text-amber-400" />
+                                <span className="hidden sm:inline">Scan QR</span>
                             </button>
 
                             {/* HELD CARTS BUTTON */}
@@ -987,6 +1003,13 @@ export default function POSPage({
                     }}
                 />
             )}
+
+            {/* CAMERA BARCODE SCANNER MODAL */}
+            <CameraScannerModal
+                isOpen={showCameraScanner}
+                onClose={() => setShowCameraScanner(false)}
+                onScan={handleBarcodeScan}
+            />
 
             {/* SUCCESS TRANSACTION MODAL WITH RECEIPT PRINT BUTTON */}
             {completedSale && (
