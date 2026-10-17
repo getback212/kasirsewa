@@ -4,11 +4,14 @@ namespace App\Http\Controllers\AuditLog;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Traits\ExportableAuditLogs;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TenantAuditLogController extends Controller
 {
+    use ExportableAuditLogs;
+
     public function index(Request $request)
     {
         if (!auth()->user() || !auth()->user()->tenant_id) {
@@ -87,5 +90,40 @@ class TenantAuditLogController extends Controller
         return Inertia::render('AuditLogs/TenantAuditLogDetail', [
             'log' => $auditLog,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        if (!auth()->user() || !auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $tenantId = auth()->user()->tenant_id;
+        $format = $request->input('format', 'csv');
+
+        $query = AuditLog::where('tenant_id', $tenantId)
+            ->whereNull('impersonated_by')
+            ->with(['user', 'tenant']);
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->input('action'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        $logs = $query->latest('created_at')->get();
+
+        if ($format === 'csv') {
+            $filename = 'audit-logs-' . auth()->user()->tenant_id . '-' . now()->format('Ymd-His');
+            return $this->exportCsv($logs, $filename);
+        }
+
+        abort(400, 'Format tidak didukung. Gunakan: csv');
     }
 }

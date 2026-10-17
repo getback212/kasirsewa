@@ -5,11 +5,14 @@ namespace App\Http\Controllers\AuditLog;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Tenant;
+use App\Traits\ExportableAuditLogs;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SuperAdminAuditLogController extends Controller
 {
+    use ExportableAuditLogs;
+
     public function index(Request $request)
     {
         if (!auth()->user()?->hasRole('SUPER_ADMIN')) {
@@ -104,5 +107,48 @@ class SuperAdminAuditLogController extends Controller
         return Inertia::render('AuditLogs/SuperAdminAuditLogDetail', [
             'log' => $auditLog,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        if (!auth()->user()?->hasRole('SUPER_ADMIN')) {
+            abort(403, 'Only Super Admin can access audit logs');
+        }
+
+        $format = $request->input('format', 'csv');
+
+        $query = AuditLog::query()->with(['user', 'tenant', 'impersonatedByUser']);
+
+        if ($request->filled('tenant_ids')) {
+            $tenantIds = $request->input('tenant_ids');
+            if (is_array($tenantIds) && count($tenantIds) > 0) {
+                $query->whereIn('tenant_id', $tenantIds);
+            }
+        }
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->input('action'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        if ($request->filled('show_impersonation') === '1') {
+            $query->whereNotNull('impersonated_by');
+        }
+
+        $logs = $query->latest('created_at')->get();
+
+        if ($format === 'csv') {
+            $filename = 'audit-logs-admin-' . now()->format('Ymd-His');
+            return $this->exportCsv($logs, $filename);
+        }
+
+        abort(400, 'Format tidak didukung. Gunakan: csv');
     }
 }

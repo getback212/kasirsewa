@@ -275,6 +275,28 @@ export default function TenantAuditLogs({ logs, actions, users, filters }: Props
                         </div>
                     )}
 
+                    {/* Export Section */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-blue-400" />
+                                <h3 className="font-bold">Export Data</h3>
+                            </div>
+                            <a
+                                href={`/tenant-audit-logs/export/csv?${new URLSearchParams({
+                                    action: filters.action || '',
+                                    user_id: filters.user_id || '',
+                                    date_from: filters.date_from || '',
+                                    date_to: filters.date_to || '',
+                                    search: filters.search || '',
+                                }).toString()}`}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold text-xs rounded-xl transition"
+                            >
+                                📥 Download CSV
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </AppLayout>

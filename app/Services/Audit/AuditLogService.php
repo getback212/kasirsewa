@@ -77,6 +77,27 @@ class AuditLogService
         ]);
     }
 
+    /**
+     * Log audit event + send critical event alerts
+     */
+    public static function logWithAlert(
+        string $action,
+        ?string $modelType = null,
+        ?int $modelId = null,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?int $userId = null,
+        ?int $tenantId = null,
+        ?int $impersonatedBy = null
+    ): AuditLog {
+        $log = self::log($action, $modelType, $modelId, $oldValues, $newValues, $userId, $tenantId, $impersonatedBy);
+        
+        // Trigger critical event alert
+        CriticalEventAlertService::sendAlert($log);
+        
+        return $log;
+    }
+
     private static function sanitize(?array $data): ?array
     {
         if (! $data) {

@@ -322,6 +322,30 @@ export default function SuperAdminAuditLogs({ logs, actions, tenants, filters }:
                         </div>
                     )}
 
+                    {/* Export Section */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 text-blue-400" />
+                                <h3 className="font-bold">Export Data</h3>
+                            </div>
+                            <a
+                                href={`/admin/audit-logs/export/csv?${new URLSearchParams({
+                                    tenant_ids: (filters.tenant_ids as string[])?.join(',') || '',
+                                    action: filters.action || '',
+                                    user_id: filters.user_id || '',
+                                    date_from: filters.date_from || '',
+                                    date_to: filters.date_to || '',
+                                    search: filters.search || '',
+                                    show_impersonation: filters.show_impersonation || '',
+                                }).toString()}`}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold text-xs rounded-xl transition"
+                            >
+                                📥 Download CSV
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </AppLayout>

@@ -275,6 +275,7 @@ Route::middleware('auth')->group(function () {
         // Tenant Audit Logs (Owner/Manager/Staff view their tenant's logs)
         Route::get('/tenant-audit-logs', [TenantAuditLogController::class, 'index'])->name('tenant_audit_logs.index');
         Route::get('/tenant-audit-logs/{auditLog}', [TenantAuditLogController::class, 'show'])->name('tenant_audit_logs.show');
+        Route::get('/tenant-audit-logs/export/csv', [TenantAuditLogController::class, 'export'])->name('tenant_audit_logs.export');
         
         // Super Admin Audit Logs (view all tenants + impersonation logs)
         Route::get('/admin/audit-logs', [SuperAdminAuditLogController::class, 'index'])
@@ -283,6 +284,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/audit-logs/{auditLog}', [SuperAdminAuditLogController::class, 'show'])
             ->middleware('role:SUPER_ADMIN')
             ->name('admin_audit_logs.show');
+        Route::get('/admin/audit-logs/export/csv', [SuperAdminAuditLogController::class, 'export'])
+            ->middleware('role:SUPER_ADMIN')
+            ->name('admin_audit_logs.export');
         
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups/run', [BackupController::class, 'runBackup'])->name('backups.run');
