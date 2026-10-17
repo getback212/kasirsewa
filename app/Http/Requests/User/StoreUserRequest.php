@@ -20,8 +20,8 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'],
+            'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone,NULL,id,deleted_at,NULL'],
             'password' => ['required', 'string', 'min:6'],
             'role' => ['required', 'string', 'in:OWNER,MANAGER,CASHIER,WAREHOUSE'],
             'outlet_id' => ['required', 'exists:outlets,id'],
