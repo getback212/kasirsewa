@@ -181,7 +181,7 @@ export default function Register({ plans = [], selected_plan_id, google_email, g
                         <input type="hidden" name="billing_cycle" value={data.billing_cycle} />
 
                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center">
-                            <div className="text-xs text-emerald-400 font-bold">✨ Paket Starter Basic - Trial Gratis 7 Hari (Tanpa Kartu Kredit)</div>
+                            <div className="text-xs text-emerald-400 font-bold">✨ Paket {selectedPlan?.name ?? 'Starter Basic'} - Trial Gratis 7 Hari (Tanpa Kartu Kredit)</div>
                             <div className="text-[11px] text-emerald-300 mt-1">Akses penuh semua fitur selama masa trial. Upgrade kapan saja.</div>
                         </div>
 
