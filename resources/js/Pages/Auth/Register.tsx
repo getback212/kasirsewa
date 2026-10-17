@@ -176,13 +176,44 @@ export default function Register({ plans = [], selected_plan_id, google_email, g
                             </div>
                         </div>
 
-                        {/* PLAN INFO - Auto-selected Starter Basic, not shown */}
+                        {/* PLAN SELECTION - Show 2 Plans */}
+                        <div>
+                            <label className="block font-bold text-slate-300 mb-3">Pilih Paket Subscription</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {plans.map((plan) => (
+                                    <button
+                                        key={plan.id}
+                                        type="button"
+                                        onClick={() => setData('plan_id', plan.id)}
+                                        className={`p-4 rounded-2xl border-2 transition text-left ${
+                                            data.plan_id === plan.id
+                                                ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-600/30'
+                                                : 'bg-slate-950 border-slate-700 hover:border-slate-600'
+                                        }`}
+                                    >
+                                        <div className="font-bold text-sm text-white">{plan.name}</div>
+                                        <div className="text-[11px] text-slate-400 mt-1">
+                                            Rp {plan.monthly_price?.toLocaleString('id-ID') ?? '0'}/bulan
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 mt-1.5">
+                                            👥 {plan.max_users} user • 📦 {plan.max_products} produk
+                                        </div>
+                                        {data.plan_id === plan.id && (
+                                            <div className="mt-2 px-2 py-1 bg-blue-500/30 rounded text-[10px] font-bold text-blue-300 w-fit">
+                                                ✓ Terpilih
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <input type="hidden" name="plan_id" value={data.plan_id} />
                         <input type="hidden" name="billing_cycle" value={data.billing_cycle} />
 
                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center">
-                            <div className="text-xs text-emerald-400 font-bold">✨ Paket {selectedPlan?.name ?? 'Starter Basic'} - Trial Gratis 7 Hari (Tanpa Kartu Kredit)</div>
-                            <div className="text-[11px] text-emerald-300 mt-1">Akses penuh semua fitur selama masa trial. Upgrade kapan saja.</div>
+                            <div className="text-xs text-emerald-400 font-bold">✨ Trial Gratis 7 Hari (Tanpa Kartu Kredit)</div>
+                            <div className="text-[11px] text-emerald-300 mt-1">Paket {selectedPlan?.name ?? 'Starter Basic'} - Akses penuh semua fitur selama masa trial. Upgrade kapan saja.</div>
                         </div>
 
                         <button
