@@ -106,6 +106,8 @@ class OutletController extends Controller
             'city' => $validated['city'] ?? null,
             'qris_payload' => $validated['qris_payload'] ?? null,
             'qris_image_url' => $validated['qris_image_url'] ?? null,
+            'enable_ppn' => $validated['enable_ppn'] ?? true,
+            'tax_percentage' => $validated['tax_percentage'] ?? 11,
         ]);
 
         // Sync main outlet name update with Tenant & Company models for Super Admin UI

@@ -25,6 +25,8 @@ class UpdateOutletRequest extends FormRequest
             'city' => ['sometimes', 'nullable', 'string', 'max:100'],
             'qris_payload' => ['sometimes', 'nullable', 'string'],
             'qris_image_url' => ['sometimes', 'nullable', 'url'],
+            'enable_ppn' => ['sometimes', 'boolean'],
+            'tax_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
         ];
     }
 
