@@ -40,15 +40,19 @@ class POSController extends Controller
             ->where('status', 'open')
             ->first();
 
-        // Load Products with live stock from PostgreSQL `stocks` table
+        // Load Products with live stock from PostgreSQL `stocks` table (optimized: cache per-product stock)
         $products = Product::with(['category', 'unit'])
             ->where('company_id', $user->company_id)
             ->where('is_active', true)
             ->get()
             ->map(function ($product) use ($activeOutletId) {
-                $stockQty = Stock::where('outlet_id', $activeOutletId)
-                    ->where('product_id', $product->id)
-                    ->value('quantity') ?? 0.00;
+                $stockQty = Cache::remember(
+                    "stock.{$activeOutletId}.{$product->id}",
+                    now()->addMinutes(5),
+                    fn() => Stock::where('outlet_id', $activeOutletId)
+                        ->where('product_id', $product->id)
+                        ->value('quantity') ?? 0.00
+                );
 
                 return [
                     'id' => $product->id,
@@ -65,14 +69,21 @@ class POSController extends Controller
             });
 
         $categories = Category::where('company_id', $user->company_id)->where('is_active', true)->get(['id', 'name']);
-        $customers = Customer::where('company_id', $user->company_id)->get(['id', 'code', 'name', 'phone', 'points', 'credit_balance', 'credit_limit']);
+        // Cache customer list (1min TTL) — frequently accessed in POS autocomplete
+        $customers = Cache::remember(
+            "customers.{$user->company_id}",
+            now()->addMinutes(1),
+            fn() => Customer::where('company_id', $user->company_id)
+                ->get(['id', 'code', 'name', 'phone', 'points', 'credit_balance', 'credit_limit'])
+        );
         $discounts = Discount::where('tenant_id', $activeOutletId ? Outlet::find($activeOutletId)?->tenant_id : null)
             ->where('is_active', true)
             ->get();
 
-        $heldTransactions = HeldTransaction::with(['customer', 'items.product.category', 'items.product.unit'])
+        $heldTransactions = HeldTransaction::with(['customer:id,code,name,phone', 'items.product.category', 'items.product.unit'])
             ->where('outlet_id', $activeOutletId)
             ->latest()
+            ->limit(50)
             ->get()
             ->map(function ($held) use ($activeOutletId) {
                 return [
