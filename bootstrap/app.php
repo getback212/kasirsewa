@@ -29,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
             'register',
             '/register',
+            '/login',
+            'login',
+            '/super-admin/login',
+            'super-admin/login',
         ]);
 
         // Register middleware aliases

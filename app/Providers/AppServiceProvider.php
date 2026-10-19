@@ -64,68 +64,68 @@ class AppServiceProvider extends ServiceProvider
 
         // Login attempts: 5 per minute per IP
         RateLimiter::for('login', function (Request $request) {
-            return RateLimiter::limit(5)->perMinute()->by($request->ip());
+            return Limit::perMinute(5)->by($request->ip());
         });
 
         // Super admin login: 3 per minute (stricter)
         RateLimiter::for('superadmin-login', function (Request $request) {
-            return RateLimiter::limit(3)->perMinute()->by($request->ip());
+            return Limit::perMinute(3)->by($request->ip());
         });
 
         // Password recovery: 3 per hour per email
         RateLimiter::for('password-recovery', function (Request $request) {
-            return RateLimiter::limit(3)->perHour()->by(
+            return Limit::perHour(3)->by(
                 $request->input('email', '').'|'.$request->ip()
             );
         });
 
         // Email verification: 3 per hour per email
         RateLimiter::for('email-verification', function (Request $request) {
-            return RateLimiter::limit(3)->perHour()->by(
+            return Limit::perHour(3)->by(
                 $request->user()?->email.'|'.$request->ip()
             );
         });
 
         // API authentication: 5 per minute per IP
         RateLimiter::for('api-login', function (Request $request) {
-            return RateLimiter::limit(5)->perMinute()->by($request->ip());
+            return Limit::perMinute(5)->by($request->ip());
         });
 
         // API general endpoints: 60 per minute per user
         RateLimiter::for('api', function (Request $request) {
-            return RateLimiter::limit(60)->perMinute()->by($request->user()?->id ?? $request->ip());
+            return Limit::perMinute(60)->by($request->user()?->id ?? $request->ip());
         });
 
         // API webhooks: 30 per minute per IP (QRIS, payment gateways)
         RateLimiter::for('api-webhooks', function (Request $request) {
-            return RateLimiter::limit(30)->perMinute()->by($request->ip());
+            return Limit::perMinute(30)->by($request->ip());
         });
 
         // POS checkout: 10 per minute per user (prevent rapid transactions)
         RateLimiter::for('pos-checkout', function (Request $request) {
-            return RateLimiter::limit(10)->perMinute()->by($request->user()?->id ?? $request->ip());
+            return Limit::perMinute(10)->by($request->user()?->id ?? $request->ip());
         });
 
         // Product search: 30 per minute per user (expensive queries)
         RateLimiter::for('product-search', function (Request $request) {
-            return RateLimiter::limit(30)->perMinute()->by($request->user()?->id ?? $request->ip());
+            return Limit::perMinute(30)->by($request->user()?->id ?? $request->ip());
         });
 
         // Report generation: 5 per hour per user (expensive)
         RateLimiter::for('reports', function (Request $request) {
-            return RateLimiter::limit(5)->perHour()->by($request->user()?->id ?? $request->ip());
+            return Limit::perHour(5)->by($request->user()?->id ?? $request->ip());
         });
 
         // OTP/SMS requests: 3 per 10 minutes per phone
         RateLimiter::for('otp-request', function (Request $request) {
-            return RateLimiter::limit(3)->perTenMinutes()->by(
+            return Limit::perMinutes(10, 3)->by(
                 $request->input('phone', '').'|'.$request->ip()
             );
         });
 
         // Employee invitation: 10 per day per user
         RateLimiter::for('employee-invite', function (Request $request) {
-            return RateLimiter::limit(10)->perDay()->by($request->user()?->id ?? $request->ip());
+            return Limit::perDay(10)->by($request->user()?->id ?? $request->ip());
         });
     }
 }
