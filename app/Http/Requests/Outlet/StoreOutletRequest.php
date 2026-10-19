@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Outlet;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreOutletRequest extends FormRequest
 {
@@ -15,13 +16,15 @@ class StoreOutletRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50'],
+            'code' => ['sometimes', 'string', 'max:50', Rule::unique('outlets', 'code')],
             'address' => ['required', 'string', 'max:500'],
             'phone' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255'],
             'city' => ['nullable', 'string', 'max:100'],
             'qris_payload' => ['nullable', 'string'],
             'qris_image_url' => ['nullable', 'url'],
+            'enable_ppn' => ['sometimes', 'boolean'],
+            'tax_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
         ];
     }
 

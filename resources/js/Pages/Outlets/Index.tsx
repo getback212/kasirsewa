@@ -42,7 +42,7 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
     const [editingOutlet, setEditingOutlet] = useState<OutletItem | null>(null);
 
     const createForm = useForm({
-        code: `OUT-00${outlets.length + 1}`,
+        code: '',
         name: '',
         phone: '',
         address: '',
