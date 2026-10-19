@@ -17,9 +17,9 @@ class UpdateOutletRequest extends FormRequest
         $outletId = $this->route('id');
 
         return [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'code' => ['sometimes', 'required', 'string', 'max:50', Rule::unique('outlets', 'code')->ignore($outletId)],
-            'address' => ['sometimes', 'required', 'string', 'max:500'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'code' => ['sometimes', 'string', 'max:50', Rule::unique('outlets', 'code')->ignore($outletId)],
+            'address' => ['sometimes', 'string', 'max:500'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'city' => ['sometimes', 'nullable', 'string', 'max:100'],
