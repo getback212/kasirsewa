@@ -9,7 +9,7 @@ class UpdateOutletRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasPermissionTo('update-outlets');
+        return $this->user()->hasPermissionTo('edit-outlets');
     }
 
     public function rules(): array

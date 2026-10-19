@@ -86,6 +86,10 @@ class OutletController extends Controller
     {
         $user = $request->user();
 
+        if (! $user->hasPermissionTo('edit-outlets')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengedit data outlet toko.');
+        }
+
         $tenantId = session('active_tenant_id', $user->tenant_id);
         $outlet = Outlet::where('company_id', $user->company_id)
             ->where('tenant_id', $tenantId)
