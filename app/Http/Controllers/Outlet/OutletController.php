@@ -63,10 +63,21 @@ class OutletController extends Controller
 
         $validated = $request->validated();
 
+        // Auto-generate outlet code if not provided
+        $code = $validated['code'] ?? null;
+        if (!$code) {
+            $lastOutlet = Outlet::where('company_id', $user->company_id)
+                ->where('tenant_id', $tenantId)
+                ->orderBy('id', 'desc')
+                ->first();
+            $nextNumber = ($lastOutlet ? (int)substr($lastOutlet->code, -3) : 0) + 1;
+            $code = 'OUT-'.str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        }
+
         $outlet = Outlet::create([
             'company_id' => $user->company_id,
             'tenant_id' => $tenantId,
-            'code' => strtoupper($validated['code']),
+            'code' => strtoupper($code),
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
@@ -74,6 +85,8 @@ class OutletController extends Controller
             'city' => $validated['city'] ?? null,
             'qris_payload' => $validated['qris_payload'] ?? null,
             'qris_image_url' => $validated['qris_image_url'] ?? null,
+            'enable_ppn' => $validated['enable_ppn'] ?? true,
+            'tax_percentage' => $validated['tax_percentage'] ?? 11,
             'is_active' => true,
         ]);
 
@@ -212,5 +225,62 @@ class OutletController extends Controller
         session(['active_outlet_id' => $outlet->id]);
 
         return redirect()->back()->with('success', "Berhasil berpindah ke outlet aktif: {$outlet->name}");
+    }
+
+    public function toggleActive(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasPermissionTo('edit-outlets')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengubah status outlet toko.');
+        }
+
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $outlet = Outlet::where('company_id', $user->company_id)
+            ->where('tenant_id', $tenantId)
+            ->findOrFail($id);
+
+        $newStatus = !$outlet->is_active;
+        $outlet->update(['is_active' => $newStatus]);
+
+        $status = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
+        AuditLogService::log('OUTLET_TOGGLE', 'Outlet', $outlet->id, ['is_active' => $newStatus]);
+
+        return redirect()->back()->with('success', "Outlet {$outlet->name} berhasil {$status}!");
+    }
+
+    public function destroy(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasPermissionTo('delete-outlets')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk menghapus outlet toko.');
+        }
+
+        $tenantId = session('active_tenant_id', $user->tenant_id);
+        $outlet = Outlet::where('company_id', $user->company_id)
+            ->where('tenant_id', $tenantId)
+            ->findOrFail($id);
+
+        // Check if outlet has active transactions (sales)
+        $saleTxCount = DB::table('sales')->where('outlet_id', $outlet->id)->count();
+        if ($saleTxCount > 0) {
+            return redirect()->back()->with('error', "Outlet {$outlet->name} tidak dapat dihapus karena masih memiliki {$saleTxCount} transaksi penjualan. Nonaktifkan outlet saja.");
+        }
+
+        // Check if outlet has active transactions (purchases)
+        $purchaseTxCount = DB::table('purchases')->where('outlet_id', $outlet->id)->count();
+        if ($purchaseTxCount > 0) {
+            return redirect()->back()->with('error', "Outlet {$outlet->name} tidak dapat dihapus karena masih memiliki {$purchaseTxCount} transaksi pembelian. Nonaktifkan outlet saja.");
+        }
+
+        $outletName = $outlet->name;
+        $outletCode = $outlet->code;
+
+        AuditLogService::log('OUTLET_DELETE', 'Outlet', $outlet->id, ['name' => $outletName, 'code' => $outletCode]);
+
+        $outlet->delete();
+
+        return redirect()->back()->with('success', "Outlet {$outletName} ({$outletCode}) berhasil dihapus!");
     }
 }

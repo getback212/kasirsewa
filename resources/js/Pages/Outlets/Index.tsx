@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, useForm, usePage, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Store, Plus, Edit, CheckCircle2, AlertCircle, Phone, MapPin, Percent, Lock } from 'lucide-react';
+import { Store, Plus, Edit, CheckCircle2, AlertCircle, Phone, MapPin, Percent, Lock, Power, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/Types';
 
 interface OutletItem {
@@ -325,30 +325,61 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                                    {(tenantSubscription?.max_stores ?? 1) > 1 && outlets.length > 1 ? (
-                                        !isCurrentActive ? (
-                                            <button
-                                                onClick={() => handleSwitchOutlet(outlet.id)}
-                                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
-                                            >
-                                                Ganti Ke Outlet Ini
-                                            </button>
+                                <div className="pt-4 border-t border-slate-800/80 flex flex-col gap-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                        {(tenantSubscription?.max_stores ?? 1) > 1 && outlets.length > 1 ? (
+                                            !isCurrentActive ? (
+                                                <button
+                                                    onClick={() => handleSwitchOutlet(outlet.id)}
+                                                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
+                                                >
+                                                    Ganti Ke Outlet Ini
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-emerald-400 font-bold font-mono">Sesi Aktif</span>
+                                            )
                                         ) : (
-                                            <span className="text-[10px] text-emerald-400 font-bold font-mono">Sesi Aktif</span>
-                                        )
-                                    ) : (
-                                        <span className="text-[10px] text-emerald-400 font-bold font-mono flex items-center gap-1">
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Toko Utama Aktif
-                                        </span>
-                                    )}
+                                            <span className="text-[10px] text-emerald-400 font-bold font-mono flex items-center gap-1">
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Toko Utama Aktif
+                                            </span>
+                                        )}
 
-                                    <button
-                                        onClick={() => openEditModal(outlet)}
-                                        className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition cursor-pointer active:scale-95"
-                                    >
-                                        <Edit className="w-3.5 h-3.5" /> Edit Nama & Profil Toko
-                                    </button>
+                                        <button
+                                            onClick={() => openEditModal(outlet)}
+                                            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition cursor-pointer active:scale-95"
+                                        >
+                                            <Edit className="w-3.5 h-3.5" /> Edit
+                                        </button>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`${outlet.is_active ? 'Nonaktifkan' : 'Aktifkan'} outlet "${outlet.name}"?`)) {
+                                                    router.post(`/outlets/${outlet.id}/toggle`, {}, { preserveScroll: true });
+                                                }
+                                            }}
+                                            className={`flex-1 px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                                                outlet.is_active
+                                                    ? 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30'
+                                                    : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/30'
+                                            }`}
+                                        >
+                                            <Power className="w-3 h-3" />
+                                            {outlet.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Hapus outlet "${outlet.name}"? Tindakan ini tidak dapat dibatalkan!`)) {
+                                                    router.delete(`/outlets/${outlet.id}`, { preserveScroll: true });
+                                                }
+                                            }}
+                                            className="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-600/30 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                                        >
+                                            <Trash2 className="w-3 h-3" /> Hapus
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         );
