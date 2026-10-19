@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminNotificationSettingController;
 use App\Http\Controllers\Admin\AdminPaymentSettingController;
+use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\AdminPaymentProofController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\EnterpriseRegistrationController;
@@ -295,5 +296,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/backups/restore/{filename}', [BackupController::class, 'restore'])->name('backups.restore');
         Route::get('/backups/download/{filename}', [BackupController::class, 'download'])->name('backups.download');
         Route::delete('/backups/delete/{filename}', [BackupController::class, 'delete'])->name('backups.delete');
+        
+        // Monitoring & Health
+        Route::get('/monitoring', [MonitoringController::class, 'dashboard'])->name('monitoring.dashboard');
+        Route::get('/monitoring/health', [MonitoringController::class, 'health'])->name('monitoring.health');
+        Route::post('/monitoring/check', [MonitoringController::class, 'checkNow'])->name('monitoring.check');
+        Route::get('/monitoring/slow-queries', [MonitoringController::class, 'slowQueries'])->name('monitoring.slow_queries');
+        Route::post('/monitoring/alerts/acknowledge', [MonitoringController::class, 'acknowledgeAlert'])->name('monitoring.acknowledge_alert');
     });
 });

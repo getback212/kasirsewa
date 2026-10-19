@@ -18,3 +18,9 @@ Schedule::command('app:check-subscription-expiry')
 Schedule::command('audit-logs:purge')
     ->monthlyOn(1, '02:00')
     ->withoutOverlapping();
+
+// Health monitoring: check database, redis, tunnel every 5 minutes
+// Logs to service_status, creates critical alerts if services down
+Schedule::command('monitor:health')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
