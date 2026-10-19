@@ -48,10 +48,34 @@ services:
       POSTGRES_DB: ${DB_DATABASE:-kasirsewa_db}
       POSTGRES_USER: ${DB_USERNAME:-kasirsewa_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      POSTGRES_INITDB_ARGS: >
+        -c wal_level=replica
+        -c max_wal_senders=10
+        -c max_replication_slots=10
+        -c fsync=on
+        -c synchronous_commit=remote_apply
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - fsync=on
+      - -c
+      - synchronous_commit=remote_apply
     volumes:
       - kasirsewa_pgsql_data:/var/lib/postgresql/data
+      - kasirsewa_pgsql_wal:/var/lib/postgresql/wal
     networks:
       - kasirsewa_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-kasirsewa_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kasirsewa_redis:
     image: redis:7-alpine
@@ -124,5 +148,6 @@ networks:
 
 volumes:
   kasirsewa_pgsql_data:
+  kasirsewa_pgsql_wal:
   kasirsewa_redis_data:
   kasirsewa_baileys_auth:
