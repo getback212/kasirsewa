@@ -437,6 +437,7 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                             <div>
                                 <label className="block text-slate-400 font-semibold mb-1">Alamat Lengkap</label>
                                 <textarea
+                                    required
                                     rows={2}
                                     value={createForm.data.address}
                                     onChange={(e) => createForm.setData('address', e.target.value)}
