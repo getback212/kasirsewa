@@ -19,8 +19,6 @@ class StoreOutletRequest extends FormRequest
             'code' => ['sometimes', 'string', 'max:50', Rule::unique('outlets', 'code')],
             'address' => ['required', 'string', 'max:500'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'city' => ['nullable', 'string', 'max:100'],
             'qris_payload' => ['nullable', 'string'],
             'qris_image_url' => ['nullable', 'url'],
             'enable_ppn' => ['sometimes', 'boolean'],
@@ -35,7 +33,7 @@ class StoreOutletRequest extends FormRequest
     {
         $validated = parent::validated($key, $default);
 
-        foreach (['name', 'code', 'address', 'phone', 'email', 'city'] as $field) {
+        foreach (['name', 'code', 'address', 'phone'] as $field) {
             if (isset($validated[$field]) && is_string($validated[$field])) {
                 $validated[$field] = strip_tags(trim($validated[$field]));
             }
