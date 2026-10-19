@@ -110,10 +110,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Set active tenant for super admin (default to first tenant with company)
-        $firstTenant = \App\Models\Tenant::whereHas('companies', function ($q) use ($user) {
-            $q->where('company_id', $user->company_id);
-        })->first();
+        // Set active tenant for super admin (default to first tenant in the platform)
+        $firstTenant = \App\Models\Tenant::where('company_id', $user->company_id)
+            ->orWhereHas('stores', function ($q) use ($user) {
+                $q->where('company_id', $user->company_id);
+            })
+            ->first();
         
         if ($firstTenant) {
             session(['active_tenant_id' => $firstTenant->id]);
