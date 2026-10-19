@@ -368,13 +368,14 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="col-span-1">
-                                    <label className="block text-slate-400 font-semibold mb-1">Kode Outlet</label>
+                                    <label className="block text-slate-400 font-semibold mb-1">Kode Outlet <span className="text-slate-500">(Auto)</span></label>
                                     <input
                                         type="text"
-                                        required
+                                        placeholder="Kosongkan untuk auto-generate"
                                         value={createForm.data.code}
                                         onChange={(e) => createForm.setData('code', e.target.value)}
-                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono font-bold"
+                                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono font-bold text-slate-400"
+                                        disabled
                                     />
                                 </div>
 
