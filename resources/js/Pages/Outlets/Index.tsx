@@ -37,6 +37,9 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
 
     const currentOutlet = auth?.currentOutlet;
     const canCreateStore = Boolean(tenantSubscription?.can_create_store);
+    const userRoles = auth?.user?.roles || [];
+    const isSuperAdmin = userRoles.some((role: any) => role.name === 'SUPER_ADMIN');
+    const isOwner = userRoles.some((role: any) => role.name === 'OWNER');
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingOutlet, setEditingOutlet] = useState<OutletItem | null>(null);
@@ -353,32 +356,36 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`${outlet.is_active ? 'Nonaktifkan' : 'Aktifkan'} outlet "${outlet.name}"?`)) {
-                                                    router.post(`/outlets/${outlet.id}/toggle`, {}, { preserveScroll: true });
-                                                }
-                                            }}
-                                            className={`flex-1 px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
-                                                outlet.is_active
-                                                    ? 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30'
-                                                    : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/30'
-                                            }`}
-                                        >
-                                            <Power className="w-3 h-3" />
-                                            {outlet.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                                        </button>
+                                        {!isOwner && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`${outlet.is_active ? 'Nonaktifkan' : 'Aktifkan'} outlet "${outlet.name}"?`)) {
+                                                            router.post(`/outlets/${outlet.id}/toggle`, {}, { preserveScroll: true });
+                                                        }
+                                                    }}
+                                                    className={`flex-1 px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                                                        outlet.is_active
+                                                            ? 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/30'
+                                                            : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/30'
+                                                    }`}
+                                                >
+                                                    <Power className="w-3 h-3" />
+                                                    {outlet.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                                </button>
 
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`Hapus outlet "${outlet.name}"? Tindakan ini tidak dapat dibatalkan!`)) {
-                                                    router.delete(`/outlets/${outlet.id}`, { preserveScroll: true });
-                                                }
-                                            }}
-                                            className="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-600/30 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer active:scale-95"
-                                        >
-                                            <Trash2 className="w-3 h-3" /> Hapus
-                                        </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`Hapus outlet "${outlet.name}"? Tindakan ini tidak dapat dibatalkan!`)) {
+                                                            router.delete(`/outlets/${outlet.id}`, { preserveScroll: true });
+                                                        }
+                                                    }}
+                                                    className="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-600/30 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                                                >
+                                                    <Trash2 className="w-3 h-3" /> Hapus
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
