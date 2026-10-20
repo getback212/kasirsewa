@@ -129,14 +129,15 @@ class OutletController extends Controller
         $validated = $request->validated();
 
         $outlet->update([
-            'code' => strtoupper($validated['code']),
-            'name' => $validated['name'],
+            'code' => strtoupper($validated['code'] ?? $outlet->code),
+            'name' => $validated['name'] ?? $outlet->name,
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'qris_payload' => $validated['qris_payload'] ?? null,
             'qris_image_url' => $validated['qris_image_url'] ?? null,
-            'enable_ppn' => $validated['enable_ppn'] ?? true,
-            'tax_percentage' => $validated['tax_percentage'] ?? 11,
+            'enable_ppn' => $validated['enable_ppn'] ?? $outlet->enable_ppn,
+            'tax_percentage' => $validated['tax_percentage'] ?? $outlet->tax_percentage,
+            'is_active' => $validated['is_active'] ?? $outlet->is_active,
         ]);
 
         // Sync main outlet name update with Tenant & Company models for Super Admin UI

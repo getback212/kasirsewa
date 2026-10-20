@@ -25,6 +25,7 @@ class UpdateOutletRequest extends FormRequest
             'qris_image_url' => ['sometimes', 'nullable', 'url'],
             'enable_ppn' => ['sometimes', 'boolean'],
             'tax_percentage' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 
