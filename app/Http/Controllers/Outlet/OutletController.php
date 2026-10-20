@@ -29,11 +29,15 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengelola data outlet toko.');
         }
 
-        $tenantId = session('active_tenant_id', $user->tenant_id);
+        // Super Admin: use session tenant, Owner: use their tenant
+        $tenantId = $user->hasRole('SUPER_ADMIN')
+            ? session('active_tenant_id')
+            : $user->tenant_id;
+
         $tenant = Tenant::find($tenantId);
 
-        $outlets = Outlet::when($user->company_id, fn ($q) => $q->where('company_id', $user->company_id))
-            ->when($tenantId && ! $user->company_id, fn ($q) => $q->where('tenant_id', $tenantId))
+        // Filter outlets by tenant ONLY (not by company)
+        $outlets = Outlet::where('tenant_id', $tenantId)
             ->latest()
             ->get();
 
@@ -47,18 +51,30 @@ class OutletController extends Controller
     {
         $user = $request->user();
 
-        $tenantId = session('active_tenant_id', $user->tenant_id);
+        // Super Admin: can set session('active_tenant_id') to create outlets for any tenant
+        // Owner: can ONLY create outlets for their own tenant
+        $tenantId = null;
+        
+        if ($user->hasRole('SUPER_ADMIN')) {
+            // Super admin can use session to pick tenant, or must be explicit
+            $tenantId = session('active_tenant_id');
+            if (!$tenantId) {
+                return back()->with('error', 'Super Admin: Harus pilih tenant terlebih dahulu.');
+            }
+        } else {
+            // Owner: always use their tenant
+            $tenantId = $user->tenant_id;
+        }
 
-        // Enforce SaaS Plan Limit max_stores Guard
-        if ($tenantId) {
-            $tenant = Tenant::with('subscription.plan')->find($tenantId);
-            if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
-                $maxStores = $tenant->subscription->plan->max_stores;
-                $currentStores = Outlet::where('company_id', $user->company_id)->count();
+        // Enforce SaaS Plan Limit max_stores Guard (per-tenant, not per-company)
+        $tenant = Tenant::with('subscription.plan')->find($tenantId);
+        if ($tenant && $tenant->subscription && $tenant->subscription->plan) {
+            $maxStores = $tenant->subscription->plan->max_stores;
+            // Count outlets for THIS TENANT ONLY
+            $currentStores = Outlet::where('tenant_id', $tenantId)->count();
 
-                if ($currentStores >= $maxStores) {
-                    return back()->with('error', "Batas kuota outlet cabang toko Anda telah mencapai batas maksimal paket {$tenant->subscription->plan->name} ({$maxStores} Outlet Store). Silakan upgrade paket berlangganan SaaS Anda.");
-                }
+            if ($currentStores >= $maxStores) {
+                return back()->with('error', "Batas kuota outlet cabang toko Anda telah mencapai batas maksimal paket {$tenant->subscription->plan->name} ({$maxStores} Outlet Store). Silakan upgrade paket berlangganan SaaS Anda.");
             }
         }
 
@@ -67,8 +83,7 @@ class OutletController extends Controller
         // Auto-generate outlet code if not provided
         $code = $validated['code'] ?? null;
         if (!$code) {
-            $lastOutlet = Outlet::where('company_id', $user->company_id)
-                ->where('tenant_id', $tenantId)
+            $lastOutlet = Outlet::where('tenant_id', $tenantId)
                 ->orderBy('id', 'desc')
                 ->first();
             $nextNumber = ($lastOutlet ? (int)substr($lastOutlet->code, -3) : 0) + 1;
@@ -102,9 +117,13 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengedit data outlet toko.');
         }
 
-        $tenantId = session('active_tenant_id', $user->tenant_id);
-        $outlet = Outlet::where('company_id', $user->company_id)
-            ->where('tenant_id', $tenantId)
+        // Super Admin: can edit outlets in selected tenant (via session)
+        // Owner: can ONLY edit outlets in their own tenant
+        $tenantId = $user->hasRole('SUPER_ADMIN') 
+            ? session('active_tenant_id')
+            : $user->tenant_id;
+
+        $outlet = Outlet::where('tenant_id', $tenantId)
             ->findOrFail($id);
 
         $validated = $request->validated();
@@ -232,9 +251,11 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengubah status outlet toko.');
         }
 
-        $tenantId = session('active_tenant_id', $user->tenant_id);
-        $outlet = Outlet::where('company_id', $user->company_id)
-            ->where('tenant_id', $tenantId)
+        $tenantId = $user->hasRole('SUPER_ADMIN')
+            ? session('active_tenant_id')
+            : $user->tenant_id;
+
+        $outlet = Outlet::where('tenant_id', $tenantId)
             ->findOrFail($id);
 
         $newStatus = !$outlet->is_active;
@@ -254,9 +275,11 @@ class OutletController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus outlet toko.');
         }
 
-        $tenantId = session('active_tenant_id', $user->tenant_id);
-        $outlet = Outlet::where('company_id', $user->company_id)
-            ->where('tenant_id', $tenantId)
+        $tenantId = $user->hasRole('SUPER_ADMIN')
+            ? session('active_tenant_id')
+            : $user->tenant_id;
+
+        $outlet = Outlet::where('tenant_id', $tenantId)
             ->findOrFail($id);
 
         // Check if outlet has active transactions (sales)
