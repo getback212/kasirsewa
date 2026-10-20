@@ -16,7 +16,7 @@ class StoreOutletRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['sometimes', 'string', 'max:50', Rule::unique('outlets', 'code')],
+            'code' => ['nullable', 'string', 'max:50', Rule::unique('outlets', 'code')],
             'address' => ['required', 'string', 'max:500'],
             'phone' => ['nullable', 'string', 'max:20'],
             'qris_payload' => ['nullable', 'string'],
