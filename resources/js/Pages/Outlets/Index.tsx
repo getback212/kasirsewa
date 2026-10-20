@@ -102,6 +102,16 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
     const handleCreateOutlet = (e: React.FormEvent) => {
         e.preventDefault();
         createForm.post('/outlets', {
+            data: {
+                name: createForm.data.name,
+                phone: createForm.data.phone,
+                address: createForm.data.address,
+                tax_percentage: createForm.data.tax_percentage,
+                enable_ppn: createForm.data.enable_ppn,
+                qris_payload: createForm.data.qris_payload,
+                qris_image_url: createForm.data.qris_image_url,
+                // code intentionally omitted - will be auto-generated
+            },
             onSuccess: () => {
                 setShowCreateModal(false);
                 createForm.reset();
