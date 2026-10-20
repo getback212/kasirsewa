@@ -305,9 +305,20 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                             <h3 className="font-extrabold text-sm text-white mt-1.5">{outlet.name}</h3>
                                         </div>
 
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1 flex-wrap justify-end">
+                                            {outlet.is_active ? (
+                                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full font-bold text-[10px] uppercase flex items-center gap-1">
+                                                    <CheckCircle2 className="w-3 h-3" />
+                                                    Operasional
+                                                </span>
+                                            ) : (
+                                                <span className="px-2.5 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-full font-bold text-[10px] uppercase flex items-center gap-1">
+                                                    <AlertCircle className="w-3 h-3" />
+                                                    Nonaktif
+                                                </span>
+                                            )}
                                             {isCurrentActive && (
-                                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full font-bold text-[10px] uppercase">
+                                                <span className="px-2.5 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-full font-bold text-[10px] uppercase">
                                                     AKTIF SEKARANG
                                                 </span>
                                             )}
