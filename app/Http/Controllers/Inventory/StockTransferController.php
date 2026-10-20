@@ -46,7 +46,7 @@ class StockTransferController extends Controller
             ->latest()
             ->paginate(15);
 
-        $allOutlets = Outlet::where('company_id', $user->company_id)->get(['id', 'code', 'name']);
+        $allOutlets = Outlet::where('company_id', $user->company_id)->where('is_active', true)->get(['id', 'code', 'name']);
         $products = Product::where('company_id', $user->company_id)->get(['id', 'sku', 'name']);
 
         return Inertia::render('Inventory/StockTransferIndex', [

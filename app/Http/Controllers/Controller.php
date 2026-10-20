@@ -22,7 +22,7 @@ abstract class Controller
         $sessionOutletId = session('active_outlet_id');
 
         if ($sessionOutletId) {
-            $query = Outlet::where('id', $sessionOutletId);
+            $query = Outlet::where('id', $sessionOutletId)->where('is_active', true);
             if ($user->company_id) {
                 $query->where('company_id', $user->company_id);
             } elseif ($user->tenant_id) {
@@ -34,7 +34,7 @@ abstract class Controller
         }
 
         if ($user->outlet_id) {
-            $query = Outlet::where('id', $user->outlet_id);
+            $query = Outlet::where('id', $user->outlet_id)->where('is_active', true);
             if ($user->company_id) {
                 $query->where('company_id', $user->company_id);
             } elseif ($user->tenant_id) {
@@ -46,14 +46,14 @@ abstract class Controller
         }
 
         if ($user->company_id) {
-            $outlet = Outlet::where('company_id', $user->company_id)->first();
+            $outlet = Outlet::where('company_id', $user->company_id)->where('is_active', true)->first();
             if ($outlet) {
                 return (int) $outlet->id;
             }
         }
 
         if ($user->tenant_id) {
-            $outlet = Outlet::where('tenant_id', $user->tenant_id)->first();
+            $outlet = Outlet::where('tenant_id', $user->tenant_id)->where('is_active', true)->first();
             if ($outlet) {
                 return (int) $outlet->id;
             }

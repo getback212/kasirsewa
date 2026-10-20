@@ -154,6 +154,11 @@ class InventoryController extends Controller
         $activeOutletId = $this->resolveScopedOutletId($request);
         abort_unless($activeOutletId, 403, 'Outlet aktif tidak valid.');
         $outlet = Outlet::find($activeOutletId);
+        
+        // Check if outlet is active
+        if (!$outlet || !$outlet->is_active) {
+            abort(403, 'Outlet tidak aktif. Silakan pilih outlet yang aktif.');
+        }
         $outletName = $outlet?->name ?? 'KasirSewa Store';
 
         $stocks = Stock::with(['product.category', 'product.unit'])
