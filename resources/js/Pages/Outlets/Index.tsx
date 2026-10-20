@@ -427,6 +427,7 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                         placeholder="e.g. KasirSewa Cabang Bandung"
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium"
                                     />
+                                    {createForm.errors.name && <p className="text-rose-400 text-xs mt-1">{createForm.errors.name}</p>}
                                 </div>
                             </div>
 
@@ -451,6 +452,7 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                     placeholder="Jl. Merdeka No. 123..."
                                     className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium"
                                 />
+                                {createForm.errors.address && <p className="text-rose-400 text-xs mt-1">{createForm.errors.address}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
@@ -477,10 +479,21 @@ export default function OutletsIndex({ outlets, tenant }: OutletsPageProps) {
                                         onChange={(e) => createForm.setData('tax_percentage', e.target.value)}
                                         className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-blue-400 font-mono font-bold"
                                     />
+                                    {createForm.errors.tax_percentage && <p className="text-rose-400 text-xs mt-1">{createForm.errors.tax_percentage}</p>}
                                 </div>
                             </div>
 
                             <div className="flex gap-2.5 pt-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 pb-1 z-10">
+                                {createForm.errors && Object.keys(createForm.errors).length > 0 && (
+                                    <div className="w-full bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3 rounded-xl text-xs">
+                                        <p className="font-bold mb-2">❌ Ada error pada form:</p>
+                                        <ul className="space-y-1">
+                                            {Object.values(createForm.errors).map((err: any, i: number) => (
+                                                <li key={i}>• {err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                                 <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl cursor-pointer">Batal</button>
                                 <button type="submit" disabled={createForm.processing} className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg cursor-pointer">
                                     {createForm.processing ? '⏳ Menyimpan...' : 'Simpan Outlet Baru'}
