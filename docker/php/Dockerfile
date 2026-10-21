@@ -8,11 +8,16 @@ RUN apk add --no-cache \
     unzip \
     git \
     tzdata \
-    curl
+    curl \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN docker-php-ext-install pdo pdo_pgsql zip bcmath opcache
+RUN docker-php-ext-install pdo pdo_pgsql zip bcmath opcache \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd
 
 RUN apk add --no-cache $PHPIZE_DEPS \
     && pecl install redis \
